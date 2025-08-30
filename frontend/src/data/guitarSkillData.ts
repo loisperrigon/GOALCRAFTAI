@@ -282,7 +282,44 @@ export const guitarSkillNodes: SkillNode[] = [
     unlocked: false,
     category: 'main',
     estimatedTime: '1 semaine',
-    position: { x: 500, y: 600 }
+    position: { x: 500, y: 600 },
+    details: {
+      why: "L'accord Fa barré est la porte d'entrée vers des milliers de chansons. Une fois maîtrisé, vous pourrez jouer n'importe quel accord barré en déplaçant simplement cette forme sur le manche.",
+      howTo: [
+        "Renforcez d'abord votre force de pouce avec des exercices",
+        "Commencez par barrer seulement 2 cordes, puis progressez",
+        "Placez votre index légèrement de côté, pas à plat",
+        "Appuyez fort avec le pouce derrière le manche",
+        "Pratiquez 5 minutes par jour, pas plus au début"
+      ],
+      difficulty: 'Difficile',
+      tools: [
+        {
+          name: "JustinGuitar - F Chord",
+          type: 'video',
+          url: "https://www.justinguitar.com/guitar-lessons/f-chord-bc-161",
+          description: "Méthode progressive pour maîtriser le Fa barré"
+        },
+        {
+          name: "Fender Play",
+          type: 'app',
+          url: "https://www.fender.com/play",
+          description: "Exercices progressifs pour les accords barrés"
+        }
+      ],
+      tips: [
+        "💪 C'est normal que ce soit difficile - tout le monde galère au début !",
+        "🎯 Si ça ne sonne pas, ajustez la position de votre index",
+        "⏱️ Limitez à 5-10 minutes pour éviter les tendinites",
+        "🔄 Alternez avec des accords simples pour reposer votre main"
+      ],
+      milestones: [
+        { title: "Barrer 2 cordes proprement", completed: false },
+        { title: "Former l'accord complet (même si ça grésille)", completed: false },
+        { title: "Faire sonner 4 cordes sur 6", completed: false },
+        { title: "Jouer le Fa barré proprement", completed: false }
+      ]
+    }
   },
   {
     id: 'fingerpicking',
