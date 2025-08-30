@@ -88,9 +88,9 @@ export default function PricingPage() {
       </div>
 
       {/* Hero Section - Plus compact */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="text-center mb-4">
-          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
             Débloquez l'IA illimitée
           </h1>
           <p className="text-muted-foreground">
@@ -110,7 +110,7 @@ export default function PricingPage() {
         </div>
         
         {/* Points clés Premium */}
-        <div className="flex justify-center gap-6 mb-6">
+        <div className="flex flex-wrap justify-center gap-3 md:gap-6 mb-6">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
               <Brain className="h-4 w-4 text-purple-400" />
@@ -155,10 +155,10 @@ export default function PricingPage() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
           
           {/* Free Plan */}
-          <Card className="relative p-6 border-2 border-border hover:border-purple-500/30 transition-all">
+          <Card className="relative p-4 md:p-6 border-2 border-border hover:border-purple-500/30 transition-all">
             <div className="mb-4">
               <h3 className="text-2xl font-bold mb-1">Starter</h3>
               <p className="text-sm text-muted-foreground mb-3">
@@ -226,7 +226,7 @@ export default function PricingPage() {
           </Card>
 
           {/* Premium Plan */}
-          <Card className="relative p-6 border-2 border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-blue-500/10 hover:border-purple-500 transition-all scale-105">
+          <Card className="relative p-4 md:p-6 border-2 border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-blue-500/10 hover:border-purple-500 transition-all lg:scale-105">
             {/* Badge populaire */}
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
               <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none px-3 py-1 text-xs animate-pulse">
@@ -372,8 +372,8 @@ export default function PricingPage() {
         </div>
 
         {/* Trust badges */}
-        <div className="mt-12 text-center">
-          <div className="flex items-center justify-center gap-8 mb-8">
+        <div className="mt-8 md:mt-12 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 mb-8">
             <div className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-green-400" />
               <span className="text-sm">Paiement sécurisé</span>
@@ -389,7 +389,7 @@ export default function PricingPage() {
           </div>
           
           {/* Témoignages */}
-          <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto mb-8">
             <Card className="p-4 bg-card/50">
               <div className="flex gap-1 mb-2">
                 {[...Array(5)].map((_, i) => (
@@ -427,7 +427,7 @@ export default function PricingPage() {
         </div>
 
         {/* FAQ Section */}
-        <div className="mt-20 max-w-3xl mx-auto">
+        <div className="mt-12 md:mt-20 max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">
             Questions fréquentes
           </h2>

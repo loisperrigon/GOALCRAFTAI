@@ -50,9 +50,9 @@ export default function AuthPage() {
 
       <Header />
 
-      <div className="relative z-10 flex-1 flex items-center justify-center w-full max-w-md mx-auto px-4 py-12">
-
-        <Card className="bg-card/50 backdrop-blur border-purple-500/20 p-8">
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8 md:py-12">
+        <div className="w-full max-w-md">
+          <Card className="bg-card/50 backdrop-blur border-purple-500/20 p-6 md:p-8">
           {/* Tabs */}
           <div className="flex gap-2 mb-8">
             <button
@@ -203,7 +203,8 @@ export default function AuthPage() {
               </a>
             </p>
           )}
-        </Card>
+          </Card>
+        </div>
       </div>
 
       <Footer />

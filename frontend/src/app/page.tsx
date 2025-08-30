@@ -33,10 +33,10 @@ export default function Home() {
         <Header />
 
         {/* Hero Section */}
-        <main className="container mx-auto px-4 pt-20 pb-32">
+        <main className="container mx-auto px-4 pt-12 md:pt-20 pb-16 md:pb-32">
           <div className="max-w-4xl mx-auto text-center">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-purple-500/10 border border-purple-500/20 mb-6 md:mb-8">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
@@ -45,7 +45,7 @@ export default function Home() {
             </div>
 
             {/* Main heading with gradient */}
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-4 md:mb-6 leading-tight">
               <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
                 Transformez vos rêves
               </span>
@@ -53,30 +53,30 @@ export default function Home() {
               <span className="text-foreground">en victoires épiques</span>
             </h1>
 
-            <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto">
               Décrivez votre objectif. L'IA crée votre quête personnalisée. 
               Débloquez des étapes, gagnez des XP, accomplissez l'impossible.
             </p>
 
             {/* Input Section */}
-            <div className="max-w-2xl mx-auto mb-16">
+            <div className="max-w-2xl mx-auto mb-12 md:mb-16">
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
                 <div className="relative bg-card rounded-2xl p-2">
-                  <div className="flex flex-col md:flex-row gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <Input
                       type="text"
                       placeholder="Quel est votre prochain grand défi ? (ex: Créer mon entreprise, Apprendre le piano...)"
                       value={objective}
                       onChange={(e) => setObjective(e.target.value)}
-                      className="flex-1 bg-background border-0 text-lg px-6 py-6 focus:ring-2 focus:ring-purple-500/50 placeholder:text-muted-foreground/60"
+                      className="flex-1 bg-background border-0 text-base md:text-lg px-4 py-4 md:px-6 md:py-6 focus:ring-2 focus:ring-purple-500/50 placeholder:text-muted-foreground/60"
                       onMouseEnter={() => setIsHovered(true)}
                       onMouseLeave={() => setIsHovered(false)}
                     />
                     <Button 
                       size="lg"
                       onClick={handleStartAdventure}
-                      className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/40"
+                      className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-6 py-4 md:px-8 md:py-6 text-base md:text-lg font-semibold shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/40"
                     >
                       Commencer l'aventure →
                     </Button>
@@ -100,7 +100,7 @@ export default function Home() {
             </div>
 
             {/* Features Grid */}
-            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-20">
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto mb-12 md:mb-20">
               <Card className="bg-card/50 backdrop-blur border-purple-500/20 p-6 hover:border-purple-500/40 transition-all group">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <span className="text-2xl">🎯</span>
@@ -133,7 +133,7 @@ export default function Home() {
             </div>
 
             {/* Stats Section */}
-            <div className="grid md:grid-cols-4 gap-8 max-w-4xl mx-auto py-12 border-y border-border/50">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-4xl mx-auto py-8 md:py-12 border-y border-border/50">
               <div>
                 <div className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                   50K+
@@ -161,7 +161,7 @@ export default function Home() {
             </div>
 
             {/* Testimonial */}
-            <div className="mt-20 max-w-2xl mx-auto">
+            <div className="mt-12 md:mt-20 max-w-2xl mx-auto">
               <Card className="bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/20 p-8">
                 <div className="flex items-center gap-2 mb-4">
                   {[...Array(5)].map((_, i) => (
@@ -183,7 +183,7 @@ export default function Home() {
             </div>
 
             {/* CTA Section */}
-            <div className="mt-20">
+            <div className="mt-12 md:mt-20">
               <h2 className="text-3xl font-bold mb-4">
                 Prêt à transformer votre vie en jeu ?
               </h2>
@@ -193,7 +193,7 @@ export default function Home() {
               <Button 
                 size="lg"
                 onClick={handleStartAdventure}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-12 py-6 text-lg font-semibold shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/40"
+                className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-4 md:px-12 md:py-6 text-base md:text-lg font-semibold shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/40"
               >
                 Commencer gratuitement
               </Button>
