@@ -280,8 +280,8 @@ export default function CreatePage() {
 
       {/* Main Content Area - Chat and Artifact */}
       <div className="flex-1 flex">
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
+        {/* Chat Area - 2/3 de l'espace */}
+        <div className="flex-[2] flex flex-col">
           {/* Chat Header */}
           <div className="h-14 border-b border-border flex items-center px-6 bg-card/50">
             <div className="flex items-center gap-3">
@@ -375,8 +375,8 @@ export default function CreatePage() {
           </div>
         </div>
 
-        {/* Artifact Panel */}
-        <div className={`${isFullscreen ? 'fixed inset-0 z-50' : 'flex-1 border-l'} border-border bg-card/50 flex flex-col transition-all duration-300`}>
+        {/* Artifact Panel - 1/3 de l'espace */}
+        <div className={`${isFullscreen ? 'fixed inset-0 z-50' : 'flex-[1] border-l'} border-border bg-card/50 flex flex-col transition-all duration-300`}>
           {/* Artifact Header */}
           <div className="h-14 border-b border-border flex items-center justify-between px-4">
             <div className="flex items-center gap-2">
@@ -401,7 +401,7 @@ export default function CreatePage() {
 
           {/* Artifact Content - Skill Tree */}
           <div className="flex-1 relative overflow-hidden">
-            <SkillTree />
+            <SkillTree isFullscreen={isFullscreen} />
           </div>
         </div>
       </div>

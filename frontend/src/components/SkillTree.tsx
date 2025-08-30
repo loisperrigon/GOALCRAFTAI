@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import ReactFlow, {
   Node,
   Edge,
-  Controls,
   Background,
   useNodesState,
   useEdgesState,
@@ -252,66 +251,70 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
 
   return (
     <div className="h-full w-full relative bg-background">
-      {/* Header avec stats */}
-      <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none">
-        <div className="flex items-center justify-between">
-          <Card className="bg-card/90 backdrop-blur p-3 pointer-events-auto">
-            <div className="flex items-center gap-4">
-              <div>
-                <p className="text-xs text-muted-foreground">Niveau</p>
-                <p className="text-lg font-bold text-purple-400">{userLevel}</p>
+      {/* Header avec stats - visible seulement en plein écran */}
+      {isFullscreen && (
+        <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none">
+          <div className="flex items-center justify-between">
+            <Card className="bg-card/90 backdrop-blur p-3 pointer-events-auto">
+              <div className="flex items-center gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Niveau</p>
+                  <p className="text-lg font-bold text-purple-400">{userLevel}</p>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div>
+                  <p className="text-xs text-muted-foreground">XP Total</p>
+                  <p className="text-lg font-bold text-blue-400">{userXP}</p>
+                </div>
+                <div className="w-px h-8 bg-border" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Progression</p>
+                  <p className="text-lg font-bold text-green-400">{Math.round(progression)}%</p>
+                </div>
               </div>
-              <div className="w-px h-8 bg-border" />
-              <div>
-                <p className="text-xs text-muted-foreground">XP Total</p>
-                <p className="text-lg font-bold text-blue-400">{userXP}</p>
-              </div>
-              <div className="w-px h-8 bg-border" />
-              <div>
-                <p className="text-xs text-muted-foreground">Progression</p>
-                <p className="text-lg font-bold text-green-400">{Math.round(progression)}%</p>
-              </div>
-            </div>
-          </Card>
+            </Card>
 
-          <Card className="bg-card/90 backdrop-blur p-3 pointer-events-auto">
-            <div className="flex items-center gap-3">
-              <div className="flex gap-2">
-                <div className="flex items-center gap-1">
-                  <Circle className="h-3 w-3 text-purple-400" />
-                  <span className="text-xs">Principal</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Star className="h-3 w-3 text-blue-400" />
-                  <span className="text-xs">Bonus</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Zap className="h-3 w-3 text-pink-400" />
-                  <span className="text-xs">Défi</span>
+            <Card className="bg-card/90 backdrop-blur p-3 pointer-events-auto">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-2">
+                  <div className="flex items-center gap-1">
+                    <Circle className="h-3 w-3 text-purple-400" />
+                    <span className="text-xs">Principal</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star className="h-3 w-3 text-blue-400" />
+                    <span className="text-xs">Bonus</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Zap className="h-3 w-3 text-pink-400" />
+                    <span className="text-xs">Défi</span>
+                  </div>
                 </div>
               </div>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Barre de progression en bas - visible seulement en plein écran */}
+      {isFullscreen && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none w-80">
+          <Card className="bg-card/90 backdrop-blur p-3 pointer-events-auto">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Progression</span>
+              <span className="text-sm text-muted-foreground">
+                {completedNodes.length}/{nodes.filter(n => !n.optional).length} étapes
+              </span>
+            </div>
+            <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
+                style={{ width: `${progression}%` }}
+              />
             </div>
           </Card>
         </div>
-      </div>
-
-      {/* Barre de progression en bas */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none w-80">
-        <Card className="bg-card/90 backdrop-blur p-3 pointer-events-auto">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Progression</span>
-            <span className="text-sm text-muted-foreground">
-              {completedNodes.length}/{nodes.filter(n => !n.optional).length} étapes
-            </span>
-          </div>
-          <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
-              style={{ width: `${progression}%` }}
-            />
-          </div>
-        </Card>
-      </div>
+      )}
 
       {/* React Flow Canvas */}
       <ReactFlow
@@ -326,6 +329,7 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
         elementsSelectable={true}
         fitView
         className="bg-background"
+        proOptions={{ hideAttribution: true }}
       >
         <Background 
           variant={BackgroundVariant.Dots} 
@@ -333,54 +337,55 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
           size={1}
           color="#4b5563"
         />
-        <Controls className="bg-card border-border" />
         
-        {/* Panneau de contrôle minimaliste vertical */}
-        <Panel position="top-left" className="bg-card/90 backdrop-blur p-2 rounded-lg border border-border" style={{ top: '80px', left: '16px' }}>
-          <div className="flex flex-col gap-1">
-            <Button
-              size="icon"
-              variant={isInteractive ? "default" : "ghost"}
-              onClick={toggleInteractive}
-              className={`h-8 w-8 ${isInteractive ? 'bg-purple-500 hover:bg-purple-600' : 'hover:bg-purple-500/20'}`}
-              title="Mode édition (glisser-déposer)"
-            >
-              <Move className="h-4 w-4" />
-            </Button>
+        {/* Panneau de contrôle minimaliste vertical - visible seulement en plein écran */}
+        {isFullscreen && (
+          <Panel position="top-left" className="bg-card/90 backdrop-blur p-2 rounded-lg border border-border" style={{ top: '80px', left: '16px' }}>
+            <div className="flex flex-col gap-1">
+              <Button
+                size="icon"
+                variant={isInteractive ? "default" : "ghost"}
+                onClick={toggleInteractive}
+                className={`h-8 w-8 ${isInteractive ? 'bg-purple-500 hover:bg-purple-600' : 'hover:bg-purple-500/20'}`}
+                title="Mode édition (glisser-déposer)"
+              >
+                <Move className="h-4 w-4" />
+              </Button>
 
-            <div className="h-px bg-border/50 my-1" />
+              <div className="h-px bg-border/50 my-1" />
 
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={handleSave}
-              className="h-8 w-8 hover:bg-purple-500/20"
-              title="Sauvegarder"
-            >
-              <Save className="h-4 w-4" />
-            </Button>
-            
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={handleExport}
-              className="h-8 w-8 hover:bg-purple-500/20"
-              title="Exporter"
-            >
-              <Download className="h-4 w-4" />
-            </Button>
-            
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={handleReset}
-              className="h-8 w-8 hover:bg-red-500/20"
-              title="Réinitialiser"
-            >
-              <RotateCcw className="h-4 w-4 text-red-400" />
-            </Button>
-          </div>
-        </Panel>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleSave}
+                className="h-8 w-8 hover:bg-purple-500/20"
+                title="Sauvegarder"
+              >
+                <Save className="h-4 w-4" />
+              </Button>
+              
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleExport}
+                className="h-8 w-8 hover:bg-purple-500/20"
+                title="Exporter"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleReset}
+                className="h-8 w-8 hover:bg-red-500/20"
+                title="Réinitialiser"
+              >
+                <RotateCcw className="h-4 w-4 text-red-400" />
+              </Button>
+            </div>
+          </Panel>
+        )}
       </ReactFlow>
     </div>
   )
