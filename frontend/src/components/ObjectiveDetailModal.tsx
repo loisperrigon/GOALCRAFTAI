@@ -61,70 +61,65 @@ interface ObjectiveDetailModalProps {
 }
 
 export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: ObjectiveDetailModalProps) {
-  const { completeNode } = useSkillTreeStore()
+  const { completeNode, toggleMilestone, nodes } = useSkillTreeStore()
   
   if (!nodeData) return null
 
-  // Mock data détaillées pour l'exemple
-  const stepDetail: StepDetail = {
+  // Récupérer les données actualisées depuis le store
+  const currentNode = nodes.find(n => n.id === nodeData.id) || nodeData
+  const hasDetails = currentNode.details
+  
+  const stepDetail: StepDetail = hasDetails ? {
+    id: currentNode.id,
+    title: currentNode.title,
+    description: currentNode.description,
+    why: currentNode.details.why,
+    howTo: currentNode.details.howTo,
+    estimatedTime: currentNode.estimatedTime || "Non spécifié",
+    difficulty: currentNode.details.difficulty,
+    tools: currentNode.details.tools,
+    tips: currentNode.details.tips,
+    milestones: currentNode.details.milestones
+  } : {
+    // Fallback pour les nodes sans détails
     id: nodeData.id,
     title: nodeData.title,
     description: nodeData.description,
-    why: "Cette étape est cruciale pour développer une base solide et progresser efficacement dans votre apprentissage de la guitare.",
+    why: "Cette étape fait partie de votre parcours d'apprentissage personnalisé.",
     howTo: [
-      "Commencez par 15 minutes par jour",
-      "Pratiquez lentement et augmentez progressivement la vitesse",
-      "Enregistrez-vous pour suivre vos progrès",
-      "Rejoignez une communauté en ligne pour rester motivé"
+      "Consultez les ressources recommandées",
+      "Pratiquez régulièrement",
+      "Demandez de l'aide si nécessaire",
+      "Célébrez vos progrès"
     ],
-    estimatedTime: nodeData.estimatedTime || "2 semaines",
-    difficulty: nodeData.difficulty || 'Moyen',
+    estimatedTime: nodeData.estimatedTime || "Variable",
+    difficulty: 'Moyen' as const,
     tools: [
       {
-        name: "Justin Guitar",
-        type: 'website',
-        url: "https://www.justinguitar.com",
-        description: "Cours gratuits structurés pour débutants"
-      },
-      {
-        name: "Guitar Pro",
-        type: 'app',
-        url: "https://www.guitar-pro.com",
-        description: "Logiciel de tablatures et d'apprentissage"
-      },
-      {
-        name: "Fender Play",
-        type: 'video',
-        url: "https://www.fender.com/play",
-        description: "Vidéos tutoriels progressifs"
-      },
-      {
-        name: "Ultimate Guitar",
-        type: 'website',
-        url: "https://www.ultimate-guitar.com",
-        description: "Base de données de tablatures et accords"
+        name: "Recherche Google",
+        type: 'website' as const,
+        url: `https://www.google.com/search?q=${encodeURIComponent(nodeData.title + ' guitare')}`,
+        description: "Trouvez des ressources supplémentaires en ligne"
       }
     ],
     tips: [
-      "💡 Pratiquez tous les jours, même 5 minutes valent mieux que rien",
-      "🎯 Fixez-vous des mini-objectifs hebdomadaires",
-      "🎵 Écoutez activement la musique que vous aimez",
-      "✨ Célébrez chaque petit progrès"
+      "💡 La pratique régulière est la clé du succès",
+      "🎯 Fixez-vous des objectifs réalisables",
+      "✨ Chaque petit progrès compte"
     ],
     milestones: [
-      { title: "Tenir correctement la guitare", completed: true },
-      { title: "Accorder la guitare", completed: true },
-      { title: "Jouer les accords de base", completed: false },
-      { title: "Enchaîner 3 accords fluidement", completed: false }
+      { title: "Comprendre les bases", completed: false },
+      { title: "Pratiquer les techniques", completed: false },
+      { title: "Maîtriser l'étape", completed: false }
     ]
   }
 
   const getIcon = () => {
-    if (nodeData.completed) return <CheckCircle2 className="h-6 w-6 text-green-400" />
-    if (!nodeData.unlocked) return <Lock className="h-6 w-6 text-gray-400" />
-    if (nodeData.category === 'challenge') return <Zap className="h-6 w-6 text-pink-400" />
-    if (nodeData.category === 'bonus') return <Star className="h-6 w-6 text-blue-400" />
-    if (nodeData.id === 'final_concert') return <Trophy className="h-6 w-6 text-yellow-400" />
+    if (currentNode.completed) return <CheckCircle2 className="h-6 w-6 text-green-400" />
+    if (!currentNode.unlocked) return <Lock className="h-6 w-6 text-gray-400" />
+    if (currentNode.category === 'challenge') return <Zap className="h-6 w-6 text-pink-400" />
+    if (currentNode.category === 'bonus') return <Star className="h-6 w-6 text-blue-400" />
+    if (currentNode.id === 'final_concert') return <Trophy className="h-6 w-6 text-yellow-400" />
     return <Circle className="h-6 w-6 text-purple-400" />
   }
 
@@ -153,7 +148,7 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl h-[85vh] bg-card border-purple-500/20 overflow-hidden p-0 flex flex-col">
         {/* DialogTitle caché pour l'accessibilité */}
-        <DialogTitle className="sr-only">{nodeData.title}</DialogTitle>
+        <DialogTitle className="sr-only">{currentNode.title}</DialogTitle>
         
         <ScrollArea className="flex-1">
           <div className="p-6 space-y-6 pb-8">
@@ -220,16 +215,24 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
                   <Progress value={progress} className="h-2" />
                   <div className="space-y-2">
                     {stepDetail.milestones.map((milestone, index) => (
-                      <div key={index} className="flex items-center gap-2">
+                      <button
+                        key={index}
+                        onClick={() => {
+                          if (hasDetails) {
+                            toggleMilestone(nodeData.id, index)
+                          }
+                        }}
+                        className="flex items-center gap-2 w-full text-left hover:bg-purple-500/10 p-2 rounded-lg transition-colors"
+                      >
                         {milestone.completed ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-400" />
+                          <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
                         ) : (
-                          <Circle className="h-4 w-4 text-gray-400" />
+                          <Circle className="h-4 w-4 text-gray-400 flex-shrink-0" />
                         )}
-                        <span className={`text-sm ${milestone.completed ? 'text-green-400' : 'text-muted-foreground'}`}>
+                        <span className={`text-sm ${milestone.completed ? 'text-green-400 line-through' : 'text-muted-foreground'}`}>
                           {milestone.title}
                         </span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>

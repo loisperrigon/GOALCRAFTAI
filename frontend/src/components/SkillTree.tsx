@@ -159,7 +159,7 @@ interface SkillTreeProps {
 }
 
 export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
-  const { nodes, loadMockData, userXP, userLevel, completedNodes } = useSkillTreeStore()
+  const { nodes, loadMockData, loadNodeDetails, userXP, userLevel, completedNodes } = useSkillTreeStore()
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [isInteractive, setIsInteractive] = useState(false)
@@ -179,10 +179,14 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
     }
   }, [])
 
-  // Charger les données mock au montage
+  // Charger les données mock et les détails au montage
   useEffect(() => {
     loadMockData()
-  }, [loadMockData])
+    // Charger les détails après un court délai pour s'assurer que les nodes sont chargés
+    setTimeout(() => {
+      loadNodeDetails()
+    }, 100)
+  }, [loadMockData, loadNodeDetails])
 
   // Fonction pour appliquer le layout automatique
   const onLayout = useCallback(

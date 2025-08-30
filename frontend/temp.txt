@@ -54,7 +54,6 @@ export interface SkillTreeState {
   resetProgress: () => void
   loadMockData: () => void
   loadNodeDetails: () => void  // Nouvelle fonction pour charger les détails
-  toggleMilestone: (nodeId: string, milestoneIndex: number) => void  // Toggle milestone completion
 }
 
 const useSkillTreeStore = create<SkillTreeState>((set, get) => ({
@@ -129,43 +128,3 @@ const useSkillTreeStore = create<SkillTreeState>((set, get) => ({
   },
 
   loadMockData: () => {
-    // Charger les nodes depuis le fichier de données
-    set({
-      nodes: guitarSkillNodes,
-      userXP: 0,
-      userLevel: 1,
-      completedNodes: [],
-      activeNodeId: null
-    })
-  },
-
-  loadNodeDetails: () => {
-    // Les détails sont déjà inclus dans guitarSkillNodes
-    console.log('Les détails sont déjà chargés avec les nodes')
-  },
-
-  toggleMilestone: (nodeId, milestoneIndex) => {
-    set((state) => ({
-      nodes: state.nodes.map(node => {
-        if (node.id === nodeId && node.details?.milestones) {
-          const updatedMilestones = [...node.details.milestones]
-          updatedMilestones[milestoneIndex] = {
-            ...updatedMilestones[milestoneIndex],
-            completed: !updatedMilestones[milestoneIndex].completed
-          }
-          
-          return {
-            ...node,
-            details: {
-              ...node.details,
-              milestones: updatedMilestones
-            }
-          }
-        }
-        return node
-      })
-    }))
-  }
-}))
-
-export default useSkillTreeStore
