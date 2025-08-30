@@ -1,13 +1,19 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 
 export default function Home() {
+  const router = useRouter()
   const [objective, setObjective] = useState("")
   const [isHovered, setIsHovered] = useState(false)
+
+  const handleStartAdventure = () => {
+    router.push("/create")
+  }
 
   return (
     <div className="min-h-screen bg-background overflow-hidden relative">
@@ -85,6 +91,7 @@ export default function Home() {
                     />
                     <Button 
                       size="lg"
+                      onClick={handleStartAdventure}
                       className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/40"
                     >
                       Commencer l'aventure →
@@ -201,6 +208,7 @@ export default function Home() {
               </p>
               <Button 
                 size="lg"
+                onClick={handleStartAdventure}
                 className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-12 py-6 text-lg font-semibold shadow-lg shadow-purple-500/25 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/40"
               >
                 Commencer gratuitement
