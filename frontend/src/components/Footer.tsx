@@ -111,17 +111,17 @@ export default function Footer() {
             <h3 className="font-semibold text-foreground">Légal</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="text-muted-foreground hover:text-purple-400 transition-colors">
+                <a href="/legal/terms" className="text-muted-foreground hover:text-purple-400 transition-colors">
                   Conditions d'utilisation
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-purple-400 transition-colors">
+                <a href="/legal/privacy" className="text-muted-foreground hover:text-purple-400 transition-colors">
                   Politique de confidentialité
                 </a>
               </li>
               <li>
-                <a href="#" className="text-muted-foreground hover:text-purple-400 transition-colors">
+                <a href="/legal/mentions" className="text-muted-foreground hover:text-purple-400 transition-colors">
                   Mentions légales
                 </a>
               </li>
