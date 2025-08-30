@@ -76,7 +76,7 @@ export default function Header() {
             <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
           )}
         </a>
-        {pathname === '/create' ? (
+        {pathname === '/objectives' ? (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/30">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             <span className="text-sm font-medium">En ligne</span>
@@ -160,7 +160,7 @@ export default function Header() {
           </a>
           
           <div className="pt-4 mt-4 border-t border-border">
-            {pathname === '/create' ? (
+            {pathname === '/objectives' ? (
               <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/30">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                 <span className="text-sm font-medium">En ligne</span>

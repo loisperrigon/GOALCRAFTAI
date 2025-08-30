@@ -173,7 +173,7 @@ export default function PricingPage() {
                 size="lg"
                 asChild
               >
-                <Link href="/create">
+                <Link href="/objectives">
                   Commencer gratuitement
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </Link>

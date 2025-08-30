@@ -14,7 +14,7 @@ export default function Home() {
   const [isHovered, setIsHovered] = useState(false)
 
   const handleStartAdventure = () => {
-    router.push("/create")
+    router.push("/objectives")
   }
 
   return (

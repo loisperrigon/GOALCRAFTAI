@@ -24,7 +24,7 @@ export default function AuthPage() {
     
     // Simulation de connexion/inscription
     setTimeout(() => {
-      router.push("/create")
+      router.push("/objectives")
     }, 1000)
   }
 
@@ -32,7 +32,7 @@ export default function AuthPage() {
     setIsLoading(true)
     // Simulation de connexion sociale
     setTimeout(() => {
-      router.push("/create")
+      router.push("/objectives")
     }, 1000)
   }
 
