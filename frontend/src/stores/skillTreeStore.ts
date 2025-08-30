@@ -32,7 +32,7 @@ export interface SkillNode {
   category: 'main' | 'bonus' | 'challenge'
   icon?: string
   estimatedTime?: string
-  position: {
+  position?: {
     x: number
     y: number
   }

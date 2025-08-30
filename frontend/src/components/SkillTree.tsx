@@ -22,6 +22,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Lock, CheckCircle2, Circle, Star, Zap, Trophy, RotateCcw, Save, Download, Layout, Move } from 'lucide-react'
 import ObjectiveDetailModal from '@/components/ObjectiveDetailModal'
+import Confetti from '@/components/Confetti'
 
 // Layout automatique avec dagre
 const dagreGraph = new dagre.graphlib.Graph()
@@ -169,6 +170,8 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null)
   const previousFullscreenRef = useRef(isFullscreen)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const previousCompletedRef = useRef<string[]>([])
 
   // Exposer la fonction pour ouvrir la modal
   useEffect(() => {
@@ -190,7 +193,19 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
     setTimeout(() => {
       loadNodeDetails()
     }, 100)
+    // Initialiser la référence des nodes complétés
+    previousCompletedRef.current = completedNodes
   }, [loadMockData, loadNodeDetails])
+  
+  // Détecter quand une étape est complétée
+  useEffect(() => {
+    if (previousCompletedRef.current.length > 0 && completedNodes.length > previousCompletedRef.current.length) {
+      // Une nouvelle étape a été complétée !
+      setShowConfetti(true)
+      setTimeout(() => setShowConfetti(false), 3500)
+    }
+    previousCompletedRef.current = completedNodes
+  }, [completedNodes])
 
   // Fonction pour appliquer le layout automatique
   const onLayout = useCallback(
@@ -474,6 +489,9 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
         }}
         nodeData={selectedNode}
       />
+      
+      {/* Confetti animation */}
+      <Confetti trigger={showConfetti} />
     </div>
   )
 }

@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { triggerMilestoneConfetti } from '@/components/Confetti'
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -62,12 +63,32 @@ interface ObjectiveDetailModalProps {
 
 export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: ObjectiveDetailModalProps) {
   const { completeNode, toggleMilestone, nodes } = useSkillTreeStore()
+  const [previousMilestones, setPreviousMilestones] = useState<boolean[]>([])
   
-  if (!nodeData) return null
-
   // Récupérer les données actualisées depuis le store
-  const currentNode = nodes.find(n => n.id === nodeData.id) || nodeData
-  const hasDetails = currentNode.details
+  const currentNode = nodeData ? (nodes.find(n => n.id === nodeData.id) || nodeData) : null
+  const hasDetails = currentNode?.details
+  
+  // Détecter quand un milestone est complété
+  useEffect(() => {
+    if (currentNode?.details?.milestones) {
+      const currentStates = currentNode.details.milestones.map(m => m.completed)
+      
+      // Vérifier si un milestone vient d'être complété
+      if (previousMilestones.length > 0) {
+        currentStates.forEach((completed, index) => {
+          if (completed && !previousMilestones[index]) {
+            // Un milestone vient d'être complété !
+            triggerMilestoneConfetti()
+          }
+        })
+      }
+      
+      setPreviousMilestones(currentStates)
+    }
+  }, [currentNode?.details?.milestones])
+  
+  if (!nodeData || !currentNode) return null
   
   const stepDetail: StepDetail = hasDetails ? {
     id: currentNode.id,
