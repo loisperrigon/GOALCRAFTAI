@@ -220,6 +220,9 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
 
   // Convertir les nodes du store en nodes React Flow avec layout automatique
   useEffect(() => {
+    // Sauvegarder la position actuelle avant la mise à jour
+    const currentViewport = reactFlowInstance?.getViewport()
+    
     const rfNodes: Node[] = nodes.map((node) => ({
       id: node.id,
       type: 'skillNode',
@@ -251,15 +254,23 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
 
     // Appliquer le layout automatique si les nodes n'ont pas de position
     if (nodes.length > 0) {
+      // Vérifier si c'est le premier chargement ou une mise à jour
+      const isFirstLoad = flowNodes.length === 0
+      
       const layouted = getLayoutedElements(rfNodes, rfEdges, 'TB')
       setFlowNodes(layouted.nodes)
       setEdges(layouted.edges)
       
-      // Recentrer après le chargement
-      if (reactFlowInstance) {
+      // Ne recentrer que lors du premier chargement
+      if (reactFlowInstance && isFirstLoad) {
         setTimeout(() => {
           reactFlowInstance.fitView({ padding: 0.2, duration: 800 })
         }, 100)
+      } else if (reactFlowInstance && currentViewport) {
+        // Restaurer la position précédente lors des mises à jour
+        setTimeout(() => {
+          reactFlowInstance.setViewport(currentViewport, { duration: 0 })
+        }, 10)
       }
     }
   }, [nodes, setFlowNodes, setEdges, reactFlowInstance])

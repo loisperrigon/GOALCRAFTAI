@@ -249,14 +249,13 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
                           toggleMilestone(currentNode.id, index)
                         }}
                         className="flex items-center gap-2 w-full text-left hover:bg-purple-500/10 p-2 rounded-lg transition-colors"
-                        disabled={!currentNode.unlocked}
                       >
                         {milestone.completed ? (
                           <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
                         ) : (
-                          <Circle className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <Circle className="h-4 w-4 text-purple-400 flex-shrink-0" />
                         )}
-                        <span className={`text-sm ${milestone.completed ? 'text-green-400 line-through' : 'text-muted-foreground'}`}>
+                        <span className={`text-sm ${milestone.completed ? 'text-green-400 line-through' : 'text-white'}`}>
                           {milestone.title}
                         </span>
                       </button>
