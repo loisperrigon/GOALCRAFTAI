@@ -4,6 +4,7 @@ import { useState } from "react"
 import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -263,7 +264,30 @@ export default function CreatePage() {
         </ScrollArea>
 
         {/* User Section */}
-        <div className="p-3 border-t border-border">
+        <div className="p-3 border-t border-border space-y-2">
+          {/* Plan actuel */}
+          {!isSidebarCollapsed && (
+            <div className="p-2 bg-gray-800/50 rounded-lg border border-gray-700">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium">Plan Gratuit</span>
+                <Badge className="bg-gray-600/50 text-gray-300 text-xs px-1 py-0">
+                  3/3 objectifs
+                </Badge>
+              </div>
+              <div className="text-xs text-muted-foreground mb-2">
+                5 générations IA restantes
+              </div>
+              <Button 
+                size="sm" 
+                className="w-full h-7 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-xs"
+                onClick={() => window.location.href = '/pricing'}
+              >
+                <Sparkles className="h-3 w-3 mr-1" />
+                Passer à Premium
+              </Button>
+            </div>
+          )}
+          
           <div className={`flex ${isSidebarCollapsed ? 'justify-center' : 'items-center gap-2'}`}>
             <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-blue-400 rounded-full flex items-center justify-center flex-shrink-0">
               <User className="h-4 w-4 text-white" />
@@ -271,7 +295,7 @@ export default function CreatePage() {
             {!isSidebarCollapsed && (
               <div className="flex-1 overflow-hidden">
                 <p className="text-xs font-medium">Mon profil</p>
-                <p className="text-xs text-muted-foreground">3 objectifs actifs</p>
+                <p className="text-xs text-muted-foreground">Niveau 1</p>
               </div>
             )}
           </div>
@@ -345,6 +369,24 @@ export default function CreatePage() {
           {/* Input Area */}
           <div className="border-t border-border p-4 bg-card/50">
             <div className="max-w-3xl mx-auto">
+              {/* Alerte limite Free */}
+              <div className="mb-3 p-3 bg-orange-500/10 border border-orange-500/30 rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-orange-400" />
+                  <span className="text-sm text-orange-400">
+                    Limite gratuite : 2 générations IA restantes ce mois
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs text-orange-400 hover:text-orange-300"
+                  onClick={() => window.location.href = '/pricing'}
+                >
+                  Débloquer l'illimité →
+                </Button>
+              </div>
+              
               <div className="relative">
                 <Textarea
                   value={inputMessage}
