@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
+import Header from "@/components/Header"
+import Footer from "@/components/Footer"
 
 export default function Home() {
   const router = useRouter()
@@ -27,26 +29,8 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/20 rounded-full filter blur-[128px] animate-pulse animation-delay-4000" />
       </div>
 
-      <div className="relative z-10">
-        {/* Header */}
-        <header className="flex items-center justify-between px-8 py-6">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">G</span>
-            </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              GoalCraftAI
-            </span>
-          </div>
-          <nav className="hidden md:flex items-center gap-8">
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Comment ça marche</a>
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Exemples</a>
-            <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Tarifs</a>
-            <Button variant="outline" className="border-purple-500/50 hover:bg-purple-500/10">
-              Se connecter
-            </Button>
-          </nav>
-        </header>
+      <div className="relative z-10 min-h-screen flex flex-col">
+        <Header />
 
         {/* Hero Section */}
         <main className="container mx-auto px-4 pt-20 pb-32">
@@ -219,6 +203,8 @@ export default function Home() {
             </div>
           </div>
         </main>
+        
+        <Footer />
       </div>
     </div>
   )

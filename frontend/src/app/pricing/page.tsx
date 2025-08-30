@@ -26,6 +26,8 @@ import {
   Gamepad2
 } from 'lucide-react'
 import Link from 'next/link'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly') // Yearly par défaut pour montrer l'économie
@@ -63,25 +65,8 @@ export default function PricingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                <Gamepad2 className="h-5 w-5 text-white" />
-              </div>
-              <span className="font-bold text-lg">GoalCraft AI</span>
-            </Link>
-            <Link href="/create">
-              <Button variant="outline">
-                Retour à l'app
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header />
 
       {/* Bannière urgence */}
       <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 border-y border-orange-500/30">
@@ -471,6 +456,8 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   )
 }
