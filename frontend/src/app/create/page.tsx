@@ -278,128 +278,131 @@ export default function CreatePage() {
         </div>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Chat Header */}
-        <div className="h-14 border-b border-border flex items-center px-6 bg-card/50">
-          <div className="flex items-center gap-3">
-            <MessageSquare className="h-5 w-5 text-purple-400" />
-            <h2 className="font-semibold">
-              {objectives.find(o => o.id === activeObjectiveId)?.title || 'Nouvel objectif'}
-            </h2>
-            <span className="text-sm text-muted-foreground">• Configuration de votre parcours</span>
+      {/* Main Content Area - Chat and Artifact */}
+      <div className="flex-1 flex">
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Chat Header */}
+          <div className="h-14 border-b border-border flex items-center px-6 bg-card/50">
+            <div className="flex items-center gap-3">
+              <MessageSquare className="h-5 w-5 text-purple-400" />
+              <h2 className="font-semibold">
+                {objectives.find(o => o.id === activeObjectiveId)?.title || 'Nouvel objectif'}
+              </h2>
+              <span className="text-sm text-muted-foreground">• Configuration de votre parcours</span>
+            </div>
           </div>
-        </div>
 
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-6">
-          <div className="max-w-3xl mx-auto space-y-6">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-4 ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
+          {/* Messages */}
+          <ScrollArea className="flex-1 p-6">
+            <div className="max-w-3xl mx-auto space-y-6">
+              {messages.map((message) => (
                 <div
-                  className={`flex gap-3 max-w-[80%] ${
-                    message.role === "user" ? "flex-row-reverse" : "flex-row"
+                  key={message.id}
+                  className={`flex gap-4 ${
+                    message.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
                   <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                      message.role === "user"
-                        ? "bg-gradient-to-br from-purple-500 to-blue-500"
-                        : "bg-gradient-to-br from-pink-500 to-purple-500"
+                    className={`flex gap-3 max-w-[80%] ${
+                      message.role === "user" ? "flex-row-reverse" : "flex-row"
                     }`}
                   >
-                    {message.role === "user" ? (
-                      <User className="h-4 w-4 text-white" />
-                    ) : (
-                      <Sparkles className="h-4 w-4 text-white" />
-                    )}
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        message.role === "user"
+                          ? "bg-gradient-to-br from-purple-500 to-blue-500"
+                          : "bg-gradient-to-br from-pink-500 to-purple-500"
+                      }`}
+                    >
+                      {message.role === "user" ? (
+                        <User className="h-4 w-4 text-white" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 text-white" />
+                      )}
+                    </div>
+                    <Card
+                      className={`p-4 ${
+                        message.role === "user"
+                          ? "bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/20"
+                          : "bg-card border-border"
+                      }`}
+                    >
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {message.timestamp.toLocaleTimeString("fr-FR", {
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })}
+                      </p>
+                    </Card>
                   </div>
-                  <Card
-                    className={`p-4 ${
-                      message.role === "user"
-                        ? "bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/20"
-                        : "bg-card border-border"
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {message.timestamp.toLocaleTimeString("fr-FR", {
-                        hour: "2-digit",
-                        minute: "2-digit"
-                      })}
-                    </p>
-                  </Card>
                 </div>
+              ))}
+            </div>
+          </ScrollArea>
+
+          {/* Input Area */}
+          <div className="border-t border-border p-4 bg-card/50">
+            <div className="max-w-3xl mx-auto">
+              <div className="relative">
+                <Textarea
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSendMessage()
+                    }
+                  }}
+                  placeholder="Décrivez votre objectif en détail... (Appuyez sur Entrée pour envoyer)"
+                  className="min-h-[80px] pr-12 bg-background/50 border-purple-500/20 focus:border-purple-500/50 resize-none"
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  size="icon"
+                  className="absolute bottom-2 right-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
               </div>
-            ))}
-          </div>
-        </ScrollArea>
-
-        {/* Input Area */}
-        <div className="border-t border-border p-4 bg-card/50">
-          <div className="max-w-3xl mx-auto">
-            <div className="relative">
-              <Textarea
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSendMessage()
-                  }
-                }}
-                placeholder="Décrivez votre objectif en détail... (Appuyez sur Entrée pour envoyer)"
-                className="min-h-[80px] pr-12 bg-background/50 border-purple-500/20 focus:border-purple-500/50 resize-none"
-              />
-              <Button
-                onClick={handleSendMessage}
-                size="icon"
-                className="absolute bottom-2 right-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs text-muted-foreground">
-                Astuce: Soyez précis sur vos motivations et contraintes pour un parcours optimal
-              </span>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-xs text-muted-foreground">
+                  Astuce: Soyez précis sur vos motivations et contraintes pour un parcours optimal
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Artifact Panel */}
-      <div className={`${isFullscreen ? 'fixed inset-0 z-50' : 'w-96 border-l'} border-border bg-card/50 flex flex-col transition-all duration-300`}>
-        {/* Artifact Header */}
-        <div className="h-14 border-b border-border flex items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <h3 className="font-semibold">Artefact</h3>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Parcours guitare</span>
+        {/* Artifact Panel */}
+        <div className={`${isFullscreen ? 'fixed inset-0 z-50' : 'flex-1 border-l'} border-border bg-card/50 flex flex-col transition-all duration-300`}>
+          {/* Artifact Header */}
+          <div className="h-14 border-b border-border flex items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              <h3 className="font-semibold">Artefact</h3>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Parcours guitare</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="hover:bg-purple-500/10"
+            >
+              {isFullscreen ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="hover:bg-purple-500/10"
-          >
-            {isFullscreen ? (
-              <Minimize2 className="h-4 w-4" />
-            ) : (
-              <Maximize2 className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
 
-        {/* Artifact Content - Skill Tree */}
-        <div className="flex-1 relative overflow-hidden">
-          <SkillTree />
+          {/* Artifact Content - Skill Tree */}
+          <div className="flex-1 relative overflow-hidden">
+            <SkillTree />
+          </div>
         </div>
       </div>
     </div>

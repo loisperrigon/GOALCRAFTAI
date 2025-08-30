@@ -155,7 +155,11 @@ const nodeTypes = {
   skillNode: SkillNode,
 }
 
-export default function SkillTree() {
+interface SkillTreeProps {
+  isFullscreen?: boolean
+}
+
+export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const { nodes, loadMockData, userXP, userLevel, completedNodes } = useSkillTreeStore()
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
