@@ -7,8 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
+import AuthLayout from "@/components/AuthLayout"
 import PremiumBadge from "@/components/PremiumBadge"
 import { useToast } from "@/hooks/useToast"
 import { 
@@ -37,7 +36,18 @@ import {
 export default function ProfilePage() {
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
-  const [activeTab, setActiveTab] = useState<"profile" | "settings" | "achievements">("profile")
+  
+  // Récupérer le tab depuis l'URL
+  const getInitialTab = () => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const tab = params.get('tab')
+      if (tab === 'achievements' || tab === 'settings') return tab
+    }
+    return 'profile'
+  }
+  
+  const [activeTab, setActiveTab] = useState<"profile" | "settings" | "achievements">(getInitialTab())
   
   const [profile, setProfile] = useState({
     name: "Jean Dupont",
@@ -80,10 +90,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
+    <AuthLayout>
+      <div className="container mx-auto px-4 py-8">
         {/* Profile Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
@@ -474,9 +482,7 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </AuthLayout>
   )
 }

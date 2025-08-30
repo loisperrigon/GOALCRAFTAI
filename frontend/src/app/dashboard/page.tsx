@@ -6,8 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import Header from "@/components/Header"
-import Footer from "@/components/Footer"
+import AuthLayout from "@/components/AuthLayout"
 import { 
   Trophy, 
   Target, 
@@ -118,10 +117,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
+    <AuthLayout>
+      <div className="container mx-auto px-4 py-8">
         {/* User Stats Header */}
         <div className="mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
@@ -388,9 +385,7 @@ export default function Dashboard() {
             </Card>
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </AuthLayout>
   )
 }

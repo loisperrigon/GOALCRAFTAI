@@ -2,31 +2,19 @@
 
 import { useState } from "react"
 import dynamic from "next/dynamic"
+import AuthLayout from "@/components/AuthLayout"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { 
   Send, 
-  Plus, 
   Settings, 
   Target, 
-  Calendar,
-  Trophy,
-  Sparkles,
-  User,
-  MessageSquare,
-  ChevronRight,
   Zap,
   Brain,
-  Gamepad2,
   Maximize2,
   Minimize2,
-  Menu,
-  X,
   Map,
   Bot
 } from "lucide-react"
@@ -38,7 +26,7 @@ const SkillTree = dynamic(() => import("@/components/SkillTree"), {
     <div className="flex items-center justify-center h-full">
       <div className="text-center">
         <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
-          <Sparkles className="h-10 w-10 text-purple-400" />
+          <Brain className="h-10 w-10 text-purple-400" />
         </div>
         <p className="text-sm text-muted-foreground">Chargement de l'arbre...</p>
       </div>
@@ -53,18 +41,7 @@ interface Message {
   timestamp?: Date
 }
 
-interface Objective {
-  id: string
-  title: string
-  description: string
-  progress: number
-  xp: number
-  totalSteps: number
-  completedSteps: number
-  createdAt: Date
-}
-
-export default function CreatePage() {
+export default function ObjectivesPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -74,20 +51,8 @@ export default function CreatePage() {
     }
   ])
   const [inputMessage, setInputMessage] = useState("")
-  const [currentObjective, setCurrentObjective] = useState<Objective | null>({
-    id: "1",
-    title: "Apprendre la guitare",
-    description: "Maîtriser les bases de la guitare acoustique en 3 mois",
-    progress: 35,
-    xp: 420,
-    totalSteps: 12,
-    completedSteps: 4,
-    createdAt: new Date()
-  })
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [activeView, setActiveView] = useState<"chat" | "tree" | "objectives">("chat") // Pour mobile
-  const [isMobileObjectivesOpen, setIsMobileObjectivesOpen] = useState(false)
+  const [activeView, setActiveView] = useState<"chat" | "tree">("chat")
 
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return
@@ -115,210 +80,34 @@ export default function CreatePage() {
   }
 
   return (
-    <div className="h-screen bg-background overflow-hidden">
-      {/* Mobile View Toggle */}
-      <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsMobileObjectivesOpen(!isMobileObjectivesOpen)}
-            className="p-2 hover:bg-purple-500/10 rounded-lg transition-colors"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <span className="font-semibold">GoalCraft AI</span>
-        </div>
-        <div className="flex gap-1">
-          <Button
-            variant={activeView === "chat" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveView("chat")}
-            className={activeView === "chat" ? "bg-gradient-to-r from-purple-500 to-blue-500" : ""}
-          >
-            <Bot className="h-4 w-4" />
-            <span className="ml-1 hidden sm:inline">Chat</span>
-          </Button>
-          <Button
-            variant={activeView === "tree" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveView("tree")}
-            className={activeView === "tree" ? "bg-gradient-to-r from-purple-500 to-blue-500" : ""}
-          >
-            <Map className="h-4 w-4" />
-            <span className="ml-1 hidden sm:inline">Arbre</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile Objectives Drawer */}
-      {isMobileObjectivesOpen && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/50 z-30 md:hidden"
-            onClick={() => setIsMobileObjectivesOpen(false)}
-          />
-          <div className="fixed top-0 left-0 h-full w-[280px] bg-background border-r border-border z-40 md:hidden">
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h2 className="font-semibold">Mes Objectifs</h2>
-              <button
-                onClick={() => setIsMobileObjectivesOpen(false)}
-                className="p-2 hover:bg-purple-500/10 rounded-lg transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            <div className="p-4">
-              <Button className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white mb-4">
-                <Plus className="h-4 w-4 mr-2" />
-                Nouvel objectif
-              </Button>
-
-              <div className="space-y-3">
-                {currentObjective && (
-                  <Card className="p-3 border-purple-500/30 bg-purple-500/5 cursor-pointer hover:bg-purple-500/10 transition-colors">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-sm">{currentObjective.title}</h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {currentObjective.completedSteps}/{currentObjective.totalSteps} étapes
-                        </p>
-                      </div>
-                      <Badge className="bg-purple-500/20 text-purple-300 text-xs">
-                        {currentObjective.progress}%
-                      </Badge>
-                    </div>
-                    <div className="w-full bg-background/50 rounded-full h-1.5">
-                      <div 
-                        className="bg-gradient-to-r from-purple-500 to-blue-500 h-1.5 rounded-full transition-all"
-                        style={{ width: `${currentObjective.progress}%` }}
-                      />
-                    </div>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Trophy className="h-3 w-3" />
-                        {currentObjective.xp} XP
-                      </span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        Aujourd'hui
-                      </span>
-                    </div>
-                  </Card>
-                )}
-                
-                {/* Exemple d'autres objectifs */}
-                <Card className="p-3 border-border bg-card/50 cursor-pointer hover:bg-purple-500/5 transition-colors opacity-60">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-sm">Perdre 10kg</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        8/15 étapes
-                      </p>
-                    </div>
-                    <Badge className="bg-gray-500/20 text-gray-300 text-xs">
-                      53%
-                    </Badge>
-                  </div>
-                  <div className="w-full bg-background/50 rounded-full h-1.5">
-                    <div 
-                      className="bg-gradient-to-r from-gray-500 to-gray-400 h-1.5 rounded-full transition-all"
-                      style={{ width: "53%" }}
-                    />
-                  </div>
-                </Card>
-
-                <Card className="p-3 border-border bg-card/50 cursor-pointer hover:bg-purple-500/5 transition-colors opacity-60">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-sm">Méditer quotidiennement</h3>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        3/7 étapes
-                      </p>
-                    </div>
-                    <Badge className="bg-gray-500/20 text-gray-300 text-xs">
-                      43%
-                    </Badge>
-                  </div>
-                  <div className="w-full bg-background/50 rounded-full h-1.5">
-                    <div 
-                      className="bg-gradient-to-r from-gray-500 to-gray-400 h-1.5 rounded-full transition-all"
-                      style={{ width: "43%" }}
-                    />
-                  </div>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      <div className="flex h-[calc(100vh-65px)] md:h-screen">
-        {/* Sidebar - Desktop only */}
-        <div className={`hidden md:block border-r border-border bg-card/50 backdrop-blur transition-all duration-300 ${
-          isSidebarCollapsed ? "w-16" : "w-64"
-        }`}>
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-6">
-              {!isSidebarCollapsed && (
-                <h2 className="text-lg font-semibold">Mes Objectifs</h2>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="hover:bg-purple-500/10"
-              >
-                {isSidebarCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
-              </Button>
-            </div>
-
-            {!isSidebarCollapsed && (
-              <>
-                <Button className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white mb-4">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nouvel objectif
-                </Button>
-
-                <div className="space-y-3">
-                  {currentObjective && (
-                    <Card className="p-3 border-purple-500/30 bg-purple-500/5 cursor-pointer hover:bg-purple-500/10 transition-colors">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <h3 className="font-medium text-sm">{currentObjective.title}</h3>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {currentObjective.completedSteps}/{currentObjective.totalSteps} étapes
-                          </p>
-                        </div>
-                        <Badge className="bg-purple-500/20 text-purple-300 text-xs">
-                          {currentObjective.progress}%
-                        </Badge>
-                      </div>
-                      <div className="w-full bg-background/50 rounded-full h-1.5">
-                        <div 
-                          className="bg-gradient-to-r from-purple-500 to-blue-500 h-1.5 rounded-full transition-all"
-                          style={{ width: `${currentObjective.progress}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Trophy className="h-3 w-3" />
-                          {currentObjective.xp} XP
-                        </span>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          Aujourd'hui
-                        </span>
-                      </div>
-                    </Card>
-                  )}
-                </div>
-              </>
-            )}
+    <AuthLayout>
+      <div className="h-full">
+        {/* Mobile View Toggle */}
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur">
+          <span className="font-semibold">Mes Objectifs</span>
+          <div className="flex gap-1">
+            <Button
+              variant={activeView === "chat" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveView("chat")}
+              className={activeView === "chat" ? "bg-gradient-to-r from-purple-500 to-blue-500" : ""}
+            >
+              <Bot className="h-4 w-4" />
+              <span className="ml-1 hidden sm:inline">Chat</span>
+            </Button>
+            <Button
+              variant={activeView === "tree" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveView("tree")}
+              className={activeView === "tree" ? "bg-gradient-to-r from-purple-500 to-blue-500" : ""}
+            >
+              <Map className="h-4 w-4" />
+              <span className="ml-1 hidden sm:inline">Arbre</span>
+            </Button>
           </div>
         </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col md:flex-row">
+        <div className="flex h-[calc(100%-65px)] md:h-full">
           {/* Chat Section */}
           <div className={`${activeView === "chat" ? "flex" : "hidden"} md:flex flex-1 flex-col bg-background/50 ${
             isFullscreen ? "md:hidden" : ""
@@ -435,7 +224,7 @@ export default function CreatePage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className="bg-purple-500/20 text-purple-300 text-xs">
-                    <Trophy className="h-3 w-3 mr-1" />
+                    <Brain className="h-3 w-3 mr-1" />
                     420 XP
                   </Badge>
                   <Button 
@@ -456,6 +245,6 @@ export default function CreatePage() {
           </div>
         </div>
       </div>
-    </div>
+    </AuthLayout>
   )
 }

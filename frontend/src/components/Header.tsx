@@ -3,12 +3,16 @@
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User, LayoutDashboard, Target } from "lucide-react"
 
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  
+  // Simulation : vérifier si l'utilisateur est connecté
+  // En production, cela viendrait d'un contexte ou store global
+  const isAuthenticated = pathname === '/objectives' || pathname === '/dashboard' || pathname === '/profile'
 
   return (
     <>
