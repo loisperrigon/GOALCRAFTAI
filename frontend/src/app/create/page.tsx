@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -20,8 +21,25 @@ import {
   ChevronRight,
   Zap,
   Brain,
-  Gamepad2
+  Gamepad2,
+  Maximize2,
+  Minimize2
 } from "lucide-react"
+
+// Import dynamique pour éviter les erreurs SSR avec React Flow
+const SkillTree = dynamic(() => import("@/components/SkillTree"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center">
+        <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <Sparkles className="h-10 w-10 text-purple-400" />
+        </div>
+        <p className="text-sm text-muted-foreground">Chargement de l'arbre...</p>
+      </div>
+    </div>
+  )
+})
 
 interface Message {
   id: string
@@ -31,6 +49,7 @@ interface Message {
 }
 
 export default function CreatePage() {
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -323,28 +342,32 @@ export default function CreatePage() {
       </div>
 
       {/* Artifact Panel */}
-      <div className="w-96 border-l border-border bg-card/50 flex flex-col">
+      <div className={`${isFullscreen ? 'fixed inset-0 z-50' : 'w-96 border-l'} border-border bg-card/50 flex flex-col transition-all duration-300`}>
         {/* Artifact Header */}
-        <div className="h-14 border-b border-border flex items-center px-4">
+        <div className="h-14 border-b border-border flex items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
             <h3 className="font-semibold">Artefact</h3>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Votre parcours</span>
+            <span className="text-sm text-muted-foreground">Parcours guitare</span>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsFullscreen(!isFullscreen)}
+            className="hover:bg-purple-500/10"
+          >
+            {isFullscreen ? (
+              <Minimize2 className="h-4 w-4" />
+            ) : (
+              <Maximize2 className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
-        {/* Artifact Content */}
-        <div className="flex-1 p-6 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="h-10 w-10 text-purple-400" />
-            </div>
-            <h4 className="font-semibold mb-2">Zone d'artefact</h4>
-            <p className="text-sm text-muted-foreground">
-              Votre parcours gamifié apparaîtra ici une fois généré
-            </p>
-          </div>
+        {/* Artifact Content - Skill Tree */}
+        <div className="flex-1 relative overflow-hidden">
+          <SkillTree />
         </div>
       </div>
     </div>
