@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button'
 import { Lock, CheckCircle2, Circle, Star, Zap, Trophy, RotateCcw, Save, Download, Layout, Move } from 'lucide-react'
 import ObjectiveDetailModal from '@/components/ObjectiveDetailModal'
 import Confetti from '@/components/Confetti'
+import FreeLimitBanner from '@/components/FreeLimitBanner'
 
 // Layout automatique avec dagre
 const dagreGraph = new dagre.graphlib.Graph()
@@ -350,8 +351,22 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
     }, 100)
   }
 
+  // Simuler le statut Free/Premium (à remplacer par vraie logique)
+  const isPremium = false // À connecter avec votre système d'auth
+  const maxStepsInFree = 10
+  const currentSteps = nodes.filter(n => n.category === 'main').length
+  
   return (
     <div ref={containerRef} className="h-full w-full relative bg-background">
+      {/* Bannière limite Free */}
+      {!isPremium && (
+        <FreeLimitBanner 
+          currentSteps={currentSteps}
+          maxSteps={maxStepsInFree}
+          show={true}
+        />
+      )}
+      
       {/* Header avec stats - visible seulement en plein écran */}
       {isFullscreen && (
         <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none">
