@@ -232,6 +232,13 @@ Difficulté: {difficulty}
 - **Radix UI :** Installer avec `--legacy-peer-deps`
 - **Personnalisation gaming :** Adapter les composants avec animations et styles gaming
 
+### Points d'Attention UX
+- **Pas de localStorage :** Sauvegarde directe en base à chaque modification
+- **Pas de free trial :** Les utilisateurs ont déjà 2-3 essais gratuits sans compte
+- **Limitations Free :** Maximum 10 étapes par objectif en plan gratuit
+- **Confetti latéraux :** Animations sur les côtés, pas au centre de l'écran
+- **Indicateur de page :** Header montre la page active avec souligné gradient
+
 ## 💬 Communication avec Claude Code
 
 ### Lors des Demandes
@@ -300,26 +307,63 @@ GoalCraftAI/
 ## 📊 État Actuel du Projet
 
 ### ✅ Complété
-- Structure frontend/backend séparée créée
-- Next.js 15 avec React 19 et TypeScript configuré
-- Tailwind CSS v4 avec configuration gaming
-- shadcn/ui initialisé avec composants de base
-- Composants UI gaming créés (Button, Card, Dialog, Input, Badge, Progress, Avatar)
-- Backend Express.js avec TypeScript configuré
-- Modèle MongoDB User avec Mongoose
-- Types TypeScript partagés définis
+- **Architecture Frontend/Backend** séparée et configurée
+- **Next.js 15** avec React 19, TypeScript et App Router
+- **Tailwind CSS v4** avec configuration gaming et animations
+- **shadcn/ui** (canary) avec composants React 19 compatibles
+- **Pages principales** :
+  - Page d'accueil (/) avec hero section et CTA
+  - Page d'authentification (/auth) unifiée login/signup avec social auth
+  - Page de chat (/create) avec interface conversationnelle
+  - Page de tarification (/pricing) optimisée conversion avec countdown
+- **Visualisation Skill Tree** avec React Flow et dagre pour layout automatique
+- **Système de progression** fonctionnel avec XP, niveaux et milestones
+- **Store Zustand** pour state management global
+- **Composants réutilisables** :
+  - Header avec indicateur de page active
+  - Footer avec newsletter et liens sociaux
+  - Modals (ObjectiveDetail, StepComplete)
+  - FreeLimitBanner pour limitations free
+  - PremiumBadge pour statut utilisateur
+  - Confetti animations pour célébrations
+- **Gamification complète** :
+  - Système de déblocage séquentiel
+  - Barres de progression animées
+  - Milestones cliquables avec progression
+  - Animations de célébration (confetti)
+- **Modèle Freemium** :
+  - Plan Free : 3 objectifs, 10 étapes max, 5 générations IA/mois
+  - Plan Premium : Illimité avec coaching IA
+- **Data model** complet pour objectifs guitare (exemple fonctionnel)
 
 ### 🚧 En Cours
-- Interface de chat pour saisir les objectifs
-- Intégration OpenAI pour génération d'arbres d'étapes
+- Intégration backend MongoDB/Express
+- Connexion OpenAI pour génération IA
+- Authentification réelle (JWT/OAuth)
 
-### 📝 À Faire
-- Visualisation de l'arbre de progression (React Flow)
-- Système de déblocage séquentiel
-- Animations Framer Motion
-- Authentification JWT
-- WebSockets pour temps réel
-- Tests unitaires et E2E
+### 📝 À Faire Prioritaire
+- **Backend API** :
+  - Routes authentification (register, login, logout)
+  - Routes objectifs (CRUD)
+  - Routes progression (save, load)
+  - Intégration OpenAI GPT-4
+- **Persistence** :
+  - Sauvegarde automatique en base (pas localStorage)
+  - Synchronisation temps réel
+- **Mobile responsive** :
+  - Adaptation skill tree mobile
+  - Navigation mobile (burger menu)
+- **Pages légales** :
+  - Conditions d'utilisation
+  - Politique de confidentialité
+  - Mentions légales
+
+### 🎨 Design System Établi
+- **Couleurs** : Gradients purple-500 to blue-500
+- **Animations** : Pulse, transitions fluides, confetti latéraux
+- **Typography** : Inter pour contenu, poids variés
+- **Spacing** : Système cohérent avec Tailwind
+- **Components** : Cartes avec backdrop-blur, boutons gradient
 
 ## 🔧 Configuration Environnement
 
@@ -343,11 +387,11 @@ PORT=3001
 **Objectif :** Créer une expérience magique où transformer sa vie devient aussi addictif qu'un jeu vidéo ! 🎮✨
 
 **Tech Stack Résumé :**
-- **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS v4, shadcn/ui (canary), Framer Motion, Zustand
+- **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS v4, shadcn/ui (canary), Zustand, React Flow, dagre, canvas-confetti
 - **Backend:** Node.js, Express, TypeScript, Mongoose, MongoDB
 - **Composants UI:** shadcn/ui avec Radix UI (React 19 compatible)
-- **IA:** OpenAI API
-- **Cache:** Redis
-- **Auth:** JWT
+- **IA:** OpenAI API (GPT-4)
+- **Cache:** Redis (prévu)
+- **Auth:** JWT + OAuth (Google, GitHub) - à implémenter
 - **Icons:** Lucide React
-- **Gestion des dépendances:** npm avec --legacy-peer-deps pour compatibilité
+- **Gestion des dépendances:** npm avec --legacy-peer-deps pour compatibilité React 19
