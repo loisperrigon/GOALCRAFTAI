@@ -142,7 +142,9 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
     }
   }
 
-  const progress = stepDetail.milestones.filter(m => m.completed).length / stepDetail.milestones.length * 100
+  const progress = currentNode.details?.milestones 
+    ? currentNode.details.milestones.filter(m => m.completed).length / currentNode.details.milestones.length * 100
+    : stepDetail.milestones.filter(m => m.completed).length / stepDetail.milestones.length * 100
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -205,24 +207,28 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
             </div>
 
             {/* Progression */}
-            {nodeData.unlocked && (
+            {currentNode.unlocked && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Trophy className="h-4 w-4 text-yellow-400" />
                   Votre progression
                 </h3>
                 <div className="space-y-3">
-                  <Progress value={progress} className="h-2" />
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-gray-700">
+                    <div 
+                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
                   <div className="space-y-2">
-                    {stepDetail.milestones.map((milestone, index) => (
+                    {currentNode.details?.milestones ? currentNode.details.milestones.map((milestone, index) => (
                       <button
                         key={index}
                         onClick={() => {
-                          if (hasDetails) {
-                            toggleMilestone(nodeData.id, index)
-                          }
+                          toggleMilestone(currentNode.id, index)
                         }}
                         className="flex items-center gap-2 w-full text-left hover:bg-purple-500/10 p-2 rounded-lg transition-colors"
+                        disabled={!currentNode.unlocked}
                       >
                         {milestone.completed ? (
                           <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
@@ -233,6 +239,16 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
                           {milestone.title}
                         </span>
                       </button>
+                    )) : stepDetail.milestones.map((milestone, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2 opacity-50"
+                      >
+                        <Circle className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">
+                          {milestone.title}
+                        </span>
+                      </div>
                     ))}
                   </div>
                 </div>
