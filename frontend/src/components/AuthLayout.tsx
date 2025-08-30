@@ -15,7 +15,6 @@ import {
   X,
   Plus,
   LogOut,
-  Settings,
   Crown,
   Gamepad2,
   Trophy,
@@ -259,16 +258,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                       <LogOut className="h-4 w-4 text-red-400" />
                     </Button>
                   </div>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start hover:bg-purple-500/10 mt-2"
-                    onClick={() => router.push("/profile?tab=settings")}
-                  >
-                    <Settings className="h-3 w-3 mr-2" />
-                    <span className="text-xs">Paramètres</span>
-                  </Button>
                 </div>
               </>
             )}
@@ -461,19 +450,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                       <LogOut className="h-4 w-4 text-red-400" />
                     </Button>
                   </div>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start hover:bg-purple-500/10 mt-2"
-                    onClick={() => {
-                      router.push("/profile?tab=settings")
-                      setIsMobileSidebarOpen(false)
-                    }}
-                  >
-                    <Settings className="h-3 w-3 mr-2" />
-                    <span className="text-xs">Paramètres</span>
-                  </Button>
                 </div>
               </div>
             </div>

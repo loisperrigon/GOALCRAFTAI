@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import AuthModal from '@/components/AuthModal'
 import { 
   Check, 
   X, 
@@ -33,6 +34,8 @@ export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly') // Yearly par défaut pour montrer l'économie
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 59 })
   const [activeUsers, setActiveUsers] = useState(1247)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   
   const monthlyPrice = 9.99
   const yearlyPrice = 89.99 // 25% de réduction
@@ -63,6 +66,35 @@ export default function PricingPage() {
     }, 5000)
     return () => clearInterval(interval)
   }, [])
+
+  // Vérifier si l'utilisateur est connecté (simulation)
+  useEffect(() => {
+    // En production, cela viendrait du contexte auth ou d'un store
+    const checkAuth = () => {
+      const token = localStorage.getItem('auth_token')
+      setIsAuthenticated(!!token)
+    }
+    checkAuth()
+  }, [])
+
+  const handlePremiumClick = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true)
+    } else {
+      // Rediriger vers Stripe ou processus de paiement
+      console.log('Redirection vers Stripe...')
+      // window.location.href = '/api/stripe/checkout'
+    }
+  }
+
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true)
+    // Simuler le stockage du token
+    localStorage.setItem('auth_token', 'dummy_token')
+    // Après connexion réussie, continuer vers Stripe
+    console.log('Connexion réussie, redirection vers Stripe...')
+    // window.location.href = '/api/stripe/checkout'
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -257,6 +289,7 @@ export default function PricingPage() {
               <Button 
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg relative overflow-hidden group"
                 size="lg"
+                onClick={handlePremiumClick}
               >
                 <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
                 <Unlock className="h-4 w-4 mr-2" />
@@ -458,6 +491,13 @@ export default function PricingPage() {
       </div>
       
       <Footer />
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </div>
   )
 }
