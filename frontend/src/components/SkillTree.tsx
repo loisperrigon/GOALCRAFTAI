@@ -331,30 +331,9 @@ export default function SkillTree() {
         />
         <Controls className="bg-card border-border" />
         
-        {/* Panneau de contrôle minimaliste */}
-        <Panel position="top-right" className="bg-card/90 backdrop-blur p-2 rounded-lg border border-border mt-20 mr-4">
+        {/* Panneau de contrôle minimaliste vertical */}
+        <Panel position="top-left" className="bg-card/90 backdrop-blur p-2 rounded-lg border border-border" style={{ top: '80px', left: '16px' }}>
           <div className="flex flex-col gap-1">
-            <div className="flex gap-1">
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => onLayout('TB')}
-                className="h-8 w-8 hover:bg-purple-500/20"
-                title="Layout vertical"
-              >
-                <Layout className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => onLayout('LR')}
-                className="h-8 w-8 hover:bg-purple-500/20"
-                title="Layout horizontal"
-              >
-                <Layout className="h-4 w-4 rotate-90" />
-              </Button>
-            </div>
-
             <Button
               size="icon"
               variant={isInteractive ? "default" : "ghost"}
@@ -365,7 +344,7 @@ export default function SkillTree() {
               <Move className="h-4 w-4" />
             </Button>
 
-            <div className="border-t border-border/50 my-1" />
+            <div className="h-px bg-border/50 my-1" />
 
             <Button
               size="icon"
@@ -376,7 +355,7 @@ export default function SkillTree() {
             >
               <Save className="h-4 w-4" />
             </Button>
-
+            
             <Button
               size="icon"
               variant="ghost"
@@ -386,7 +365,7 @@ export default function SkillTree() {
             >
               <Download className="h-4 w-4" />
             </Button>
-
+            
             <Button
               size="icon"
               variant="ghost"
