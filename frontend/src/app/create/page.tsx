@@ -376,7 +376,7 @@ export default function CreatePage() {
         </div>
 
         {/* Artifact Panel - 1/3 de l'espace */}
-        <div className={`${isFullscreen ? 'fixed inset-0 z-50' : 'flex-[1] border-l'} border-border bg-card/50 flex flex-col transition-all duration-300`}>
+        <div className={`${isFullscreen ? 'fixed inset-0 z-50 animate-in fade-in duration-300' : 'flex-[1] border-l animate-in fade-in duration-300'} border-border bg-card/50 flex flex-col`}>
           {/* Artifact Header */}
           <div className="h-14 border-b border-border flex items-center justify-between px-4">
             <div className="flex items-center gap-2">

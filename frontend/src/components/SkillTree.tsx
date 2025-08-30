@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import ReactFlow, {
   Node,
   Edge,
@@ -13,6 +13,7 @@ import ReactFlow, {
   BackgroundVariant,
   ConnectionMode,
   Panel,
+  ReactFlowInstance,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import dagre from 'dagre'
@@ -165,6 +166,9 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const [isInteractive, setIsInteractive] = useState(false)
   const [selectedNode, setSelectedNode] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null)
+  const previousFullscreenRef = useRef(isFullscreen)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Exposer la fonction pour ouvrir la modal
   useEffect(() => {
@@ -235,8 +239,52 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
       const layouted = getLayoutedElements(rfNodes, rfEdges, 'TB')
       setFlowNodes(layouted.nodes)
       setEdges(layouted.edges)
+      
+      // Recentrer après le chargement
+      if (reactFlowInstance) {
+        setTimeout(() => {
+          reactFlowInstance.fitView({ padding: 0.2, duration: 800 })
+        }, 100)
+      }
     }
-  }, [nodes, setFlowNodes, setEdges])
+  }, [nodes, setFlowNodes, setEdges, reactFlowInstance])
+
+  // Ajuster la position lors du changement de mode plein écran
+  useEffect(() => {
+    if (previousFullscreenRef.current !== isFullscreen && reactFlowInstance && containerRef.current) {
+      const viewport = reactFlowInstance.getViewport()
+      
+      if (isFullscreen) {
+        // En passant en plein écran, ajuster pour centrer sur la même zone
+        const widthBefore = window.innerWidth * 0.33 // L'arbre occupait 1/3 de la largeur
+        const widthAfter = window.innerWidth // L'arbre occupe toute la largeur
+        const widthDiff = (widthAfter - widthBefore) / 2
+        
+        setTimeout(() => {
+          reactFlowInstance.setViewport({
+            x: viewport.x + widthDiff,
+            y: viewport.y,
+            zoom: viewport.zoom
+          }, { duration: 400 })
+        }, 100)
+      } else {
+        // En sortant du plein écran, recentrer sur la zone réduite
+        const widthBefore = window.innerWidth // L'arbre occupait toute la largeur
+        const widthAfter = window.innerWidth * 0.33 // L'arbre occupe 1/3 de la largeur
+        const widthDiff = (widthBefore - widthAfter) / 2
+        
+        setTimeout(() => {
+          reactFlowInstance.setViewport({
+            x: viewport.x - widthDiff,
+            y: viewport.y,
+            zoom: viewport.zoom
+          }, { duration: 400 })
+        }, 100)
+      }
+    }
+    previousFullscreenRef.current = isFullscreen
+  }, [isFullscreen, reactFlowInstance])
+
 
   // Calculer la progression
   const progression = useMemo(() => {
@@ -268,8 +316,16 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
     console.log(isInteractive ? '🔒 Mode édition désactivé' : '✏️ Mode édition activé')
   }
 
+  const onInit = (instance: ReactFlowInstance) => {
+    setReactFlowInstance(instance)
+    // Centrer au premier chargement
+    setTimeout(() => {
+      instance.fitView({ padding: 0.2, duration: 800 })
+    }, 100)
+  }
+
   return (
-    <div className="h-full w-full relative bg-background">
+    <div ref={containerRef} className="h-full w-full relative bg-background">
       {/* Header avec stats - visible seulement en plein écran */}
       {isFullscreen && (
         <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none">
@@ -297,16 +353,16 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
               <div className="flex items-center gap-3">
                 <div className="flex gap-2">
                   <div className="flex items-center gap-1">
-                    <Circle className="h-3 w-3 text-purple-400" />
-                    <span className="text-xs">Principal</span>
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                    <span className="text-xs">Complété</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Star className="h-3 w-3 text-blue-400" />
-                    <span className="text-xs">Bonus</span>
+                    <div className="w-3 h-3 rounded-full bg-purple-500" />
+                    <span className="text-xs">Disponible</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Zap className="h-3 w-3 text-pink-400" />
-                    <span className="text-xs">Défi</span>
+                    <div className="w-3 h-3 rounded-full bg-gray-500" />
+                    <span className="text-xs">Verrouillé</span>
                   </div>
                 </div>
               </div>
@@ -315,40 +371,42 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
         </div>
       )}
 
-      {/* Barre de progression en bas - visible seulement en plein écran */}
+      {/* Barre de progression globale - visible seulement en plein écran */}
       {isFullscreen && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none w-80">
-          <Card className="bg-card/90 backdrop-blur p-3 pointer-events-auto">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Progression</span>
-              <span className="text-sm text-muted-foreground">
-                {completedNodes.length}/{nodes.filter(n => !n.optional).length} étapes
-              </span>
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none">
+          <Card className="bg-card/90 backdrop-blur p-4 pointer-events-auto min-w-[400px] max-w-[600px]">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium whitespace-nowrap">Progression globale</span>
+              <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden min-w-[200px]">
+                <div 
+                  className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
+                  style={{ width: `${progression}%` }}
+                />
+              </div>
+              <span className="text-sm font-bold text-purple-400 whitespace-nowrap">{Math.round(progression)}%</span>
             </div>
-            <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
-                style={{ width: `${progression}%` }}
-              />
+            <div className="mt-2 text-xs text-muted-foreground text-center">
+              {completedNodes.length} étapes complétées sur {nodes.filter(n => n.category === 'main').length} principales
             </div>
           </Card>
         </div>
       )}
 
-      {/* React Flow Canvas */}
       <ReactFlow
         nodes={flowNodes}
         edges={edges}
-        onNodesChange={onNodesChange}
+        onNodesChange={isInteractive ? onNodesChange : undefined}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
+        fitView
+        attributionPosition="bottom-right"
         nodesDraggable={isInteractive}
         nodesConnectable={false}
         elementsSelectable={true}
-        fitView
         className="bg-background"
         proOptions={{ hideAttribution: true }}
+        onInit={onInit}
       >
         <Background 
           variant={BackgroundVariant.Dots} 
