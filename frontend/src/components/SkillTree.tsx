@@ -20,6 +20,7 @@ import useSkillTreeStore from '@/stores/skillTreeStore'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Lock, CheckCircle2, Circle, Star, Zap, Trophy, RotateCcw, Save, Download, Layout, Move } from 'lucide-react'
+import ObjectiveDetailModal from '@/components/ObjectiveDetailModal'
 
 // Layout automatique avec dagre
 const dagreGraph = new dagre.graphlib.Graph()
@@ -90,11 +91,10 @@ const SkillNode = ({ data, selected }: NodeProps) => {
 
   const handleClick = () => {
     setActiveNode(node.id)
-    if (node.unlocked && !node.completed) {
-      // Simuler la complétion pour la démo
-      if (window.confirm(`Marquer "${node.title}" comme complété ?`)) {
-        completeNode(node.id)
-      }
+    // Ouvrir la modal au lieu de confirmer directement
+    const parentComponent = (window as any).__skillTreeComponent
+    if (parentComponent) {
+      parentComponent.openNodeModal(node)
     }
   }
 
@@ -163,6 +163,21 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [isInteractive, setIsInteractive] = useState(false)
+  const [selectedNode, setSelectedNode] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // Exposer la fonction pour ouvrir la modal
+  useEffect(() => {
+    (window as any).__skillTreeComponent = {
+      openNodeModal: (nodeData: any) => {
+        setSelectedNode(nodeData)
+        setIsModalOpen(true)
+      }
+    }
+    return () => {
+      delete (window as any).__skillTreeComponent
+    }
+  }, [])
 
   // Charger les données mock au montage
   useEffect(() => {
@@ -387,6 +402,16 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
           </Panel>
         )}
       </ReactFlow>
+
+      {/* Modal de détail */}
+      <ObjectiveDetailModal 
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedNode(null)
+        }}
+        nodeData={selectedNode}
+      />
     </div>
   )
 }

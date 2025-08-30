@@ -82,4 +82,59 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Custom Scrollbar Styles */
+  /* Pour Webkit (Chrome, Safari, Edge) */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(240 10% 8%);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(271 91% 65% / 0.3);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(271 91% 65% / 0.5);
+  }
+
+  /* Pour Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(271 91% 65% / 0.3) hsl(240 10% 8%);
+  }
+
+  /* Style spécifique pour les ScrollArea de Radix */
+  [data-radix-scroll-area-viewport] {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(271 91% 65% / 0.3) transparent;
+  }
+
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+  }
+
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+    background: hsl(271 91% 65% / 0.3);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  [data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb:hover {
+    background: hsl(271 91% 65% / 0.5);
+    background-clip: content-box;
+  }
 }

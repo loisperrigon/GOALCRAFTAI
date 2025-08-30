@@ -27,7 +27,8 @@
       "Bash(git push:*)",
       "Bash(gh repo create:*)",
       "WebFetch(domain:github.com)",
-      "Bash(winget install:*)"
+      "Bash(winget install:*)",
+      "Bash(npx shadcn@canary add dialog:*)"
     ],
     "deny": [],
     "ask": []
