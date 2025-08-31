@@ -19,10 +19,11 @@ Tu travailles sur une application web révolutionnaire qui transforme les object
 ### Standards de Code
 - **TypeScript obligatoire** pour la robustesse
 - **Components fonctionnels** avec hooks React
-- **Nommage explicite** : `GameTree.tsx`, `XPProgressBar.tsx`, `ObjectiveChat.tsx`
+- **Nommage explicite** : `SkillTree.tsx`, `AuthLayout.tsx`, `ObjectiveDetailModal.tsx`
 - **Code modulaire** et réutilisable
 - **Comments** pour la logique IA et gamification complexe
 - **API RESTful** avec versioning (/api/v1/)
+- **Pas de commentaires inutiles** dans le code de production
 
 ## 🎮 Priorités UX/UI
 
@@ -313,50 +314,62 @@ GoalCraftAI/
 
 ## 📊 État Actuel du Projet
 
-### ✅ Complété
-- **Architecture Frontend/Backend** séparée et configurée
-- **Next.js 15** avec React 19, TypeScript et App Router
-- **Tailwind CSS v4** avec configuration gaming et animations
-- **shadcn/ui** (canary) avec composants React 19 compatibles
-- **Pages principales** :
-  - Page d'accueil (/) avec hero section et CTA
-  - Page d'authentification (/auth) unifiée login/signup avec social auth
-  - Page de chat (/create) avec interface conversationnelle
-  - Page de tarification (/pricing) optimisée conversion avec countdown
-- **Visualisation Skill Tree** avec React Flow et dagre pour layout automatique
-- **Système de progression** fonctionnel avec XP, niveaux et milestones
-- **Store Zustand** pour state management global
-- **Composants réutilisables** :
-  - Header avec indicateur de page active
-  - Footer avec newsletter et liens sociaux
-  - Modals (ObjectiveDetail, StepComplete)
-  - FreeLimitBanner pour limitations free
-  - PremiumBadge pour statut utilisateur
-  - Confetti animations pour célébrations
-- **Gamification complète** :
-  - Système de déblocage séquentiel
-  - Barres de progression animées
-  - Milestones cliquables avec progression
-  - Animations de célébration (confetti)
-- **Modèle Freemium** :
-  - Plan Free : 3 objectifs, 10 étapes max, 5 générations IA/mois
-  - Plan Premium : Illimité avec coaching IA
-- **Data model** complet pour objectifs guitare (exemple fonctionnel)
+### ✅ Frontend Complété (100%)
 
-### 🚧 En Cours
-- Intégration backend MongoDB/Express
-- Connexion OpenAI pour génération IA
-- Authentification réelle (JWT/OAuth)
+#### **Architecture & Configuration**
+- ✅ **Next.js 15** avec App Router, React 19 et TypeScript strict
+- ✅ **Tailwind CSS v4** avec système de design gaming complet
+- ✅ **shadcn/ui canary** avec tous les composants UI nécessaires
+- ✅ **Zustand** pour state management avec actions complexes
+- ✅ **SEO optimisé** : métadonnées, Open Graph, Twitter Cards sur toutes les pages
 
-### 📝 À Faire Prioritaire
-- **Backend API** :
-  - Routes authentification (register, login, logout)
-  - Routes objectifs (CRUD)
-  - Routes progression (save, load)
-  - Intégration OpenAI GPT-4
-- **Persistence** :
-  - Sauvegarde automatique en base (pas localStorage)
-  - Synchronisation temps réel
+#### **Pages (8 pages production-ready)**
+- ✅ **/** : Landing page avec hero, stats, témoignages, CTA
+- ✅ **/auth** : Authentification unifiée avec Google/GitHub
+- ✅ **/objectives** : Chat IA + Arbre interactif (cœur de l'app)
+- ✅ **/dashboard** : Tableau de bord avec stats détaillées
+- ✅ **/profile** : Profil utilisateur avec onglets
+- ✅ **/pricing** : Page tarifs avec timer, FAQ, modal auth intégrée
+- ✅ **/legal/*** : CGU, confidentialité, mentions légales
+- ✅ **/404** : Page d'erreur personnalisée gaming
+
+#### **Composants & Fonctionnalités**
+- ✅ **Chat IA conversationnel** avec simulation GPT-4 réaliste
+- ✅ **SkillTree React Flow** avec drag & drop, zoom, fullscreen
+- ✅ **Système de gamification** : XP, niveaux, badges, achievements
+- ✅ **Animations** : confetti, transitions fluides, hover effects
+- ✅ **AuthLayout** avec sidebar gaming pour pages authentifiées
+- ✅ **AuthModal** pour réduire la friction sur pricing
+- ✅ **Responsive design** : mobile-first avec menu drawer
+- ✅ **Système Free/Premium** avec limitations visuelles
+
+#### **Données d'exemple**
+- ✅ Parcours "Apprendre la guitare" avec 12+ étapes
+- ✅ Multiples objectifs avec catégories et difficultés
+- ✅ Statistiques et progression simulées
+
+### 🚧 Backend À Implémenter (Structure prête)
+
+#### **Priorité 1 : Core Backend**
+- ⏳ **MongoDB** : Connexion et modèles Mongoose
+- ⏳ **Auth JWT** : Register, login, logout, refresh tokens
+- ⏳ **API Objectifs** : CRUD complet avec validation
+- ⏳ **OpenAI GPT-4** : Génération réelle des parcours
+
+#### **Priorité 2 : Monétisation**
+- ⏳ **Stripe** : Checkout, webhooks, gestion abonnements
+- ⏳ **Limites Free** : Middleware de vérification quotas
+
+#### **Priorité 3 : Temps réel**
+- 📝 **WebSockets** : Sync progression en temps réel
+- 📝 **Redis** : Cache et sessions
+
+### ✨ Fonctionnalités Bonus (Post-MVP)
+- 📝 **Système de notifications** toast (structure prête)
+- 📝 **Mode sombre/clair** avec toggle
+- 📝 **PWA** : Manifest et service worker
+- 📝 **Export PDF** des parcours
+- 📝 **Partage social** des achievements
 - **Mobile responsive** :
   - Adaptation skill tree mobile
   - Navigation mobile (burger menu)

@@ -107,9 +107,9 @@ export default function ObjectivesPage() {
           </div>
         </div>
 
-        <div className="flex h-[calc(100%-65px)] md:h-full">
+        <div className="flex h-[calc(100%-65px)] md:h-full relative">
           {/* Chat Section */}
-          <div className={`${activeView === "chat" ? "flex" : "hidden"} md:flex flex-1 flex-col bg-background/50 ${
+          <div className={`${activeView === "chat" ? "flex" : "hidden"} md:flex flex-1 flex-col bg-background/50 md:border-r md:border-border ${
             isFullscreen ? "md:hidden" : ""
           }`}>
             <div className="border-b border-border bg-card/50 backdrop-blur p-4">
