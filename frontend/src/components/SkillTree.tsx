@@ -17,7 +17,7 @@ import ReactFlow, {
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import dagre from 'dagre'
-import { useObjectivesStore } from '@/stores/objectives-store'
+import { useObjectiveStore } from '@/stores/objective-store'
 import { useUserStore } from '@/stores/user-store'
 import { useStreakStore } from '@/stores/streak-store'
 import { Card } from '@/components/ui/card'
@@ -66,7 +66,7 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
 
 // Custom Node Component
 const SkillNode = ({ data, selected }: NodeProps) => {
-  const { completeNode, setActiveNode } = useSkillTreeStore()
+  const { currentObjective, completeNode } = useObjectiveStore()
   const { playClick, playUnlock } = useSound()
   const node = data as any
 
@@ -103,7 +103,6 @@ const SkillNode = ({ data, selected }: NodeProps) => {
     } else {
       playUnlock() // Son différent si verrouillé
     }
-    setActiveNode(node.id)
     // Ouvrir la modal au lieu de confirmer directement
     const parentComponent = (window as any).__skillTreeComponent
     if (parentComponent) {
@@ -173,18 +172,16 @@ interface SkillTreeProps {
 }
 
 export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
-  // Récupérer l'objectif actif depuis objectives-store
+  // Récupérer l'objectif actif depuis objective-store
   const { 
-    getActiveObjective,
-    completeNode: completeObjectiveNode,
-    activeObjectiveId
-  } = useObjectivesStore()
+    currentObjective,
+    completeNode: completeObjectiveNode
+  } = useObjectiveStore()
   
   const { user, addXP } = useUserStore()
-  const activeObjective = getActiveObjective()
   
   // Extraire les données de l'objectif actif
-  const nodes = activeObjective?.skillTree?.nodes || []
+  const nodes = currentObjective?.skillTree?.nodes || []
   const completedNodes = nodes.filter(n => n.completed).map(n => n.id)
   const userXP = user?.xp || 0
   const userLevel = user?.level || 1
@@ -399,7 +396,7 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const currentSteps = nodes.filter(n => n.category === 'main').length
   
   // Si pas d'objectif actif, afficher un message
-  if (!activeObjective) {
+  if (!currentObjective) {
     return (
       <div className="h-full w-full flex items-center justify-center">
         <Card className="p-8 text-center max-w-md">

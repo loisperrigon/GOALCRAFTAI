@@ -1,39 +1,33 @@
-"use client"
+"use client";
 
-import { useEffect } from 'react'
-import { useObjectivesStore } from '@/stores/objectives-store'
-import { useUserStore } from '@/stores/user-store'
-import { mockObjectives } from '@/data/mockObjectives'
+import { mockObjectives } from "@/data/mockObjectives";
+import { useObjectiveStore } from "@/stores/objective-store";
+import { useUserStore } from "@/stores/user-store";
+import { useEffect, useRef } from "react";
 
 export function useInitializeStores() {
-  const { objectives, createObjective, setActiveObjective } = useObjectivesStore()
-  const { user, login } = useUserStore()
+  const { currentObjective, setActiveObjective } = useObjectiveStore();
+  const { user, login } = useUserStore();
+  const initialized = useRef(false);
 
   useEffect(() => {
     // Initialiser l'utilisateur si pas connecté
     if (!user) {
       // Auto-login avec un utilisateur mock
-      login('lois@example.com', 'password').catch(console.error)
+      login("lois@example.com", "password").catch(console.error);
     }
-  }, [user, login])
+  }, [user, login]);
 
   useEffect(() => {
-    // Initialiser les objectifs s'ils sont vides
-    if (objectives.length === 0) {
-      console.log('Initialisation des objectifs mock...')
+    // Si pas d'objectif actif, charger le premier mock par défaut
+    if (!currentObjective && !initialized.current) {
+      initialized.current = true;
+      console.log("Chargement de l'objectif par défaut...");
       
-      // Ajouter les objectifs mock
-      Promise.all(
-        mockObjectives.map(obj => createObjective(obj))
-      ).then(createdObjectives => {
-        // Définir le premier objectif comme actif
-        if (createdObjectives.length > 0) {
-          setActiveObjective(createdObjectives[0].id)
-        }
-      })
-    } else if (!objectives.find(o => o.id === useObjectivesStore.getState().activeObjectiveId)) {
-      // Si aucun objectif actif, prendre le premier
-      setActiveObjective(objectives[0]?.id || null)
+      // Charger le premier objectif mock par défaut
+      if (mockObjectives.length > 0) {
+        setActiveObjective(mockObjectives[0]);
+      }
     }
-  }, [objectives, createObjective, setActiveObjective])
+  }, []); // Pas de dépendances pour éviter les re-runs
 }

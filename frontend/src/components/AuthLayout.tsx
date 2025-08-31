@@ -7,8 +7,9 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { SimpleStreak } from "@/components/SimpleStreak"
-import { useObjectivesStore } from "@/stores/objectives-store"
+import { useObjectiveStore } from "@/stores/objective-store"
 import { useUserStore } from "@/stores/user-store"
+import { mockObjectives } from "@/data/mockObjectives"
 import { 
   LayoutDashboard,
   Target,
@@ -42,10 +43,12 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-
-  // Récupérer les données depuis les stores
-  const { objectives, setActiveObjective, activeObjectiveId } = useObjectivesStore()
   const { user } = useUserStore()
+  const { setActiveObjective } = useObjectiveStore()
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>('1')
+  
+  // Les objectifs viennent de la liste mockée (plus tard: API endpoint /api/objectives)
+  const objectives = mockObjectives
 
   const navigationItems = [
     { 
@@ -63,6 +66,16 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     avatar: null,
     level: 1,
     xp: 0
+  }
+
+  const handleObjectiveClick = (objectiveId: string) => {
+    setSelectedObjectiveId(objectiveId)
+    // Charger l'objectif dans le store (plus tard: API call)
+    const selectedObj = objectives.find(o => o.id === objectiveId)
+    if (selectedObj) {
+      setActiveObjective(selectedObj)
+    }
+    router.push("/objectives")
   }
 
   return (
@@ -155,14 +168,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                         <Card 
                           key={objective.id}
                           className={`p-3 cursor-pointer transition-all hover:shadow-md ${
-                            objective.id === activeObjectiveId 
+                            objective.id === selectedObjectiveId 
                               ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10" 
                               : "border-border hover:border-purple-500/20 hover:bg-purple-500/5"
                           }`}
-                          onClick={() => {
-                            setActiveObjective(objective.id)
-                            router.push("/objectives")
-                          }}
+                          onClick={() => handleObjectiveClick(objective.id)}
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">

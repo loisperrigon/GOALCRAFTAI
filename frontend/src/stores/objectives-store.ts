@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 
 export interface Objective {
   id: string
@@ -105,11 +104,10 @@ interface ObjectivesState {
   getObjectivesByStatus: (status: Objective['status']) => Objective[]
   calculateTotalProgress: () => number
   generateObjectiveFromAI: (prompt: string) => Promise<Objective>
+  clearDuplicates: () => void
 }
 
-export const useObjectivesStore = create<ObjectivesState>()(
-  persist(
-    (set, get) => ({
+export const useObjectivesStore = create<ObjectivesState>((set, get) => ({
       objectives: [],
       activeObjectiveId: null,
       isLoading: false,
@@ -117,25 +115,37 @@ export const useObjectivesStore = create<ObjectivesState>()(
       createObjective: async (objectiveData) => {
         set({ isLoading: true })
         
-        // Créer un nouvel objectif
+        // Vérifier si un objectif avec cet ID existe déjà
+        const existingObjective = get().objectives.find(o => o.id === objectiveData.id)
+        if (existingObjective) {
+          set({ isLoading: false })
+          return existingObjective // Retourner l'objectif existant au lieu d'en créer un nouveau
+        }
+        
+        // Générer un ID unique avec timestamp + random pour éviter les doublons
+        const timestamp = Date.now()
+        const random = Math.random().toString(36).substring(2, 9)
+        const uniqueId = objectiveData.id || `${timestamp}-${random}`
+        
+        // Créer un nouvel objectif sans spread pour éviter l'écrasement de l'ID
         const newObjective: Objective = {
-          id: Date.now().toString(),
+          id: uniqueId,
           title: objectiveData.title || 'Nouvel objectif',
           description: objectiveData.description || '',
           category: objectiveData.category || 'other',
-          status: 'active',
-          progress: 0,
+          status: objectiveData.status || 'active',
+          progress: objectiveData.progress || 0,
           xpReward: objectiveData.xpReward || 100,
           difficulty: objectiveData.difficulty || 'medium',
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: objectiveData.createdAt || new Date(),
+          updatedAt: objectiveData.updatedAt || new Date(),
           milestones: objectiveData.milestones || [],
           totalSteps: objectiveData.totalSteps || 0,
-          completedSteps: 0,
+          completedSteps: objectiveData.completedSteps || 0,
           aiGenerated: objectiveData.aiGenerated || false,
           userPrompt: objectiveData.userPrompt,
           skillTree: objectiveData.skillTree,
-          ...objectiveData
+          completedAt: objectiveData.completedAt
         }
         
         set(state => ({
@@ -398,14 +408,22 @@ export const useObjectivesStore = create<ObjectivesState>()(
         }))
         
         return aiObjective
+      },
+
+      clearDuplicates: () => {
+        set(state => {
+          const seen = new Set<string>()
+          const uniqueObjectives = state.objectives.filter(obj => {
+            if (seen.has(obj.id)) {
+              return false
+            }
+            seen.add(obj.id)
+            return true
+          })
+          
+          return {
+            objectives: uniqueObjectives
+          }
+        })
       }
-    }),
-    {
-      name: 'objectives-storage',
-      partialize: (state) => ({
-        objectives: state.objectives,
-        activeObjectiveId: state.activeObjectiveId
-      })
-    }
-  )
-)
+    }))

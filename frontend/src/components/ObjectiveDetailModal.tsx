@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useObjectivesStore } from '@/stores/objectives-store'
+import { useObjectiveStore } from '@/stores/objective-store'
 import { useStreakStore } from '@/stores/streak-store'
 import { 
   Clock, 
@@ -63,13 +63,12 @@ interface ObjectiveDetailModalProps {
 }
 
 export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: ObjectiveDetailModalProps) {
-  const { getActiveObjective, completeNode, toggleNodeMilestone } = useObjectivesStore()
+  const { currentObjective, completeNode, toggleNodeMilestone } = useObjectiveStore()
   const { updateStreak, streakMultiplier } = useStreakStore()
   const [previousMilestones, setPreviousMilestones] = useState<boolean[]>([])
   
   // Récupérer les données actualisées depuis le store
-  const activeObjective = getActiveObjective()
-  const nodes = activeObjective?.skillTree?.nodes || []
+  const nodes = currentObjective?.skillTree?.nodes || []
   const currentNode = nodeData ? (nodes.find(n => n.id === nodeData.id) || nodeData) : null
   const hasDetails = currentNode?.details
   
@@ -250,9 +249,7 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
                       <button
                         key={index}
                         onClick={() => {
-                          if (activeObjective) {
-                            toggleNodeMilestone(activeObjective.id, currentNode.id, index)
-                          }
+                          toggleNodeMilestone(currentNode.id, index)
                         }}
                         className="flex items-center gap-2 w-full text-left hover:bg-purple-500/10 p-2 rounded-lg transition-colors"
                       >
@@ -324,9 +321,7 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
                   className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
                   onClick={() => {
                     console.log('Marquer comme complété:', nodeData.id)
-                    if (activeObjective) {
-                      completeNode(activeObjective.id, nodeData.id)
-                    }
+                    completeNode(nodeData.id)
                     updateStreak() // Mise à jour du streak
                     onClose()
                   }}
