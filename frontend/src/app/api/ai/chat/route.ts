@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     const { message, conversationId, objectiveType } = validationResult.data
 
-    // Sauvegarder le message utilisateur
+    // Connexion à MongoDB
     const client = await clientPromise
     const db = client.db()
     

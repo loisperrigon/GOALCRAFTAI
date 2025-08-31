@@ -4,7 +4,6 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import clientPromise from "./mongodb"
 import bcrypt from "bcryptjs"
-import { MongoClient } from "mongodb"
 
 // Validation des inputs
 function validateEmail(email: string): boolean {
@@ -78,7 +77,7 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
-          // Connexion à MongoDB directement (pas de Mongoose côté client)
+          // Connexion à MongoDB
           const client = await clientPromise
           const db = client.db()
           const user = await db.collection("users").findOne({ 

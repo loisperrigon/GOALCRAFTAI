@@ -32,7 +32,11 @@
       "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\create\\CreatePageClient.tsx\")",
       "Bash(git checkout:*)",
       "Bash(npx shadcn@canary add:*)",
-      "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\stores\\skillTreeStore.ts\")"
+      "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\stores\\skillTreeStore.ts\")",
+      "Bash(npm run build:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx next:*)",
+      "Bash(del C:UsersLoisDocumentsProjetGoalCraftAIfrontendserver.js)"
     ],
     "deny": [],
     "ask": []
