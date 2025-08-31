@@ -129,10 +129,6 @@ export default function ObjectivesPage() {
                   </div>
                 </div>
                 <div className="hidden md:flex items-center gap-2">
-                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                    <Zap className="h-3 w-3 mr-1" />
-                    GPT-4
-                  </Badge>
                   <Button variant="ghost" size="sm">
                     <Settings className="h-4 w-4" />
                   </Button>
