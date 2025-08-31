@@ -15,14 +15,13 @@ const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || "https://n8n.larefonte.st
 
 export async function POST(request: NextRequest) {
   try {
-    // Vérifier l'authentification
+    // Vérifier l'authentification (optionnel - tout le monde peut tester)
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      )
-    }
+    
+    // Utiliser l'user authentifié OU un user anonyme
+    const userId = session?.user?.id || `anon-${request.headers.get("x-forwarded-for") || "unknown"}`
+    const userName = session?.user?.name || "Utilisateur"
+    const userEmail = session?.user?.email || "anonymous@example.com"
 
     const body = await request.json()
     
@@ -46,14 +45,14 @@ export async function POST(request: NextRequest) {
       // Récupérer la conversation existante
       conversation = await db.collection("conversations").findOne({
         _id: conversationId,
-        userId: session.user.id
+        userId: userId
       })
     }
 
     if (!conversation) {
       // Créer une nouvelle conversation
       const result = await db.collection("conversations").insertOne({
-        userId: session.user.id,
+        userId: userId,
         objectiveType: objectiveType || "general",
         messages: [],
         createdAt: new Date(),
@@ -78,6 +77,9 @@ export async function POST(request: NextRequest) {
     )
 
     // Appeler le webhook n8n
+    console.log("[n8n] Appel webhook:", N8N_WEBHOOK_URL)
+    console.log("[n8n] Payload:", { userId, message, objectiveType })
+    
     try {
       const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
         method: "POST",
@@ -85,14 +87,14 @@ export async function POST(request: NextRequest) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: session.user.id,
+          userId: userId,
           message,
           conversationId: conversation._id.toString(),
           objectiveType: objectiveType || "general",
           messageCount: (conversation.messages?.length || 0) + 1,
           context: {
-            userName: session.user.name,
-            userEmail: session.user.email,
+            userName: userName,
+            userEmail: userEmail,
             previousMessages: conversation.messages?.slice(-10) || [], // Plus de contexte
             isFirstMessage: !conversation.messages || conversation.messages.length === 0
           }
@@ -100,11 +102,21 @@ export async function POST(request: NextRequest) {
       })
 
       if (!n8nResponse.ok) {
-        console.error("n8n webhook error:", await n8nResponse.text())
-        throw new Error("Erreur webhook n8n")
+        const errorText = await n8nResponse.text()
+        console.error("[n8n] HTTP Error:", n8nResponse.status, errorText)
+        throw new Error(`n8n HTTP ${n8nResponse.status}: ${errorText}`)
       }
 
-      const aiResponse = await n8nResponse.json()
+      const responseText = await n8nResponse.text()
+      console.log("[n8n] Réponse brute:", responseText)
+      
+      let aiResponse
+      try {
+        aiResponse = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error("[n8n] Erreur parsing JSON:", parseError)
+        throw new Error("Réponse n8n invalide")
+      }
 
       // Sauvegarder la réponse IA
       await db.collection("conversations").updateOne(
@@ -125,7 +137,7 @@ export async function POST(request: NextRequest) {
       // L'IA peut répondre plusieurs fois avant de générer l'objectif final
       if (aiResponse.objective && aiResponse.action === "create_objective") {
         await db.collection("objectives").insertOne({
-          userId: session.user.id,
+          userId: userId,
           conversationId: conversation._id.toString(),
           ...aiResponse.objective,
           createdAt: new Date(),
@@ -142,7 +154,8 @@ export async function POST(request: NextRequest) {
       })
 
     } catch (error) {
-      console.error("n8n webhook error:", error)
+      console.error("[n8n] Erreur complète:", error)
+      console.error("[n8n] Stack:", error instanceof Error ? error.stack : "N/A")
       
       // Fallback response
       return NextResponse.json({
@@ -165,12 +178,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Non authentifié" },
-        { status: 401 }
-      )
-    }
+    const userId = session?.user?.id || `anon-${request.headers.get("x-forwarded-for") || "unknown"}`
 
     const { searchParams } = new URL(request.url)
     const conversationId = searchParams.get("conversationId")
@@ -182,7 +190,7 @@ export async function GET(request: NextRequest) {
       // Récupérer une conversation spécifique
       const conversation = await db.collection("conversations").findOne({
         _id: conversationId,
-        userId: session.user.id
+        userId: userId
       })
 
       if (!conversation) {
@@ -196,7 +204,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Récupérer toutes les conversations
       const conversations = await db.collection("conversations")
-        .find({ userId: session.user.id })
+        .find({ userId: userId })
         .sort({ updatedAt: -1 })
         .limit(10)
         .toArray()

@@ -21,6 +21,7 @@
     "@radix-ui/react-scroll-area": "^1.2.10",
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-tooltip": "^1.2.8",
+    "@types/bcryptjs": "^3.0.0",
     "@types/howler": "^2.2.12",
     "axios": "^1.11.0",
     "bcryptjs": "^3.0.2",
@@ -40,6 +41,7 @@
     "react-dom": "19.1.0",
     "reactflow": "^11.11.4",
     "socket.io": "^4.8.1",
+    "zod": "^4.1.5",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
