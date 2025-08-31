@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import AuthLayout from "@/components/AuthLayout"
 import PremiumBadge from "@/components/PremiumBadge"
 import { useToast } from "@/hooks/useToast"
+import { useRouter } from "next/navigation"
 import { 
   User,
   Mail,
@@ -35,6 +36,7 @@ import {
 
 export default function ProfilePage() {
   const { toast } = useToast()
+  const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   
   // Récupérer le tab depuis l'URL
@@ -435,7 +437,18 @@ export default function ProfilePage() {
               <Card className="p-6 border-red-500/30">
                 <h3 className="font-semibold mb-4 text-red-400">Zone dangereuse</h3>
                 <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start border-orange-500/30 hover:bg-orange-500/10 text-orange-400">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start border-orange-500/30 hover:bg-orange-500/10 text-orange-400"
+                    onClick={() => {
+                      // Simuler la déconnexion
+                      toast({
+                        title: "Déconnexion",
+                        description: "Vous avez été déconnecté avec succès"
+                      })
+                      router.push("/auth")
+                    }}
+                  >
                     <LogOut className="h-4 w-4 mr-2" />
                     Se déconnecter
                   </Button>

@@ -39,7 +39,6 @@ interface Objective {
 export default function AuthLayout({ children }: AuthLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   // Objectifs simulés - En production, viendraient d'un store global ou API
@@ -77,12 +76,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       label: "Tableau de bord", 
       icon: LayoutDashboard,
       active: pathname === "/dashboard"
-    },
-    { 
-      href: "/profile?tab=achievements", 
-      label: "Mes Badges", 
-      icon: Award,
-      active: pathname === "/profile" && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get("tab") === "achievements"
     }
   ]
   
@@ -99,45 +92,35 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex flex-1 h-screen">
         {/* Desktop Sidebar */}
-        <div className={`hidden md:block border-r border-border bg-card/50 backdrop-blur transition-all duration-300 ${
-          isSidebarCollapsed ? "w-16" : "w-64"
-        }`}>
+        <div className="hidden md:block w-64 border-r border-border bg-card/50 backdrop-blur">
           <div className="p-4 h-full flex flex-col">
             {/* Logo Section */}
             <div className="mb-4">
               <div 
-                className={`flex items-center gap-2 cursor-pointer ${isSidebarCollapsed ? 'justify-center' : ''}`}
+                className="flex items-center gap-2 cursor-pointer"
                 onClick={() => router.push("/")}
               >
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xl">G</span>
                 </div>
-                {!isSidebarCollapsed && (
-                  <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                    GoalCraftAI
-                  </span>
-                )}
+                <span className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                  GoalCraftAI
+                </span>
               </div>
             </div>
             
-            {/* User Profile Section */}
+            {/* User Profile Section - Simplified */}
             {!isSidebarCollapsed && (
               <div 
-                className="mb-4 p-3 bg-purple-500/10 rounded-lg cursor-pointer hover:bg-purple-500/20 transition-colors"
+                className="mb-4 flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-purple-500/10 transition-colors"
                 onClick={() => router.push("/profile")}
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                    <User className="h-5 w-5 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-white">{currentUser.name}</p>
-                    <p className="text-xs text-muted-foreground">{currentUser.email}</p>
-                  </div>
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="h-4 w-4 text-white" />
                 </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Niveau {currentUser.level}</span>
-                  <span className="text-xs font-medium text-purple-400">{currentUser.xp} XP</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{currentUser.name}</p>
+                  <p className="text-xs text-muted-foreground">Niveau {currentUser.level}</p>
                 </div>
               </div>
             )}
@@ -260,17 +243,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                   </Button>
                 </Card>
 
-                {/* Logout Button */}
-                <div className="mt-auto border-t border-border pt-4">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start hover:bg-red-500/10 text-red-400"
-                    onClick={() => router.push("/auth")}
-                  >
-                    <LogOut className="h-4 w-4 mr-3" />
-                    Déconnexion
-                  </Button>
-                </div>
               </>
             )}
 
