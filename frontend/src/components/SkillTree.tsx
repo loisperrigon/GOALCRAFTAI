@@ -16,6 +16,7 @@ import ReactFlow, {
   ReactFlowInstance,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
+import '@/styles/skill-tree.css'
 import dagre from 'dagre'
 import { useObjectiveStore } from '@/stores/objective-store'
 import { useUserStore } from '@/stores/user-store'
@@ -40,7 +41,12 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
   const isHorizontal = direction === 'LR'
   dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 80 })
 
+  // Sauvegarder les positions d'origine si elles existent
+  const originalPositions = new Map()
   nodes.forEach((node) => {
+    if (node.position) {
+      originalPositions.set(node.id, { ...node.position })
+    }
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight })
   })
 
@@ -69,6 +75,12 @@ const SkillNode = ({ data, selected }: NodeProps) => {
   const { currentObjective, completeNode } = useObjectiveStore()
   const { playClick, playUnlock } = useSound()
   const node = data as any
+  
+  // Déterminer si c'est le nœud en cours d'apprentissage
+  const isCurrentLearning = node.unlocked && !node.completed && 
+    !currentObjective?.skillTree?.nodes.some((n: any) => 
+      n.unlocked && !n.completed && n.id !== node.id && n.requiredLevel < node.requiredLevel
+    )
 
   const getNodeStyle = () => {
     if (node.completed) {
@@ -117,7 +129,9 @@ const SkillNode = ({ data, selected }: NodeProps) => {
         ${getNodeStyle()}
         ${selected ? 'ring-2 ring-purple-400 scale-105' : ''}
         ${node.unlocked && !node.completed ? 'hover:scale-105' : ''}
+        ${isCurrentLearning ? 'next-to-unlock ring-2 ring-purple-500 ring-opacity-50' : ''}
       `}
+      data-current={isCurrentLearning}
       onClick={handleClick}
     >
       <Handle
@@ -200,6 +214,31 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const previousLevelRef = useRef(userLevel)
   const [showStreakNotif, setShowStreakNotif] = useState(false)
   const { currentStreak, checkStreak } = useStreakStore()
+  const previousObjectiveIdRef = useRef(currentObjective?.id)
+  const [isPositioning, setIsPositioning] = useState(false)
+  const previousNodesRef = useRef<Node[]>([])
+  const layoutedNodesRef = useRef<Node[]>([])
+  const [shouldCenter, setShouldCenter] = useState(false)
+
+  // Fonction pour trouver le nœud en cours d'apprentissage
+  const getCurrentLearningNode = useCallback(() => {
+    if (!currentObjective?.skillTree?.nodes) return null
+    
+    const skillNodes = currentObjective.skillTree.nodes
+    
+    // Priorité 1 : Le premier nœud débloqué non complété
+    const nextNode = skillNodes.find(n => n.unlocked && !n.completed)
+    if (nextNode) return nextNode
+    
+    // Priorité 2 : Le dernier nœud complété
+    const completedNodesLocal = skillNodes.filter(n => n.completed)
+    if (completedNodesLocal.length > 0) {
+      return completedNodesLocal[completedNodesLocal.length - 1]
+    }
+    
+    // Priorité 3 : Le premier nœud disponible
+    return skillNodes.find(n => n.unlocked) || skillNodes[0]
+  }, [currentObjective])
 
   // Exposer la fonction pour ouvrir la modal
   useEffect(() => {
@@ -253,22 +292,35 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
       const layouted = getLayoutedElements(flowNodes, edges, direction)
       setFlowNodes([...layouted.nodes])
       setEdges([...layouted.edges])
-      console.log('Layout appliqué:', direction)
+      // Layout appliqué
     },
     [flowNodes, edges, setFlowNodes, setEdges]
   )
 
   // Convertir les nodes du store en nodes React Flow avec layout automatique
   useEffect(() => {
+    // Ne pas mettre à jour si on est en train de positionner
+    if (isPositioning) return
+    
     // Sauvegarder la position actuelle avant la mise à jour
     const currentViewport = reactFlowInstance?.getViewport()
     
-    const rfNodes: Node[] = nodes.map((node) => ({
-      id: node.id,
-      type: 'skillNode',
-      position: node.position || { x: 0, y: 0 },
-      data: node,
-    }))
+    // Vérifier si c'est le premier chargement ou un changement d'objectif
+    const isFirstLoad = previousNodesRef.current.length === 0
+    const isObjectiveChange = previousObjectiveIdRef.current !== currentObjective?.id
+    
+    // Si c'est juste une mise à jour de progression (pas un changement d'objectif)
+    // on garde les positions existantes
+    const shouldKeepPositions = !isFirstLoad && !isObjectiveChange
+    
+    const rfNodes: Node[] = nodes.map((node) => {
+      return {
+        id: node.id,
+        type: 'skillNode',
+        position: node.position || { x: 0, y: 0 },
+        data: node,
+      }
+    })
 
     // Créer les edges basés sur les dépendances
     const rfEdges: Edge[] = []
@@ -294,26 +346,71 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
 
     // Appliquer le layout automatique si les nodes n'ont pas de position
     if (nodes.length > 0) {
-      // Vérifier si c'est le premier chargement ou une mise à jour
-      const isFirstLoad = flowNodes.length === 0
+      let finalNodes = rfNodes
+      let finalEdges = rfEdges
       
+      // Toujours calculer le layout avec dagre
       const layouted = getLayoutedElements(rfNodes, rfEdges, 'TB')
-      setFlowNodes(layouted.nodes)
-      setEdges(layouted.edges)
+      finalNodes = layouted.nodes
+      finalEdges = layouted.edges
+      layoutedNodesRef.current = layouted.nodes
       
-      // Ne recentrer que lors du premier chargement
-      if (reactFlowInstance && isFirstLoad) {
+      setFlowNodes(() => finalNodes)
+      setEdges(() => finalEdges)
+      
+      // Sauvegarder les nodes pour la prochaine fois
+      previousNodesRef.current = finalNodes
+      
+      // Mettre à jour la ref de l'objectif
+      if (isObjectiveChange) {
+        previousObjectiveIdRef.current = currentObjective?.id
+      }
+      
+      // Marquer qu'on doit centrer sur le nœud
+      if (isFirstLoad || isObjectiveChange) {
+        // Attendre un peu puis centrer
         setTimeout(() => {
-          reactFlowInstance.fitView({ padding: 0.2, duration: 800 })
-        }, 100)
-      } else if (reactFlowInstance && currentViewport) {
-        // Restaurer la position précédente lors des mises à jour
+          setShouldCenter(true)
+        }, 200)
+      }
+      
+      // Ne pas toucher au viewport si on garde les positions
+      if (!shouldKeepPositions && reactFlowInstance && currentViewport) {
+        // Restaurer le viewport seulement si nécessaire
         setTimeout(() => {
           reactFlowInstance.setViewport(currentViewport, { duration: 0 })
         }, 10)
       }
     }
-  }, [nodes, setFlowNodes, setEdges, reactFlowInstance])
+  }, [nodes, currentObjective?.id, isPositioning])
+
+  // Centrage sur le nœud actuel - SIMPLE ET DIRECT
+  useEffect(() => {
+    if (shouldCenter && reactFlowInstance && layoutedNodesRef.current.length > 0) {
+      setShouldCenter(false)
+      
+      // Trouver le nœud actuel
+      const skillNodes = currentObjective?.skillTree?.nodes || []
+      let currentNode = skillNodes.find(n => n.unlocked && !n.completed) ||
+                       skillNodes.filter(n => n.completed).pop() ||
+                       skillNodes.find(n => n.unlocked) ||
+                       skillNodes[0]
+      
+      if (currentNode) {
+        // Trouver la position du nœud dans les nodes layoutés
+        const targetNode = layoutedNodesRef.current.find(n => n.id === currentNode.id)
+        if (targetNode && targetNode.position) {
+          // ZOOM DIRECT AU CENTRE DU NŒUD
+          // nodeWidth = 200, nodeHeight = 120 (définis plus haut)
+          reactFlowInstance.setCenter(
+            targetNode.position.x + nodeWidth / 2,
+            targetNode.position.y + nodeHeight / 2,
+            { zoom: 1.5, duration: 800 }
+          )
+        }
+      }
+    }
+  }, [shouldCenter, reactFlowInstance, currentObjective])
 
   // Ajuster la position lors du changement de mode plein écran
   useEffect(() => {
@@ -361,19 +458,19 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
 
   // Fonctions pour les boutons
   const handleSave = () => {
-    console.log('💾 Sauvegarde de la progression...', { nodes: flowNodes, edges, userXP, userLevel })
+    // Sauvegarde de la progression
   }
 
   const handleExport = () => {
-    console.log('📥 Export de l\'arbre...', { nodes: flowNodes, edges })
+    // Export de l'arbre
   }
 
   const handleReset = () => {
-    console.log('🔄 Réinitialisation de la progression...')
+    // Réinitialisation de la progression
     if (window.confirm('Êtes-vous sûr de vouloir réinitialiser votre progression pour cet objectif ?')) {
       // Pour l'instant on ne peut pas reset un objectif spécifique
       // TODO: Ajouter une fonction resetObjective dans objectives-store
-      console.log('Fonction de reset à implémenter')
+      // Fonction de reset à implémenter
     }
   }
 
@@ -477,6 +574,7 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
         </div>
       )}
 
+
       {/* Barre de progression globale - visible seulement en plein écran */}
       {isFullscreen && (
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 pointer-events-none">
@@ -505,7 +603,7 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
-        fitView
+        fitView={false}
         attributionPosition="bottom-right"
         nodesDraggable={isInteractive}
         nodesConnectable={false}

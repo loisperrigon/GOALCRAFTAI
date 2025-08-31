@@ -1,0 +1,62 @@
+/* Animation de pulse pour highlight du nœud actuel */
+@keyframes pulseHighlight {
+  0% {
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(168, 85, 247, 0);
+    transform: scale(1.05);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+    transform: scale(1);
+  }
+}
+
+.pulse-highlight {
+  animation: pulseHighlight 2s ease-in-out;
+}
+
+/* Indicateur de nœud actuel */
+.current-learning-node {
+  position: relative;
+}
+
+.current-learning-node::before {
+  content: '👉';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: pointingAnimation 1s ease-in-out infinite;
+  font-size: 24px;
+}
+
+@keyframes pointingAnimation {
+  0%, 100% {
+    transform: translateY(-50%) translateX(0);
+  }
+  50% {
+    transform: translateY(-50%) translateX(5px);
+  }
+}
+
+/* Style pour le nœud en cours d'apprentissage */
+.react-flow__node[data-current="true"] {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
+}
+
+/* Animation de glow pour le prochain objectif */
+@keyframes glowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.8));
+  }
+}
+
+.next-to-unlock {
+  animation: glowPulse 2s ease-in-out infinite;
+}
