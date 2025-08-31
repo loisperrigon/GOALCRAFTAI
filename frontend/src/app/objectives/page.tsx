@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 import AuthLayout from "@/components/AuthLayout"
 import { useInitializeStores } from "@/hooks/useInitializeStores"
@@ -10,6 +10,8 @@ import { useSound } from "@/hooks/useSound"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { useAIChat } from "@/hooks/useAIChat"
+import { useObjectiveStore } from "@/stores/objective-store"
 import { 
   Send, 
   Settings, 
@@ -37,55 +39,44 @@ const SkillTree = dynamic(() => import("@/components/SkillTree"), {
   )
 })
 
-interface Message {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp?: Date
-}
 
 export default function ObjectivesPage() {
   // Initialiser les stores avec les données mock
   useInitializeStores()
   
   const { playNotification, playWhoosh } = useSound()
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "Salut ! Je suis ton coach IA 🎮 Dis-moi quel objectif tu veux atteindre et je vais créer un parcours gamifié personnalisé pour toi. Que veux-tu accomplir ?",
-      timestamp: new Date()
-    }
-  ])
+  const { currentObjective } = useObjectiveStore()
   const [inputMessage, setInputMessage] = useState("")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [activeView, setActiveView] = useState<"chat" | "tree">("chat")
-
-  const handleSendMessage = () => {
-    if (!inputMessage.trim()) return
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputMessage,
-      timestamp: new Date()
+  
+  // Utiliser le hook AI Chat pour la vraie intégration
+  const {
+    messages,
+    isLoading,
+    error,
+    sendMessage,
+    clearMessages
+  } = useAIChat({
+    objectiveType: currentObjective?.category || "general",
+    onObjectiveGenerated: (objective) => {
+      // L'agent a décidé de créer l'objectif
+      playNotification()
+      // Passer automatiquement à la vue arbre
+      setTimeout(() => setActiveView("tree"), 1500)
     }
+  })
 
-    setMessages([...messages, newMessage])
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return
+
+    const message = inputMessage.trim()
     setInputMessage("")
     playWhoosh() // Son d'envoi
-
-    // Simulation de réponse IA
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Super choix ! Je vais créer un parcours personnalisé pour t'aider à atteindre cet objectif. Voici ton arbre de progression avec des étapes gamifiées. Chaque étape débloquée te rapporte de l'XP ! 🎯",
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, aiResponse])
-      playNotification() // Son de notification pour la réponse
-    }, 1000)
+    
+    // Envoyer le message au vrai backend
+    await sendMessage(message)
+    playNotification() // Son de notification pour la réponse
   }
 
   return (
@@ -129,7 +120,7 @@ export default function ObjectivesPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold">Coach IA</h3>
-                    <p className="text-xs text-muted-foreground">En ligne • Prêt à t'aider</p>
+                    <p className="text-xs text-muted-foreground">{isLoading ? "En train de réfléchir..." : "En ligne • Prêt à t'aider"}</p>
                   </div>
                 </div>
                 <div className="hidden md:flex items-center gap-2">
@@ -143,9 +134,9 @@ export default function ObjectivesPage() {
 
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4 max-w-3xl mx-auto">
-                {messages.map((message) => (
+                {messages.map((message, index) => (
                   <div
-                    key={message.id}
+                    key={index}
                     className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div className={`max-w-[85%] md:max-w-[70%] ${
@@ -173,13 +164,15 @@ export default function ObjectivesPage() {
                   <Input
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                    placeholder="Décris ton objectif..."
+                    onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
+                    placeholder={isLoading ? "L'IA réfléchit..." : "Décris ton objectif en détail..."}
                     className="flex-1 bg-background/50"
+                    disabled={isLoading}
                   />
                   <GameButton 
                     onClick={handleSendMessage}
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-4 md:px-6"
+                    disabled={isLoading || !inputMessage.trim()}
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-4 md:px-6 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="h-4 w-4 md:mr-2" />
                     <span className="hidden md:inline">Envoyer</span>
