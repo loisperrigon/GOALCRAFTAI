@@ -22,10 +22,11 @@ export function useAIChat(options: UseAIChatOptions = {}) {
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const sendMessage = useCallback(async (content: string) => {
-    if (!isAuthenticated) {
-      setError("Vous devez être connecté pour utiliser le chat")
-      return
-    }
+    // Retirer la vérification d'authentification pour permettre l'accès anonyme
+    // if (!isAuthenticated) {
+    //   setError("Vous devez être connecté pour utiliser le chat")
+    //   return
+    // }
 
     setIsLoading(true)
     setError(null)
@@ -68,30 +69,70 @@ export function useAIChat(options: UseAIChatOptions = {}) {
           }
         )
       } else {
-        // Mode normal
+        // Mode normal avec webhook asynchrone
         const response = await aiClient.sendMessage(content, {
           conversationId: conversationId || undefined,
           objectiveType: options.objectiveType
         })
 
         setConversationId(response.conversationId)
-
-        // Ajouter la réponse de l'assistant
-        const assistantMessage: ChatMessage = {
-          role: "assistant",
-          content: response.response,
-          timestamp: new Date()
-        }
-        setMessages(prev => [...prev, assistantMessage])
-
-        // Si un objectif a été généré
-        if (response.objective) {
-          if (options.onObjectiveGenerated) {
-            options.onObjectiveGenerated(response.objective)
+        
+        // Si on a un messageId, écouter les mises à jour via SSE
+        if (response.messageId && response.status === "processing") {
+          // Afficher un message temporaire
+          const tempMessage: ChatMessage = {
+            role: "assistant",
+            content: "Je réfléchis à votre demande...",
+            timestamp: new Date()
+          }
+          setMessages(prev => [...prev, tempMessage])
+          
+          // Se connecter au SSE pour recevoir les réponses
+          const eventSource = new EventSource(
+            `/api/ai/sse?conversationId=${response.conversationId}&messageId=${response.messageId}`
+          )
+          
+          eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data)
+            
+            if (data.type === "message") {
+              // Mettre à jour le dernier message
+              setMessages(prev => {
+                const newMessages = [...prev]
+                const lastMessage = newMessages[newMessages.length - 1]
+                if (lastMessage && lastMessage.role === "assistant") {
+                  lastMessage.content = data.content
+                }
+                return newMessages
+              })
+              
+              // Si ce n'est plus en train de réfléchir
+              if (!data.isThinking) {
+                setIsLoading(false)
+              }
+            } else if (data.type === "complete") {
+              // Fermer la connexion SSE
+              eventSource.close()
+              setIsLoading(false)
+            } else if (data.type === "error") {
+              eventSource.close()
+              setError("Erreur lors de la réception de la réponse")
+              setIsLoading(false)
+            }
           }
           
-          // Mettre à jour le store si configuré
-          setCurrentObjective(response.objective)
+          eventSource.onerror = () => {
+            eventSource.close()
+            setIsLoading(false)
+          }
+        } else {
+          // Réponse directe (fallback ou erreur)
+          const assistantMessage: ChatMessage = {
+            role: "assistant",
+            content: response.response || response.message || "Message reçu",
+            timestamp: new Date()
+          }
+          setMessages(prev => [...prev, assistantMessage])
         }
 
         return response
@@ -111,7 +152,7 @@ export function useAIChat(options: UseAIChatOptions = {}) {
       setIsLoading(false)
       setStreamingContent("")
     }
-  }, [isAuthenticated, conversationId, options, setCurrentObjective, streamingContent])
+  }, [conversationId, options, setCurrentObjective, streamingContent])
 
   const clearMessages = useCallback(() => {
     setMessages([])

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-config"
 import clientPromise from "@/lib/mongodb"
 import { z } from "zod"
+import { checkRateLimit, getUniqueIdentifier } from "@/lib/rate-limiter"
 
 const chatSchema = z.object({
   message: z.string().min(1).max(10000), // Permet des descriptions détaillées
@@ -18,8 +19,18 @@ export async function POST(request: NextRequest) {
     // Vérifier l'authentification (optionnel - tout le monde peut tester)
     const session = await getServerSession(authOptions)
     
-    // Utiliser l'user authentifié OU un user anonyme
-    const userId = session?.user?.id || `anon-${request.headers.get("x-forwarded-for") || "unknown"}`
+    // Déterminer le type d'utilisateur
+    const userType = session?.user?.isPremium ? "premium" : session?.user ? "free" : "anon"
+    
+    // Vérifier le rate limiting
+    const rateLimitResponse = await checkRateLimit(request, userType)
+    if (rateLimitResponse) {
+      return rateLimitResponse // Retourne 429 si limité
+    }
+    
+    // Utiliser l'user authentifié OU un identifiant unique pour anonyme
+    const uniqueId = getUniqueIdentifier(request)
+    const userId = session?.user?.id || `anon-${uniqueId}`
     const userName = session?.user?.name || "Utilisateur"
     const userEmail = session?.user?.email || "anonymous@example.com"
 
@@ -76,94 +87,58 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    // Appeler le webhook n8n
-    console.log("[n8n] Appel webhook:", N8N_WEBHOOK_URL)
-    console.log("[n8n] Payload:", { userId, message, objectiveType })
+    // Générer un ID unique pour cette conversation
+    const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     
-    try {
-      const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
+    // Sauvegarder le message avec un statut "pending"
+    await db.collection("conversations").updateOne(
+      { _id: conversation._id },
+      {
+        $set: {
+          lastMessageId: messageId,
+          status: "waiting_for_ai"
+        }
+      }
+    )
+    
+    // Envoyer la requête à n8n de manière asynchrone
+    console.log("[n8n] Envoi webhook asynchrone:", N8N_WEBHOOK_URL)
+    console.log("[n8n] Message ID:", messageId)
+    
+    // Envoyer à n8n sans attendre la réponse
+    fetch(N8N_WEBHOOK_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          messageId: messageId, // ID unique pour retrouver la réponse
           userId: userId,
           message,
           conversationId: conversation._id.toString(),
           objectiveType: objectiveType || "general",
           messageCount: (conversation.messages?.length || 0) + 1,
+          callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/ai/webhook`, // URL de callback
           context: {
             userName: userName,
             userEmail: userEmail,
-            previousMessages: conversation.messages?.slice(-10) || [], // Plus de contexte
+            previousMessages: conversation.messages?.slice(-10) || [],
             isFirstMessage: !conversation.messages || conversation.messages.length === 0
           }
         })
+      }).then(response => {
+        console.log("[n8n] Webhook envoyé, status:", response.status)
+      }).catch(error => {
+        console.error("[n8n] Erreur envoi webhook:", error)
       })
-
-      if (!n8nResponse.ok) {
-        const errorText = await n8nResponse.text()
-        console.error("[n8n] HTTP Error:", n8nResponse.status, errorText)
-        throw new Error(`n8n HTTP ${n8nResponse.status}: ${errorText}`)
-      }
-
-      const responseText = await n8nResponse.text()
-      console.log("[n8n] Réponse brute:", responseText)
-      
-      let aiResponse
-      try {
-        aiResponse = JSON.parse(responseText)
-      } catch (parseError) {
-        console.error("[n8n] Erreur parsing JSON:", parseError)
-        throw new Error("Réponse n8n invalide")
-      }
-
-      // Sauvegarder la réponse IA
-      await db.collection("conversations").updateOne(
-        { _id: conversation._id },
-        {
-          $push: {
-            messages: {
-              role: "assistant",
-              content: aiResponse.response || aiResponse.message || "Je réfléchis à votre objectif...",
-              timestamp: new Date(),
-              metadata: aiResponse.metadata
-            }
-          }
-        }
-      )
-
-      // Si l'IA a généré un objectif (après discussion), le sauvegarder
-      // L'IA peut répondre plusieurs fois avant de générer l'objectif final
-      if (aiResponse.objective && aiResponse.action === "create_objective") {
-        await db.collection("objectives").insertOne({
-          userId: userId,
-          conversationId: conversation._id.toString(),
-          ...aiResponse.objective,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-      }
-
-      return NextResponse.json({
-        conversationId: conversation._id.toString(),
-        response: aiResponse.response || aiResponse.message,
-        objective: aiResponse.objective, // Peut être null si on est encore en discussion
-        action: aiResponse.action || "chat", // "chat" ou "create_objective"
-        metadata: aiResponse.metadata
-      })
-
-    } catch (error) {
-      console.error("[n8n] Erreur complète:", error)
-      console.error("[n8n] Stack:", error instanceof Error ? error.stack : "N/A")
-      
-      // Fallback response
-      return NextResponse.json({
-        conversationId: conversation._id.toString(),
-        response: "Je comprends votre objectif. Pour le moment, je vais vous proposer un parcours type. Le système d'IA sera bientôt disponible pour personnaliser complètement votre expérience !",
-        isFallback: true
-      })
-    }
+    
+    // Retourner immédiatement au frontend que le message est en cours de traitement
+    return NextResponse.json({
+      conversationId: conversation._id.toString(),
+      messageId: messageId,
+      status: "processing",
+      message: "Votre message a été envoyé à l'IA. Je réfléchis..."
+    })
 
   } catch (error) {
     console.error("Chat API error:", error)

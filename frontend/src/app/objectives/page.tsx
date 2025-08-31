@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import dynamic from "next/dynamic"
 import AuthLayout from "@/components/AuthLayout"
 import { useInitializeStores } from "@/hooks/useInitializeStores"
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAIChat } from "@/hooks/useAIChat"
 import { useObjectiveStore } from "@/stores/objective-store"
+import { motion, AnimatePresence } from "framer-motion"
 import { 
   Send, 
   Settings, 
@@ -21,7 +22,8 @@ import {
   Maximize2,
   Minimize2,
   Map,
-  Bot
+  Bot,
+  Loader2
 } from "lucide-react"
 
 // Import dynamique pour éviter les erreurs SSR avec React Flow
@@ -49,6 +51,7 @@ export default function ObjectivesPage() {
   const [inputMessage, setInputMessage] = useState("")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [activeView, setActiveView] = useState<"chat" | "tree">("chat")
+  const scrollRef = useRef<HTMLDivElement>(null)
   
   // Utiliser le hook AI Chat pour la vraie intégration
   const {
@@ -56,9 +59,11 @@ export default function ObjectivesPage() {
     isLoading,
     error,
     sendMessage,
-    clearMessages
+    clearMessages,
+    streamingContent
   } = useAIChat({
     objectiveType: currentObjective?.category || "general",
+    useStreaming: false, // Pour l'instant on garde le mode normal
     onObjectiveGenerated: (objective) => {
       // L'agent a décidé de créer l'objectif
       playNotification()
@@ -66,6 +71,13 @@ export default function ObjectivesPage() {
       setTimeout(() => setActiveView("tree"), 1500)
     }
   })
+  
+  // Auto-scroll quand de nouveaux messages arrivent
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages, isLoading])
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return
@@ -132,11 +144,16 @@ export default function ObjectivesPage() {
               
             </div>
 
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
               <div className="space-y-4 max-w-3xl mx-auto">
+                <AnimatePresence>
                 {messages.map((message, index) => (
-                  <div
+                  <motion.div
                     key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
                     className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div className={`max-w-[85%] md:max-w-[70%] ${
@@ -153,8 +170,33 @@ export default function ObjectivesPage() {
                         </p>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
+                
+                {/* Indicateur de réflexion de l'IA */}
+                {isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex justify-start"
+                  >
+                    <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4 max-w-[85%] md:max-w-[70%]">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
+                        <span className="text-sm text-muted-foreground animate-pulse">
+                          L'IA réfléchit à votre demande...
+                        </span>
+                      </div>
+                      <div className="flex gap-1 mt-2">
+                        <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+                </AnimatePresence>
               </div>
             </ScrollArea>
 

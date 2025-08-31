@@ -11,23 +11,23 @@ interface RateLimiterOptions {
 
 // Configurations par type d'utilisateur
 const LIMITS = {
-  // Utilisateurs anonymes : très limités
+  // Utilisateurs anonymes : très limités pour éviter les abus
   anon: {
-    maxRequests: 5,        // 5 requêtes
+    maxRequests: 3,        // 3 requêtes max
     interval: 60 * 1000,   // par minute
-    dailyLimit: 20         // max 20 par jour
+    dailyLimit: 5          // max 5 messages par jour (1 objectif de test)
   },
   // Utilisateurs connectés gratuits
   free: {
-    maxRequests: 20,       // 20 requêtes
+    maxRequests: 5,        // 5 requêtes
     interval: 60 * 1000,   // par minute
-    dailyLimit: 200        // max 200 par jour
+    dailyLimit: 20         // max 20 messages par jour (3-4 objectifs)
   },
   // Utilisateurs premium
   premium: {
-    maxRequests: 100,      // 100 requêtes
+    maxRequests: 10,       // 10 requêtes
     interval: 60 * 1000,   // par minute
-    dailyLimit: 10000      // max 10000 par jour
+    dailyLimit: 50         // max 50 messages par jour (8-10 objectifs)
   }
 }
 

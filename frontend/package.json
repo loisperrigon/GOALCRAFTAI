@@ -32,6 +32,7 @@
     "express": "^5.1.0",
     "framer-motion": "^12.23.12",
     "howler": "^2.2.4",
+    "lru-cache": "^11.1.0",
     "lucide-react": "^0.542.0",
     "mongodb": "^6.19.0",
     "mongoose": "^8.18.0",
