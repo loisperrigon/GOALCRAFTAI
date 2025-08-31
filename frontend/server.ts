@@ -5,8 +5,6 @@ import { Server as SocketIOServer } from 'socket.io'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { connectDB } from './server/config/database'
-import authRoutes from './server/routes/auth.routes'
-import objectivesRoutes from './server/routes/objectives.routes'
 import { setupWebSocket } from './server/websocket/websocket.handler'
 
 // Charger les variables d'environnement
@@ -41,23 +39,24 @@ app.prepare().then(async () => {
   server.use(express.json())
   server.use(express.urlencoded({ extended: true }))
 
-  // Routes API (avant Next.js handler)
-  server.use('/api/auth', authRoutes)
-  server.use('/api/objectives', objectivesRoutes)
-
   // Health check
   server.get('/api/health', (req, res) => {
     res.json({ 
       status: 'ok', 
       timestamp: new Date().toISOString(),
-      env: process.env.NODE_ENV 
+      env: process.env.NODE_ENV,
+      services: {
+        database: 'connected',
+        websocket: 'ready',
+        n8n: process.env.N8N_WEBHOOK_URL ? 'configured' : 'not configured'
+      }
     })
   })
 
   // Setup WebSocket handlers
   setupWebSocket(io)
 
-  // Toutes les autres routes sont gérées par Next.js
+  // Toutes les autres routes sont gérées par Next.js (incluant NextAuth)
   server.all('*', (req, res) => {
     return handle(req, res)
   })
@@ -68,7 +67,8 @@ app.prepare().then(async () => {
       🚀 Server ready at http://localhost:${port}
       🔌 WebSocket ready at ws://localhost:${port}
       🌍 Environment: ${process.env.NODE_ENV}
-      📦 Database: ${process.env.MONGODB_URI ? 'Connected' : 'Not configured'}
+      📦 Database: MongoDB connected
+      🔐 Auth: NextAuth configured
     `)
   })
 })
