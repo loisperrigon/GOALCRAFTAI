@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { guitarSkillNodes } from '@/data/guitarSkillData'
+import { useStreakStore } from './streak-store'
 
 // Interface pour les détails enrichis d'un node
 export interface NodeDetails {
@@ -69,6 +70,10 @@ const useSkillTreeStore = create<SkillTreeState>((set, get) => ({
       const node = state.nodes.find(n => n.id === nodeId)
       if (!node || !node.unlocked) return state
 
+      // Récupérer le multiplicateur de streak
+      const streakMultiplier = useStreakStore.getState().streakMultiplier
+      const xpWithBonus = Math.round((node?.xpReward || 0) * streakMultiplier)
+
       const updatedNodes = state.nodes.map(n => {
         if (n.id === nodeId) {
           return { ...n, completed: true }
@@ -89,8 +94,8 @@ const useSkillTreeStore = create<SkillTreeState>((set, get) => ({
         ...state,
         nodes: updatedNodes,
         completedNodes: [...state.completedNodes, nodeId],
-        userXP: state.userXP + (node?.xpReward || 0),
-        userLevel: Math.floor((state.userXP + (node?.xpReward || 0)) / 100) + 1
+        userXP: state.userXP + xpWithBonus,
+        userLevel: Math.floor((state.userXP + xpWithBonus) / 100) + 1
       }
     })
   },

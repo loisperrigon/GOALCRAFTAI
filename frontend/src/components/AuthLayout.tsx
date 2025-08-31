@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { SimpleStreak } from "@/components/SimpleStreak"
 import { 
   LayoutDashboard,
   Target,
@@ -78,24 +79,21 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       active: pathname === "/dashboard"
     },
     { 
-      href: "/objectives", 
-      label: "Mes Objectifs", 
-      icon: Target,
-      active: pathname === "/objectives"
-    },
-    { 
-      href: "/profile", 
-      label: "Mon Profil", 
-      icon: User,
-      active: pathname === "/profile"
-    },
-    { 
       href: "/profile?tab=achievements", 
       label: "Mes Badges", 
       icon: Award,
-      active: pathname === "/profile" && new URLSearchParams(window.location.search).get("tab") === "achievements"
+      active: pathname === "/profile" && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get("tab") === "achievements"
     }
   ]
+  
+  // Mock user data - à remplacer par vraies données
+  const currentUser = {
+    name: "Loïs Martin",
+    email: "lois@example.com",
+    avatar: null,
+    level: 12,
+    xp: 1250
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -106,7 +104,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         }`}>
           <div className="p-4 h-full flex flex-col">
             {/* Logo Section */}
-            <div className="mb-6">
+            <div className="mb-4">
               <div 
                 className={`flex items-center gap-2 cursor-pointer ${isSidebarCollapsed ? 'justify-center' : ''}`}
                 onClick={() => router.push("/")}
@@ -121,6 +119,35 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                 )}
               </div>
             </div>
+            
+            {/* User Profile Section */}
+            {!isSidebarCollapsed && (
+              <div 
+                className="mb-4 p-3 bg-purple-500/10 rounded-lg cursor-pointer hover:bg-purple-500/20 transition-colors"
+                onClick={() => router.push("/profile")}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">{currentUser.name}</p>
+                    <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Niveau {currentUser.level}</span>
+                  <span className="text-xs font-medium text-purple-400">{currentUser.xp} XP</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Streak Display */}
+            {!isSidebarCollapsed && (
+              <div className="mb-6 p-3 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+                <SimpleStreak />
+              </div>
+            )}
 
             <div className="flex items-center justify-between mb-4">
               {!isSidebarCollapsed && (
@@ -233,31 +260,16 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                   </Button>
                 </Card>
 
-                {/* User Profile Section */}
+                {/* Logout Button */}
                 <div className="mt-auto border-t border-border pt-4">
-                  <div className="flex items-center justify-between p-2 rounded-lg hover:bg-purple-500/5 cursor-pointer transition-colors"
-                       onClick={() => router.push("/profile")}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Jean Dupont</p>
-                        <p className="text-xs text-muted-foreground">jean.dupont@email.com</p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0 hover:bg-red-500/10"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        router.push("/auth")
-                      }}
-                    >
-                      <LogOut className="h-4 w-4 text-red-400" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start hover:bg-red-500/10 text-red-400"
+                    onClick={() => router.push("/auth")}
+                  >
+                    <LogOut className="h-4 w-4 mr-3" />
+                    Déconnexion
+                  </Button>
                 </div>
               </>
             )}

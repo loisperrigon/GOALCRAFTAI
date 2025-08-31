@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Menu, X, User, LayoutDashboard, Target } from "lucide-react"
+import SoundControl from "@/components/SoundControl"
 
 export default function Header() {
   const router = useRouter()
@@ -80,6 +81,12 @@ export default function Header() {
             <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
           )}
         </a>
+        
+        {/* Sound Controls */}
+        <div className="flex items-center gap-2">
+          <SoundControl />
+        </div>
+        
         {pathname === '/objectives' ? (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/30">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />

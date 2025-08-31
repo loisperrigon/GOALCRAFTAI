@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import useSkillTreeStore from '@/stores/skillTreeStore'
+import { useStreakStore } from '@/stores/streak-store'
 import { 
   Clock, 
   Target, 
@@ -63,6 +64,7 @@ interface ObjectiveDetailModalProps {
 
 export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: ObjectiveDetailModalProps) {
   const { completeNode, toggleMilestone, nodes } = useSkillTreeStore()
+  const { updateStreak, streakMultiplier } = useStreakStore()
   const [previousMilestones, setPreviousMilestones] = useState<boolean[]>([])
   
   // Récupérer les données actualisées depuis le store
@@ -319,10 +321,18 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
                   onClick={() => {
                     console.log('Marquer comme complété:', nodeData.id)
                     completeNode(nodeData.id)
+                    updateStreak() // Mise à jour du streak
                     onClose()
                   }}
                 >
-                  Marquer comme complété
+                  <div className="flex flex-col gap-1">
+                    <span>Marquer comme complété</span>
+                    {streakMultiplier > 1 && (
+                      <span className="text-xs text-yellow-300">
+                        +{Math.round(nodeData.xpReward * streakMultiplier)} XP (x{streakMultiplier} streak bonus!)
+                      </span>
+                    )}
+                  </div>
                 </Button>
               )}
               {!nodeData.unlocked && (

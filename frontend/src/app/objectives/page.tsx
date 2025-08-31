@@ -4,6 +4,8 @@ import { useState } from "react"
 import dynamic from "next/dynamic"
 import AuthLayout from "@/components/AuthLayout"
 import { Button } from "@/components/ui/button"
+import { GameButton } from "@/components/ui/game-button"
+import { useSound } from "@/hooks/useSound"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -42,6 +44,7 @@ interface Message {
 }
 
 export default function ObjectivesPage() {
+  const { playNotification, playWhoosh } = useSound()
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -66,6 +69,7 @@ export default function ObjectivesPage() {
 
     setMessages([...messages, newMessage])
     setInputMessage("")
+    playWhoosh() // Son d'envoi
 
     // Simulation de réponse IA
     setTimeout(() => {
@@ -76,6 +80,7 @@ export default function ObjectivesPage() {
         timestamp: new Date()
       }
       setMessages(prev => [...prev, aiResponse])
+      playNotification() // Son de notification pour la réponse
     }, 1000)
   }
 
@@ -133,6 +138,7 @@ export default function ObjectivesPage() {
                   </Button>
                 </div>
               </div>
+              
             </div>
 
             <ScrollArea className="flex-1 p-4">
@@ -171,13 +177,13 @@ export default function ObjectivesPage() {
                     placeholder="Décris ton objectif..."
                     className="flex-1 bg-background/50"
                   />
-                  <Button 
+                  <GameButton 
                     onClick={handleSendMessage}
                     className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-4 md:px-6"
                   >
                     <Send className="h-4 w-4 md:mr-2" />
                     <span className="hidden md:inline">Envoyer</span>
-                  </Button>
+                  </GameButton>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
                   <Badge 

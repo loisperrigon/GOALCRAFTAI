@@ -18,12 +18,15 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 import dagre from 'dagre'
 import useSkillTreeStore from '@/stores/skillTreeStore'
+import { useStreakStore } from '@/stores/streak-store'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Lock, CheckCircle2, Circle, Star, Zap, Trophy, RotateCcw, Save, Download, Layout, Move } from 'lucide-react'
 import ObjectiveDetailModal from '@/components/ObjectiveDetailModal'
 import Confetti from '@/components/Confetti'
 import FreeLimitBanner from '@/components/FreeLimitBanner'
+import { useSound } from '@/hooks/useSound'
+import { SimpleStreakNotification } from '@/components/SimpleStreakNotification'
 
 // Layout automatique avec dagre
 const dagreGraph = new dagre.graphlib.Graph()
@@ -63,6 +66,7 @@ const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => 
 // Custom Node Component
 const SkillNode = ({ data, selected }: NodeProps) => {
   const { completeNode, setActiveNode } = useSkillTreeStore()
+  const { playClick, playUnlock } = useSound()
   const node = data as any
 
   const getNodeStyle = () => {
@@ -93,6 +97,11 @@ const SkillNode = ({ data, selected }: NodeProps) => {
   }
 
   const handleClick = () => {
+    if (node.unlocked) {
+      playClick()
+    } else {
+      playUnlock() // Son différent si verrouillé
+    }
     setActiveNode(node.id)
     // Ouvrir la modal au lieu de confirmer directement
     const parentComponent = (window as any).__skillTreeComponent
@@ -153,6 +162,7 @@ const SkillNode = ({ data, selected }: NodeProps) => {
   )
 }
 
+// Définir nodeTypes en dehors du composant pour éviter les re-renders
 const nodeTypes = {
   skillNode: SkillNode,
 }
@@ -163,6 +173,7 @@ interface SkillTreeProps {
 
 export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const { nodes, loadMockData, loadNodeDetails, userXP, userLevel, completedNodes } = useSkillTreeStore()
+  const { playComplete, playLevelUp, playXpGain, playWhoosh } = useSound()
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [isInteractive, setIsInteractive] = useState(false)
@@ -173,6 +184,9 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [showConfetti, setShowConfetti] = useState(false)
   const previousCompletedRef = useRef<string[]>([])
+  const previousLevelRef = useRef(userLevel)
+  const [showStreakNotif, setShowStreakNotif] = useState(false)
+  const { currentStreak, checkStreak } = useStreakStore()
 
   // Exposer la fonction pour ouvrir la modal
   useEffect(() => {
@@ -196,17 +210,34 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
     }, 100)
     // Initialiser la référence des nodes complétés
     previousCompletedRef.current = completedNodes
-  }, [loadMockData, loadNodeDetails])
+    // Vérifier le streak au chargement
+    checkStreak()
+  }, [loadMockData, loadNodeDetails, checkStreak])
   
   // Détecter quand une étape est complétée
   useEffect(() => {
     if (previousCompletedRef.current.length > 0 && completedNodes.length > previousCompletedRef.current.length) {
       // Une nouvelle étape a été complétée !
       setShowConfetti(true)
-      setTimeout(() => setShowConfetti(false), 3500)
+      playComplete() // Son de complétion
+      playXpGain() // Son de gain d'XP
+      setShowStreakNotif(true) // Notification de streak
+      setTimeout(() => {
+        setShowConfetti(false)
+        setShowStreakNotif(false)
+      }, 3500)
     }
     previousCompletedRef.current = completedNodes
-  }, [completedNodes])
+  }, [completedNodes, playComplete, playXpGain])
+
+  // Détecter quand on monte de niveau
+  useEffect(() => {
+    if (previousLevelRef.current > 0 && userLevel > previousLevelRef.current) {
+      // Level up!
+      playLevelUp()
+    }
+    previousLevelRef.current = userLevel
+  }, [userLevel, playLevelUp])
 
   // Fonction pour appliquer le layout automatique
   const onLayout = useCallback(
@@ -371,24 +402,26 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
       {isFullscreen && (
         <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none">
           <div className="flex items-center justify-between">
-            <Card className="bg-card/90 backdrop-blur p-3 pointer-events-auto">
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground">Niveau</p>
-                  <p className="text-lg font-bold text-purple-400">{userLevel}</p>
+            <div className="flex gap-3">
+              <Card className="bg-card/90 backdrop-blur p-3 pointer-events-auto">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Niveau</p>
+                    <p className="text-lg font-bold text-purple-400">{userLevel}</p>
+                  </div>
+                  <div className="w-px h-8 bg-border" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">XP Total</p>
+                    <p className="text-lg font-bold text-blue-400">{userXP}</p>
+                  </div>
+                  <div className="w-px h-8 bg-border" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Progression</p>
+                    <p className="text-lg font-bold text-green-400">{Math.round(progression)}%</p>
+                  </div>
                 </div>
-                <div className="w-px h-8 bg-border" />
-                <div>
-                  <p className="text-xs text-muted-foreground">XP Total</p>
-                  <p className="text-lg font-bold text-blue-400">{userXP}</p>
-                </div>
-                <div className="w-px h-8 bg-border" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Progression</p>
-                  <p className="text-lg font-bold text-green-400">{Math.round(progression)}%</p>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
 
             <Card className="bg-card/90 backdrop-blur p-3 pointer-events-auto">
               <div className="flex items-center gap-3">
@@ -518,6 +551,12 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
       
       {/* Confetti animation */}
       <Confetti trigger={showConfetti} />
+      
+      {/* Streak Notifications */}
+      <SimpleStreakNotification 
+        show={showStreakNotif}
+        days={currentStreak}
+      />
     </div>
   )
 }
