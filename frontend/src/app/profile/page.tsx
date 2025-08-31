@@ -1,16 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Progress } from "@/components/ui/progress"
 import AuthLayout from "@/components/AuthLayout"
 import PremiumBadge from "@/components/PremiumBadge"
 import { useToast } from "@/hooks/useToast"
 import { useRouter } from "next/navigation"
+import { useUserStore } from "@/stores/user-store"
+import { useObjectiveStore } from "@/stores/objective-store"
+import { useStreakStore } from "@/stores/streak-store"
+import { mockObjectives } from "@/data/mockObjectives"
 import { 
   User,
   Mail,
@@ -31,13 +36,29 @@ import {
   Trash2,
   ChevronRight,
   Star,
-  Zap
+  Zap,
+  Flame,
+  Lock,
+  LayoutDashboard
 } from "lucide-react"
 
 export default function ProfilePage() {
   const { toast } = useToast()
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
+  
+  // Récupérer les données des stores
+  const { user, updateProfile } = useUserStore()
+  const { currentObjective } = useObjectiveStore()
+  const { currentStreak } = useStreakStore()
+  
+  // Les objectifs avec currentObjective mis à jour
+  const objectives = mockObjectives.map(obj => {
+    if (currentObjective && obj.id === currentObjective.id) {
+      return currentObjective
+    }
+    return obj
+  })
   
   // Récupérer le tab depuis l'URL
   const getInitialTab = () => {
@@ -51,13 +72,12 @@ export default function ProfilePage() {
   
   const [activeTab, setActiveTab] = useState<"profile" | "settings" | "achievements">(getInitialTab())
   
-  const [profile, setProfile] = useState({
-    name: "Jean Dupont",
-    email: "jean.dupont@example.com",
-    bio: "Passionné par l'apprentissage et le développement personnel. J'utilise GoalCraft pour transformer mes rêves en réalité !",
-    avatar: "",
-    joinDate: "Janvier 2024",
-    isPremium: false
+  // Profile local state pour l'édition
+  const [profileEdit, setProfileEdit] = useState({
+    name: user?.name || "Utilisateur",
+    email: user?.email || "user@example.com",
+    bio: user?.bio || "Nouvel utilisateur de GoalCraft. Prêt à transformer mes rêves en réalité !",
+    avatar: user?.avatar || ""
   })
 
   const [settings, setSettings] = useState({
@@ -67,29 +87,100 @@ export default function ProfilePage() {
     privacy: "public"
   })
 
+  // Calculer les stats réelles
   const stats = {
-    totalXP: 2460,
-    level: 3,
-    objectivesCompleted: 4,
-    totalObjectives: 7,
-    streak: 12,
-    badges: 8,
-    hoursInvested: 47
+    totalXP: user?.xp || 0,
+    level: user?.level || 1,
+    objectivesCompleted: objectives.filter(obj => obj.status === "completed").length,
+    totalObjectives: objectives.length,
+    streak: currentStreak,
+    badges: user?.badges?.length || 0,
+    achievements: user?.achievements?.length || 0
   }
 
+  // Achievements basés sur les vraies données
   const achievements = [
-    { id: 1, name: "Premier pas", description: "Créer votre premier objectif", icon: Target, color: "text-blue-400", earned: true },
-    { id: 2, name: "Semaine parfaite", description: "7 jours consécutifs", icon: Calendar, color: "text-green-400", earned: true },
-    { id: 3, name: "Finisseur", description: "Compléter un objectif", icon: Trophy, color: "text-yellow-400", earned: true },
-    { id: 4, name: "Série de feu", description: "30 jours consécutifs", icon: Zap, color: "text-orange-400", earned: false },
-    { id: 5, name: "Maître", description: "Atteindre niveau 10", icon: Crown, color: "text-purple-400", earned: false },
-    { id: 6, name: "Légende", description: "100 objectifs complétés", icon: Star, color: "text-indigo-400", earned: false }
+    { 
+      id: 1, 
+      name: "Premier pas", 
+      description: "Créer votre premier objectif", 
+      icon: Target, 
+      color: "text-blue-400", 
+      earned: objectives.length > 0 
+    },
+    { 
+      id: 2, 
+      name: "Semaine parfaite", 
+      description: "7 jours consécutifs", 
+      icon: Calendar, 
+      color: "text-green-400", 
+      earned: currentStreak >= 7 
+    },
+    { 
+      id: 3, 
+      name: "Finisseur", 
+      description: "Compléter un objectif", 
+      icon: Trophy, 
+      color: "text-yellow-400", 
+      earned: stats.objectivesCompleted > 0 
+    },
+    { 
+      id: 4, 
+      name: "Série de feu", 
+      description: "30 jours consécutifs", 
+      icon: Flame, 
+      color: "text-orange-400", 
+      earned: currentStreak >= 30 
+    },
+    { 
+      id: 5, 
+      name: "Apprenti", 
+      description: "Atteindre niveau 5", 
+      icon: Star, 
+      color: "text-purple-400", 
+      earned: stats.level >= 5 
+    },
+    { 
+      id: 6, 
+      name: "Maître", 
+      description: "Atteindre niveau 10", 
+      icon: Crown, 
+      color: "text-indigo-400", 
+      earned: stats.level >= 10 
+    },
+    { 
+      id: 7, 
+      name: "Collectionneur", 
+      description: "Gagner 10 badges", 
+      icon: Award, 
+      color: "text-pink-400", 
+      earned: stats.badges >= 10 
+    },
+    { 
+      id: 8, 
+      name: "Marathonien", 
+      description: "100 jours de série", 
+      icon: Zap, 
+      color: "text-cyan-400", 
+      earned: currentStreak >= 100 
+    }
   ]
 
   const handleSave = () => {
+    // Mettre à jour le store user
+    updateProfile({
+      name: profileEdit.name,
+      email: profileEdit.email,
+      bio: profileEdit.bio,
+      avatar: profileEdit.avatar
+    })
     setIsEditing(false)
     toast.success("Profil mis à jour", "Vos modifications ont été enregistrées")
   }
+
+  // Calculer la progression vers le prochain niveau
+  const currentLevelXP = stats.totalXP % 1000
+  const xpToNextLevel = 1000 - currentLevelXP
 
   return (
     <AuthLayout>
@@ -98,7 +189,7 @@ export default function ProfilePage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold">Mon Profil</h1>
-            <PremiumBadge isPremium={profile.isPremium} />
+            <PremiumBadge isPremium={user?.isPremium || false} />
           </div>
 
           {/* Tabs */}
@@ -117,17 +208,17 @@ export default function ProfilePage() {
               )}
             </button>
             <button
-              onClick={() => setActiveTab("achievements")}
-              className={`px-4 py-2 font-medium transition-colors relative ${
-                activeTab === "achievements" 
-                  ? "text-foreground" 
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              onClick={() => {
+                toast({
+                  title: "Bientôt disponible",
+                  description: "Les accomplissements seront disponibles dans la prochaine version"
+                })
+              }}
+              className="px-4 py-2 font-medium transition-colors relative text-muted-foreground/50 cursor-not-allowed flex items-center gap-2"
+              disabled
             >
+              <Lock className="h-3 w-3" />
               Accomplissements
-              {activeTab === "achievements" && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
-              )}
             </button>
             <button
               onClick={() => setActiveTab("settings")}
@@ -166,7 +257,16 @@ export default function ProfilePage() {
                     <div className="flex gap-2">
                       <Button 
                         variant="outline"
-                        onClick={() => setIsEditing(false)}
+                        onClick={() => {
+                          setIsEditing(false)
+                          // Restaurer les valeurs originales
+                          setProfileEdit({
+                            name: user?.name || "Utilisateur",
+                            email: user?.email || "user@example.com",
+                            bio: user?.bio || "",
+                            avatar: user?.avatar || ""
+                          })
+                        }}
                       >
                         Annuler
                       </Button>
@@ -210,8 +310,8 @@ export default function ProfilePage() {
                       <Label htmlFor="name">Nom</Label>
                       <Input
                         id="name"
-                        value={profile.name}
-                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                        value={profileEdit.name}
+                        onChange={(e) => setProfileEdit({ ...profileEdit, name: e.target.value })}
                         disabled={!isEditing}
                         className="mt-1"
                       />
@@ -221,8 +321,8 @@ export default function ProfilePage() {
                       <Input
                         id="email"
                         type="email"
-                        value={profile.email}
-                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                        value={profileEdit.email}
+                        onChange={(e) => setProfileEdit({ ...profileEdit, email: e.target.value })}
                         disabled={!isEditing}
                         className="mt-1"
                       />
@@ -233,68 +333,65 @@ export default function ProfilePage() {
                     <Label htmlFor="bio">Bio</Label>
                     <Textarea
                       id="bio"
-                      value={profile.bio}
-                      onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                      value={profileEdit.bio}
+                      onChange={(e) => setProfileEdit({ ...profileEdit, bio: e.target.value })}
                       disabled={!isEditing}
                       className="mt-1"
                       rows={4}
+                      placeholder="Parlez-nous de vous et de vos objectifs..."
                     />
                   </div>
 
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      <span>Membre depuis {profile.joinDate}</span>
+                      <span>Membre depuis {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "aujourd'hui"}</span>
                     </div>
                   </div>
                 </div>
               </Card>
+
             </div>
 
-            {/* Right Column - Stats */}
+            {/* Right Column - Quick Actions */}
             <div className="space-y-6">
-              <Card className="p-6 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/20">
-                <h3 className="font-semibold mb-4">Statistiques</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+              {/* Quick Stats */}
+              <Card className="p-6">
+                <h3 className="font-semibold mb-4">Aperçu rapide</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 bg-purple-500/10 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <Trophy className="h-4 w-4 text-purple-400" />
-                      <span className="text-sm">Niveau</span>
+                      <Crown className="h-4 w-4 text-purple-400" />
+                      <span className="text-sm">Statut</span>
                     </div>
-                    <span className="font-bold text-xl">{stats.level}</span>
+                    <Badge className={user?.isPremium ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white" : "bg-gray-500/20"}>
+                      {user?.isPremium ? "Premium" : "Gratuit"}
+                    </Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-yellow-400" />
-                      <span className="text-sm">XP Total</span>
+                      <Calendar className="h-4 w-4 text-blue-400" />
+                      <span className="text-sm">Membre depuis</span>
                     </div>
-                    <span className="font-bold">{stats.totalXP}</span>
+                    <span className="text-sm font-medium">
+                      {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Aujourd'hui"}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Target className="h-4 w-4 text-blue-400" />
-                      <span className="text-sm">Objectifs</span>
+                      <Mail className="h-4 w-4 text-green-400" />
+                      <span className="text-sm">Email vérifié</span>
                     </div>
-                    <span className="font-bold">{stats.objectivesCompleted}/{stats.totalObjectives}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-green-400" />
-                      <span className="text-sm">Série actuelle</span>
-                    </div>
-                    <span className="font-bold">{stats.streak} jours</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Award className="h-4 w-4 text-orange-400" />
-                      <span className="text-sm">Badges</span>
-                    </div>
-                    <span className="font-bold">{stats.badges}</span>
+                    <Badge className="bg-green-500/20 text-green-400">
+                      <Shield className="h-3 w-3 mr-1" />
+                      Vérifié
+                    </Badge>
                   </div>
                 </div>
               </Card>
 
-              {!profile.isPremium && (
+
+              {!user?.isPremium && (
                 <Card className="p-6 border-purple-500/30 bg-purple-500/5">
                   <div className="flex items-center gap-2 mb-3">
                     <Crown className="h-5 w-5 text-yellow-400" />
@@ -305,54 +402,35 @@ export default function ProfilePage() {
                   </p>
                   <Button 
                     className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
-                    onClick={() => window.location.href = "/pricing"}
+                    onClick={() => router.push("/pricing")}
                   >
                     Voir les offres
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 </Card>
               )}
+              
+              {/* Déconnexion */}
+              <Card className="p-6">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start border-border hover:bg-destructive/10"
+                  onClick={() => {
+                    toast({
+                      title: "Déconnexion",
+                      description: "Vous avez été déconnecté avec succès"
+                    })
+                    router.push("/auth")
+                  }}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Se déconnecter
+                </Button>
+              </Card>
             </div>
           </div>
         )}
 
-        {/* Achievements Tab */}
-        {activeTab === "achievements" && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {achievements.map((achievement) => {
-              const Icon = achievement.icon
-              return (
-                <Card 
-                  key={achievement.id}
-                  className={`p-6 ${
-                    achievement.earned 
-                      ? "border-purple-500/30 bg-purple-500/5" 
-                      : "opacity-50"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                      achievement.earned
-                        ? "bg-gradient-to-br from-purple-500/20 to-blue-500/20"
-                        : "bg-gray-500/10"
-                    }`}>
-                      <Icon className={`h-6 w-6 ${achievement.earned ? achievement.color : "text-gray-400"}`} />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">{achievement.name}</h3>
-                      <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                      {achievement.earned && (
-                        <Badge className="mt-2 bg-green-500/20 text-green-400 border-green-500/30">
-                          Débloqué
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
-        )}
 
         {/* Settings Tab */}
         {activeTab === "settings" && (
@@ -410,52 +488,17 @@ export default function ProfilePage() {
                 </div>
               </Card>
 
-              {/* Privacy */}
-              <Card className="p-6">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Confidentialité
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="privacy">Visibilité du profil</Label>
-                    <select
-                      id="privacy"
-                      value={settings.privacy}
-                      onChange={(e) => setSettings({ ...settings, privacy: e.target.value })}
-                      className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg"
-                    >
-                      <option value="public">Public</option>
-                      <option value="friends">Amis seulement</option>
-                      <option value="private">Privé</option>
-                    </select>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Account Actions */}
+              {/* Account Actions - Zone dangereuse */}
               <Card className="p-6 border-red-500/30">
                 <h3 className="font-semibold mb-4 text-red-400">Zone dangereuse</h3>
                 <div className="space-y-3">
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start border-orange-500/30 hover:bg-orange-500/10 text-orange-400"
-                    onClick={() => {
-                      // Simuler la déconnexion
-                      toast({
-                        title: "Déconnexion",
-                        description: "Vous avez été déconnecté avec succès"
-                      })
-                      router.push("/auth")
-                    }}
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Se déconnecter
-                  </Button>
                   <Button variant="outline" className="w-full justify-start border-red-500/30 hover:bg-red-500/10 text-red-400">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Supprimer le compte
                   </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Cette action est irréversible. Toutes vos données seront supprimées.
+                  </p>
                 </div>
               </Card>
             </div>
@@ -470,9 +513,6 @@ export default function ProfilePage() {
                 <div className="space-y-3">
                   <Button variant="outline" className="w-full justify-start">
                     Changer le mot de passe
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    Authentification à deux facteurs
                   </Button>
                 </div>
               </Card>
