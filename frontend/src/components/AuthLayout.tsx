@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import AuthModal from "@/components/AuthModal"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -43,7 +44,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const { user } = useUserStore()
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const { user, isAuthenticated } = useUserStore()
   const { fetchObjective, currentObjective } = useObjectiveStore()
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>('1')
   const [isLoadingObjective, setIsLoadingObjective] = useState(false)
@@ -165,7 +167,13 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                       size="sm"
                       variant="ghost"
                       className="h-7 px-2 hover:bg-purple-500/10"
-                      onClick={() => router.push("/objectives")}
+                      onClick={() => {
+                        if (!isAuthenticated) {
+                          setShowAuthModal(true)
+                        } else {
+                          router.push("/objectives")
+                        }
+                      }}
                     >
                       <Plus className="h-3 w-3" />
                     </Button>
@@ -305,8 +313,13 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                       variant="ghost"
                       className="h-7 px-2 hover:bg-purple-500/10"
                       onClick={() => {
-                        router.push("/objectives")
-                        setIsMobileSidebarOpen(false)
+                        if (!isAuthenticated) {
+                          setShowAuthModal(true)
+                          setIsMobileSidebarOpen(false)
+                        } else {
+                          router.push("/objectives")
+                          setIsMobileSidebarOpen(false)
+                        }
                       }}
                     >
                       <Plus className="h-3 w-3" />
@@ -412,6 +425,16 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           {children}
         </main>
       </div>
+      
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false)
+          window.location.reload()
+        }}
+      />
     </div>
   )
 }

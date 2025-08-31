@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import AuthModal from "@/components/AuthModal"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -46,11 +47,19 @@ export default function ProfilePage() {
   const { toast } = useToast()
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   
   // Récupérer les données des stores
-  const { user, updateProfile } = useUserStore()
+  const { user, updateProfile, isAuthenticated } = useUserStore()
   const { currentObjective } = useObjectiveStore()
   const { currentStreak } = useStreakStore()
+  
+  // Vérifier si l'utilisateur est connecté
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true)
+    }
+  }, [isAuthenticated])
   
   // Les objectifs avec currentObjective mis à jour
   const objectives = mockObjectives.map(obj => {
@@ -181,6 +190,49 @@ export default function ProfilePage() {
   // Calculer la progression vers le prochain niveau
   const currentLevelXP = stats.totalXP % 1000
   const xpToNextLevel = 1000 - currentLevelXP
+
+  // Si non connecté, afficher la modal d'authentification
+  if (!isAuthenticated) {
+    return (
+      <>
+        <AuthLayout>
+          <div className="container mx-auto px-4 py-8">
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+              <div className="text-center">
+                <User className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <h2 className="text-2xl font-bold mb-2">Connexion requise</h2>
+                <p className="text-muted-foreground mb-6">
+                  Vous devez être connecté pour accéder à votre profil
+                </p>
+                <Button 
+                  onClick={() => setShowAuthModal(true)}
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                >
+                  Se connecter
+                </Button>
+              </div>
+            </div>
+          </div>
+        </AuthLayout>
+        <AuthModal 
+          isOpen={showAuthModal}
+          onClose={() => {
+            setShowAuthModal(false)
+            // Si toujours pas connecté, retourner au dashboard
+            if (!isAuthenticated) {
+              router.push("/dashboard")
+            }
+          }}
+          onSuccess={() => {
+            setShowAuthModal(false)
+            // Rafraîchir la page après connexion
+            window.location.reload()
+          }}
+          redirectTo="/profile"
+        />
+      </>
+    )
+  }
 
   return (
     <AuthLayout>
