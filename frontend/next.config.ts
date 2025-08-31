@@ -1,7 +1,24 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    instrumentationHook: true, // Active l'instrumentation pour initialiser MongoDB au démarrage
+  },
+  webpack: (config, { isServer }) => {
+    // Exclure MongoDB et ses dépendances du bundle client
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        net: false,
+        dns: false,
+        tls: false,
+        fs: false,
+        child_process: false,
+        mongodb: false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

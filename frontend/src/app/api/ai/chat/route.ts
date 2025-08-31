@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-config"
-import clientPromise from "@/lib/mongodb"
+import { getDatabase } from "@/lib/db-init"
 import { z } from "zod"
 import { checkRateLimit, getUniqueIdentifier } from "@/lib/rate-limiter"
 
@@ -47,9 +47,8 @@ export async function POST(request: NextRequest) {
 
     const { message, conversationId, objectiveType } = validationResult.data
 
-    // Connexion à MongoDB
-    const client = await clientPromise
-    const db = client.db()
+    // Récupérer la base de données avec vérification de connexion
+    const db = await getDatabase()
     
     let conversation
     if (conversationId) {
@@ -61,15 +60,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!conversation) {
-      // Créer une nouvelle conversation
-      const result = await db.collection("conversations").insertOne({
+      // Créer une nouvelle conversation avec un ID string
+      const newConversationId = `conv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      await db.collection("conversations").insertOne({
+        _id: newConversationId, // Utiliser un string ID au lieu d'ObjectId
         userId: userId,
         objectiveType: objectiveType || "general",
         messages: [],
         createdAt: new Date(),
         updatedAt: new Date()
       })
-      conversation = { _id: result.insertedId, messages: [] }
+      conversation = { _id: newConversationId, messages: [] }
     }
 
     // Ajouter le message utilisateur
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
     // Envoyer la requête à n8n de manière asynchrone
     console.log("[n8n] Envoi webhook asynchrone:", N8N_WEBHOOK_URL)
     console.log("[n8n] Message ID:", messageId)
+    console.log("[n8n] Conversation ID:", conversation._id)
     
     // Envoyer à n8n sans attendre la réponse
     fetch(N8N_WEBHOOK_URL, {
@@ -115,7 +117,7 @@ export async function POST(request: NextRequest) {
           messageId: messageId, // ID unique pour retrouver la réponse
           userId: userId,
           message,
-          conversationId: conversation._id.toString(),
+          conversationId: conversation._id, // Déjà un string maintenant
           objectiveType: objectiveType || "general",
           messageCount: (conversation.messages?.length || 0) + 1,
           callbackUrl: `${process.env.SERVER_URL || process.env.NEXT_PUBLIC_APP_URL}/api/ai/webhook`, // URL de callback pour n8n
@@ -134,7 +136,7 @@ export async function POST(request: NextRequest) {
     
     // Retourner immédiatement au frontend que le message est en cours de traitement
     return NextResponse.json({
-      conversationId: conversation._id.toString(),
+      conversationId: conversation._id, // Déjà un string
       messageId: messageId,
       status: "processing",
       message: "Votre message a été envoyé à l'IA. Je réfléchis..."

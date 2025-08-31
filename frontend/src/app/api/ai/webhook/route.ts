@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
+import { getDatabase } from "@/lib/db-init"
 import { z } from "zod"
 
 // Schema pour valider la réponse de n8n
@@ -30,13 +30,10 @@ export async function POST(request: NextRequest) {
     
     const rawBody = await request.json()
     
-    // Debug : afficher ce que n8n envoie réellement
-    console.log("[Webhook] Body brut reçu de n8n:", JSON.stringify(rawBody, null, 2))
-    
-    // n8n envoie la structure avec action/parameters, on extrait le body
+    // n8n peut envoyer soit directement les données, soit dans une structure action/parameters
     let body = rawBody
     if (rawBody.action === "WEBHOOK" && rawBody.parameters?.body) {
-      console.log("[Webhook] Extraction du body depuis parameters.body")
+      console.log("[Webhook] Format n8n détecté, extraction du body depuis parameters.body")
       body = rawBody.parameters.body
     }
     
@@ -65,9 +62,8 @@ export async function POST(request: NextRequest) {
     console.log("[Webhook] Type:", type)
     console.log("[Webhook] Is Final:", isFinal)
     
-    // Connexion à MongoDB
-    const client = await clientPromise
-    const db = client.db()
+    // Récupérer la base de données avec vérification de connexion
+    const db = await getDatabase()
     
     // Retrouver la conversation
     const conversation = await db.collection("conversations").findOne({
@@ -190,8 +186,7 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    const client = await clientPromise
-    const db = client.db()
+    const db = await getDatabase()
     
     const conversation = await db.collection("conversations").findOne({
       _id: conversationId,
