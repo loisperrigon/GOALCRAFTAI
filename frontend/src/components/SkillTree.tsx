@@ -17,7 +17,8 @@ import ReactFlow, {
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import dagre from 'dagre'
-import useSkillTreeStore from '@/stores/skillTreeStore'
+import { useObjectivesStore } from '@/stores/objectives-store'
+import { useUserStore } from '@/stores/user-store'
 import { useStreakStore } from '@/stores/streak-store'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -172,7 +173,22 @@ interface SkillTreeProps {
 }
 
 export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
-  const { nodes, loadMockData, loadNodeDetails, userXP, userLevel, completedNodes } = useSkillTreeStore()
+  // Récupérer l'objectif actif depuis objectives-store
+  const { 
+    getActiveObjective,
+    completeNode: completeObjectiveNode,
+    activeObjectiveId
+  } = useObjectivesStore()
+  
+  const { user, addXP } = useUserStore()
+  const activeObjective = getActiveObjective()
+  
+  // Extraire les données de l'objectif actif
+  const nodes = activeObjective?.skillTree?.nodes || []
+  const completedNodes = nodes.filter(n => n.completed).map(n => n.id)
+  const userXP = user?.xp || 0
+  const userLevel = user?.level || 1
+  
   const { playComplete, playLevelUp, playXpGain, playWhoosh } = useSound()
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
@@ -201,18 +217,13 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
     }
   }, [])
 
-  // Charger les données mock et les détails au montage
+  // Initialiser au montage
   useEffect(() => {
-    loadMockData()
-    // Charger les détails après un court délai pour s'assurer que les nodes sont chargés
-    setTimeout(() => {
-      loadNodeDetails()
-    }, 100)
     // Initialiser la référence des nodes complétés
     previousCompletedRef.current = completedNodes
     // Vérifier le streak au chargement
     checkStreak()
-  }, [loadMockData, loadNodeDetails, checkStreak])
+  }, [checkStreak])
   
   // Détecter quand une étape est complétée
   useEffect(() => {
@@ -362,10 +373,10 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
 
   const handleReset = () => {
     console.log('🔄 Réinitialisation de la progression...')
-    if (window.confirm('Êtes-vous sûr de vouloir réinitialiser votre progression ?')) {
-      const resetStore = useSkillTreeStore.getState().resetProgress
-      resetStore()
-      console.log('Progression réinitialisée')
+    if (window.confirm('Êtes-vous sûr de vouloir réinitialiser votre progression pour cet objectif ?')) {
+      // Pour l'instant on ne peut pas reset un objectif spécifique
+      // TODO: Ajouter une fonction resetObjective dans objectives-store
+      console.log('Fonction de reset à implémenter')
     }
   }
 
@@ -386,6 +397,30 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const isPremium = false // À connecter avec votre système d'auth
   const maxStepsInFree = 10
   const currentSteps = nodes.filter(n => n.category === 'main').length
+  
+  // Si pas d'objectif actif, afficher un message
+  if (!activeObjective) {
+    return (
+      <div className="h-full w-full flex items-center justify-center">
+        <Card className="p-8 text-center max-w-md">
+          <Target className="h-12 w-12 text-purple-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold mb-2">Aucun objectif sélectionné</h3>
+          <p className="text-muted-foreground mb-4">
+            Sélectionnez un objectif dans la sidebar ou créez-en un nouveau pour commencer
+          </p>
+          <Button 
+            className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+            onClick={() => {
+              // TODO: Ouvrir le dialog de création d'objectif
+              console.log('Créer un nouvel objectif')
+            }}
+          >
+            Créer un objectif
+          </Button>
+        </Card>
+      </div>
+    )
+  }
   
   return (
     <div ref={containerRef} className="h-full w-full relative bg-background">

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import dynamic from "next/dynamic"
 import AuthLayout from "@/components/AuthLayout"
+import { useInitializeStores } from "@/hooks/useInitializeStores"
 import { Button } from "@/components/ui/button"
 import { GameButton } from "@/components/ui/game-button"
 import { useSound } from "@/hooks/useSound"
@@ -44,6 +45,9 @@ interface Message {
 }
 
 export default function ObjectivesPage() {
+  // Initialiser les stores avec les données mock
+  useInitializeStores()
+  
   const { playNotification, playWhoosh } = useSound()
   const [messages, setMessages] = useState<Message[]>([
     {

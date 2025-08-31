@@ -31,7 +31,8 @@
       "Bash(npx shadcn@canary add dialog:*)",
       "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\create\\CreatePageClient.tsx\")",
       "Bash(git checkout:*)",
-      "Bash(npx shadcn@canary add:*)"
+      "Bash(npx shadcn@canary add:*)",
+      "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\stores\\skillTreeStore.ts\")"
     ],
     "deny": [],
     "ask": []

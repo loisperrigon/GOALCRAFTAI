@@ -497,13 +497,19 @@ PORT=3001
   - Panel de contrôles en fullscreen
   - Sauvegarde/export/reset fonctionnel
 - ✅ **Modal de détail enrichie** : Outils recommandés, conseils, jalons de progression
+- ✅ **Système de sons** : Sons synthétiques générés avec Web Audio API pour les interactions
+- ✅ **Streak system minimaliste** : Badge flamme avec compteur intégré dans la sidebar
 - ✅ **Animations gaming** : Confetti, pulse, hover effects, transitions
 
 #### Données et État
-- ✅ **Store Zustand sophistiqué** : 
-  - Gestion nodes, progression, XP, niveaux
-  - Actions complexes (complétion, déblocage, reset)
-  - Toggle milestones, état persistant
+- ✅ **Architecture de stores centralisée** : 
+  - **user-store** : Authentification, profil, XP, niveaux, badges, achievements
+  - **objectives-store** : Objectifs avec skill trees intégrés, milestones, progression
+  - **settings-store** : Paramètres globaux (thème, notifications, sons, langue)
+  - **streak-store** : Gestion des streaks avec multiplicateurs XP
+- ✅ **Migration complète de skillTreeStore** : Toute la logique intégrée dans objectives-store
+- ✅ **Données mock avec useInitializeStores** : Auto-login et chargement des objectifs au démarrage
+- ✅ **Persistence localStorage** : État conservé entre sessions
 - ✅ **Données d'exemple réalistes** : 
   - Parcours guitare complet avec détails enrichis
   - Outils (Yousician, YouTube), conseils pratiques

@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { SimpleStreak } from "@/components/SimpleStreak"
+import { useObjectivesStore } from "@/stores/objectives-store"
+import { useUserStore } from "@/stores/user-store"
 import { 
   LayoutDashboard,
   Target,
@@ -41,34 +43,9 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const pathname = usePathname()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
-  // Objectifs simulés - En production, viendraient d'un store global ou API
-  const [objectives] = useState<Objective[]>([
-    {
-      id: "1",
-      title: "Apprendre la guitare",
-      progress: 35,
-      xp: 420,
-      totalSteps: 12,
-      completedSteps: 4,
-      isActive: true
-    },
-    {
-      id: "2",
-      title: "Perdre 10kg",
-      progress: 53,
-      xp: 630,
-      totalSteps: 15,
-      completedSteps: 8
-    },
-    {
-      id: "3",
-      title: "Méditer quotidiennement",
-      progress: 43,
-      xp: 210,
-      totalSteps: 7,
-      completedSteps: 3
-    }
-  ])
+  // Récupérer les données depuis les stores
+  const { objectives, setActiveObjective, activeObjectiveId } = useObjectivesStore()
+  const { user } = useUserStore()
 
   const navigationItems = [
     { 
@@ -79,13 +56,13 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     }
   ]
   
-  // Mock user data - à remplacer par vraies données
-  const currentUser = {
-    name: "Loïs Martin",
-    email: "lois@example.com",
+  // Utiliser les données du store user
+  const currentUser = user || {
+    name: "Utilisateur",
+    email: "user@example.com",
     avatar: null,
-    level: 12,
-    xp: 1250
+    level: 1,
+    xp: 0
   }
 
   return (
@@ -178,11 +155,14 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                         <Card 
                           key={objective.id}
                           className={`p-3 cursor-pointer transition-all hover:shadow-md ${
-                            objective.isActive 
+                            objective.id === activeObjectiveId 
                               ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10" 
                               : "border-border hover:border-purple-500/20 hover:bg-purple-500/5"
                           }`}
-                          onClick={() => router.push("/objectives")}
+                          onClick={() => {
+                            setActiveObjective(objective.id)
+                            router.push("/objectives")
+                          }}
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
@@ -192,7 +172,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                               </p>
                             </div>
                             <Badge className="bg-purple-500/20 text-purple-300 text-xs px-1.5 py-0">
-                              {objective.progress}%
+                              {Math.round(objective.progress)}%
                             </Badge>
                           </div>
                           <div className="w-full bg-background/50 rounded-full h-1">
@@ -204,7 +184,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                           <div className="flex items-center gap-2 mt-1.5">
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Trophy className="h-3 w-3" />
-                              {objective.xp} XP
+                              {objective.xpReward} XP
                             </span>
                           </div>
                         </Card>

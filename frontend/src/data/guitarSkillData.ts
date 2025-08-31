@@ -1,4 +1,4 @@
-import { SkillNode } from '@/stores/skillTreeStore'
+import { SkillNode } from '@/stores/objectives-store'
 
 // Tous les nodes de l'arbre de compétences guitare avec leurs détails complets
 export const guitarSkillNodes: SkillNode[] = [
