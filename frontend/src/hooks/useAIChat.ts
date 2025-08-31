@@ -106,10 +106,37 @@ export function useAIChat(options: UseAIChatOptions = {}) {
                 return newMessages
               })
               
-              // Si ce n'est plus en train de réfléchir
-              if (!data.isThinking) {
+              // Si l'IA a fini (elle décide)
+              if (data.isFinal) {
+                eventSource.close()
                 setIsLoading(false)
               }
+              // Sinon elle continue de réfléchir
+            } else if (data.type === "objective_created" && data.objective) {
+              // Un objectif a été créé !
+              console.log("[SSE] Objectif reçu:", data.objective)
+              
+              // Mettre à jour le dernier message
+              setMessages(prev => {
+                const newMessages = [...prev]
+                const lastMessage = newMessages[newMessages.length - 1]
+                if (lastMessage && lastMessage.role === "assistant") {
+                  lastMessage.content = data.message || "Objectif créé avec succès !"
+                }
+                return newMessages
+              })
+              
+              // Mettre à jour le store avec le nouvel objectif
+              setCurrentObjective(data.objective)
+              
+              // Appeler le callback si fourni
+              if (options.onObjectiveGenerated) {
+                options.onObjectiveGenerated(data.objective)
+              }
+              
+              // Fermer la connexion
+              eventSource.close()
+              setIsLoading(false)
             } else if (data.type === "complete") {
               // Fermer la connexion SSE
               eventSource.close()

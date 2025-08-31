@@ -6,11 +6,20 @@ import { z } from "zod"
 const webhookSchema = z.object({
   messageId: z.string(),
   conversationId: z.string(),
-  response: z.string(),
-  action: z.enum(["chat", "create_objective"]).optional(),
-  objective: z.any().optional(),
-  isThinking: z.boolean().optional(),
-  thinkingMessage: z.string().optional(),
+  type: z.enum(["message", "objective"]), // Seulement 2 types
+  content: z.string().optional(), // Contenu du message (si type = "message")
+  isFinal: z.boolean().optional().default(false), // L'IA décide si c'est son dernier message
+  objective: z.object({ // Structure de l'objectif (si type = "objective")
+    title: z.string(),
+    description: z.string(),
+    category: z.string(),
+    difficulty: z.string(),
+    estimatedDuration: z.string(),
+    skillTree: z.object({
+      nodes: z.array(z.any()),
+      edges: z.array(z.any())
+    })
+  }).optional(),
   metadata: z.any().optional()
 })
 
@@ -19,14 +28,25 @@ export async function POST(request: NextRequest) {
   try {
     console.log("[Webhook] Réception d'une réponse n8n")
     
-    const body = await request.json()
+    const rawBody = await request.json()
+    
+    // Debug : afficher ce que n8n envoie réellement
+    console.log("[Webhook] Body brut reçu de n8n:", JSON.stringify(rawBody, null, 2))
+    
+    // n8n envoie la structure avec action/parameters, on extrait le body
+    let body = rawBody
+    if (rawBody.action === "WEBHOOK" && rawBody.parameters?.body) {
+      console.log("[Webhook] Extraction du body depuis parameters.body")
+      body = rawBody.parameters.body
+    }
     
     // Validation
     const validationResult = webhookSchema.safeParse(body)
     if (!validationResult.success) {
       console.error("[Webhook] Données invalides:", validationResult.error)
+      console.error("[Webhook] Body extrait:", JSON.stringify(body, null, 2))
       return NextResponse.json(
-        { error: "Données invalides" },
+        { error: "Données invalides", details: validationResult.error.flatten() },
         { status: 400 }
       )
     }
@@ -34,16 +54,16 @@ export async function POST(request: NextRequest) {
     const { 
       messageId, 
       conversationId, 
-      response, 
-      action, 
+      type,
+      content,
       objective, 
-      isThinking,
+      isFinal,
       metadata 
     } = validationResult.data
     
     console.log("[Webhook] Message ID:", messageId)
-    console.log("[Webhook] Action:", action)
-    console.log("[Webhook] Is Thinking:", isThinking)
+    console.log("[Webhook] Type:", type)
+    console.log("[Webhook] Is Final:", isFinal)
     
     // Connexion à MongoDB
     const client = await clientPromise
@@ -63,47 +83,88 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Ajouter la réponse de l'IA à la conversation
-    await db.collection("conversations").updateOne(
-      { _id: conversationId },
-      {
-        $push: {
-          messages: {
-            role: "assistant",
-            content: response,
-            timestamp: new Date(),
-            metadata: metadata,
-            isThinking: isThinking
+    // Traiter selon le type
+    if (type === "message") {
+      // Ajouter un message de chat
+      await db.collection("conversations").updateOne(
+        { _id: conversationId },
+        {
+          $push: {
+            messages: {
+              role: "assistant",
+              content: content || "Message reçu",
+              timestamp: new Date(),
+              metadata: metadata,
+              isFinal: isFinal
+            }
+          },
+          $set: {
+            status: isFinal ? "completed" : "ai_responding",
+            lastResponse: content,
+            lastResponseAt: new Date()
           }
-        },
-        $set: {
-          status: isThinking ? "ai_thinking" : "completed",
-          lastResponse: response,
-          lastResponseAt: new Date()
         }
-      }
-    )
-    
-    // Si un objectif a été généré, le sauvegarder
-    if (objective && action === "create_objective") {
+      )
+    } else if (type === "objective" && objective) {
+      // Sauvegarder l'objectif généré
       console.log("[Webhook] Sauvegarde de l'objectif généré")
       
-      await db.collection("objectives").insertOne({
+      const newObjective = await db.collection("objectives").insertOne({
         userId: conversation.userId,
         conversationId: conversationId,
         ...objective,
         createdAt: new Date(),
         updatedAt: new Date()
       })
+      
+      // Ajouter un message pour informer que l'objectif est créé
+      await db.collection("conversations").updateOne(
+        { _id: conversationId },
+        {
+          $push: {
+            messages: {
+              role: "assistant",
+              content: `J'ai créé votre parcours personnalisé "${objective.title}" avec ${objective.skillTree.nodes.length} étapes !`,
+              timestamp: new Date(),
+              hasObjective: true,
+              objectiveId: newObjective.insertedId
+            }
+          },
+          $set: {
+            status: "completed",
+            hasObjective: true,
+            objectiveId: newObjective.insertedId,
+            lastResponseAt: new Date()
+          }
+        }
+      )
     }
     
-    // Notifier les clients connectés via Server-Sent Events ou WebSocket
-    // (sera implémenté avec SSE dans la prochaine étape)
+    // Notifier les clients connectés via SSE
+    // Import dynamique pour éviter les problèmes de dépendances circulaires
+    const { notifySSEClients } = await import("../sse/route")
+    
+    // Envoyer la notification appropriée
+    if (type === "objective" && objective) {
+      notifySSEClients(conversationId, messageId, {
+        type: "objective_created",
+        objective: objective,
+        message: `Objectif "${objective.title}" créé avec succès !`
+      })
+    } else if (type === "message") {
+      notifySSEClients(conversationId, messageId, {
+        type: "message",
+        content: content,
+        isFinal: isFinal, // L'IA décide si elle a fini
+        isThinking: !isFinal // Si pas final, elle réfléchit encore
+      })
+    }
     
     return NextResponse.json({
       success: true,
       message: "Réponse traitée avec succès",
-      isThinking: isThinking
+      type: type,
+      hasObjective: type === "objective"
     })
     
   } catch (error) {

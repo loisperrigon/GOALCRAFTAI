@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
           conversationId: conversation._id.toString(),
           objectiveType: objectiveType || "general",
           messageCount: (conversation.messages?.length || 0) + 1,
-          callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/ai/webhook`, // URL de callback
+          callbackUrl: `${process.env.SERVER_URL || process.env.NEXT_PUBLIC_APP_URL}/api/ai/webhook`, // URL de callback pour n8n
           context: {
             userName: userName,
             userEmail: userEmail,
