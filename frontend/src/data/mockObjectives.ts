@@ -1,20 +1,27 @@
-import { Objective } from "@/stores/objectives-store";
+import { Objective } from "@/stores/objective-store";
 import { guitarSkillNodes } from "./guitarSkillData";
+import { fitnessSkillNodes } from "./fitnessSkillData";
+import { startupSkillNodes } from "./startupSkillData";
+import { englishObjective } from "./englishObjective";
 
-// Convertir les nodes de guitare existants pour le nouveau format
-const guitarSkillTree = {
-  nodes: guitarSkillNodes.map((node) => ({
+// Fonction helper pour créer les skill trees
+const createSkillTree = (nodes: any[]) => ({
+  nodes: nodes.map((node) => ({
     ...node,
     position: node.position || { x: 0, y: 0 },
   })),
-  edges: guitarSkillNodes.flatMap((node) =>
+  edges: nodes.flatMap((node) =>
     node.dependencies.map((dep) => ({
       id: `${dep}-${node.id}`,
       source: dep,
       target: node.id,
     }))
   ),
-};
+});
+
+const guitarSkillTree = createSkillTree(guitarSkillNodes);
+const fitnessSkillTree = createSkillTree(fitnessSkillNodes);
+const startupSkillTree = createSkillTree(startupSkillNodes);
 
 export const mockObjectives: Objective[] = [
   {
@@ -23,16 +30,24 @@ export const mockObjectives: Objective[] = [
     description: "Maîtriser les bases de la guitare acoustique en 3 mois",
     category: "learning",
     status: "active",
-    progress: 35,
-    xpReward: 500,
+    progress: 25, // 3 étapes sur 12 complétées
+    xpReward: 445, // Total XP possible
+    xpEarned: 60, // XP déjà gagné
     difficulty: "medium",
     createdAt: new Date("2024-01-15"),
     updatedAt: new Date(),
-    totalSteps: guitarSkillNodes.length,
+    totalSteps: 12,
     completedSteps: 3,
     aiGenerated: true,
     userPrompt: "Je veux apprendre à jouer de la guitare",
     skillTree: guitarSkillTree,
+    metadata: {
+      estimatedDuration: "3 mois",
+      nextMilestone: "Jouer votre première chanson",
+      category: "Musique & Arts",
+      tags: ["musique", "guitare", "créativité"],
+      weeklyHours: 7
+    },
     milestones: [
       {
         id: "m1",
@@ -61,17 +76,28 @@ export const mockObjectives: Objective[] = [
   {
     id: "2",
     title: "Remise en forme",
-    description: "Perdre 10kg et gagner en endurance",
+    description: "Perdre 10kg et gagner en endurance en 3 mois",
     category: "health",
     status: "active",
-    progress: 60,
-    xpReward: 400,
+    progress: 18, // 2 étapes sur 11
+    xpReward: 365, // Total XP possible
+    xpEarned: 35, // XP déjà gagné
     difficulty: "hard",
     createdAt: new Date("2024-02-01"),
     updatedAt: new Date(),
-    totalSteps: 12,
-    completedSteps: 7,
-    aiGenerated: false,
+    totalSteps: 11,
+    completedSteps: 2,
+    aiGenerated: true,
+    userPrompt: "Je veux perdre 10kg et être en meilleure forme",
+    skillTree: fitnessSkillTree,
+    metadata: {
+      estimatedDuration: "3 mois",
+      nextMilestone: "Premier entraînement",
+      category: "Santé & Fitness",
+      tags: ["fitness", "santé", "nutrition"],
+      weeklyHours: 10,
+      caloriesGoal: -500
+    },
     milestones: [
       {
         id: "m4",
@@ -99,19 +125,29 @@ export const mockObjectives: Objective[] = [
   },
   {
     id: "3",
-    title: "Projet entrepreneurial",
-    description: "Lancer ma première application SaaS",
+    title: "Lancer ma startup",
+    description: "Créer et lancer une application SaaS de A à Z",
     category: "professional",
     status: "active",
-    progress: 15,
-    xpReward: 1000,
+    progress: 8, // 1 étape sur 13
+    xpReward: 450, // Total XP possible
+    xpEarned: 20, // XP déjà gagné
     difficulty: "expert",
     createdAt: new Date("2024-03-01"),
     updatedAt: new Date(),
-    totalSteps: 20,
-    completedSteps: 3,
+    totalSteps: 13,
+    completedSteps: 1,
     aiGenerated: true,
-    userPrompt: "Je veux créer une startup",
+    userPrompt: "Je veux créer une startup SaaS",
+    skillTree: startupSkillTree,
+    metadata: {
+      estimatedDuration: "6 mois",
+      nextMilestone: "Proposition de valeur définie",
+      category: "Business & Entrepreneuriat",
+      tags: ["startup", "saas", "business"],
+      weeklyHours: 20,
+      investmentNeeded: "10000€"
+    },
     milestones: [
       {
         id: "m7",
@@ -136,4 +172,5 @@ export const mockObjectives: Objective[] = [
       },
     ],
   },
+  englishObjective, // Ajouter l'objectif anglais directement
 ];

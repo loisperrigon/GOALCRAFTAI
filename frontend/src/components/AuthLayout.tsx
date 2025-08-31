@@ -44,8 +44,9 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const pathname = usePathname()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const { user } = useUserStore()
-  const { setActiveObjective } = useObjectiveStore()
+  const { fetchObjective, currentObjective } = useObjectiveStore()
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>('1')
+  const [isLoadingObjective, setIsLoadingObjective] = useState(false)
   
   // Les objectifs viennent de la liste mockée (plus tard: API endpoint /api/objectives)
   const objectives = mockObjectives
@@ -68,13 +69,14 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     xp: 0
   }
 
-  const handleObjectiveClick = (objectiveId: string) => {
+  const handleObjectiveClick = async (objectiveId: string) => {
     setSelectedObjectiveId(objectiveId)
-    // Charger l'objectif dans le store (plus tard: API call)
-    const selectedObj = objectives.find(o => o.id === objectiveId)
-    if (selectedObj) {
-      setActiveObjective(selectedObj)
-    }
+    setIsLoadingObjective(true)
+    
+    // Simuler l'appel API pour charger l'objectif
+    await fetchObjective(objectiveId)
+    
+    setIsLoadingObjective(false)
     router.push("/objectives")
   }
 
@@ -167,13 +169,18 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                       {objectives.map((objective) => (
                         <Card 
                           key={objective.id}
-                          className={`p-3 cursor-pointer transition-all hover:shadow-md ${
+                          className={`p-3 cursor-pointer transition-all hover:shadow-md relative ${
                             objective.id === selectedObjectiveId 
                               ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10" 
                               : "border-border hover:border-purple-500/20 hover:bg-purple-500/5"
-                          }`}
-                          onClick={() => handleObjectiveClick(objective.id)}
+                          } ${isLoadingObjective && objective.id === selectedObjectiveId ? "opacity-60" : ""}`}
+                          onClick={() => !isLoadingObjective && handleObjectiveClick(objective.id)}
                         >
+                          {isLoadingObjective && objective.id === selectedObjectiveId && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-lg">
+                              <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                            </div>
+                          )}
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
                               <h4 className="font-medium text-xs line-clamp-1">{objective.title}</h4>

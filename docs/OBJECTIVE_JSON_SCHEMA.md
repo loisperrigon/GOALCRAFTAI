@@ -16,14 +16,28 @@ Cette documentation définit la structure JSON attendue pour créer un parcours 
 
 ```typescript
 interface ObjectiveResponse {
-  objective: {
-    title: string              // Titre principal de l'objectif
-    description: string         // Description motivante
-    category: string           // Catégorie (music, fitness, dev, business, etc.)
-    totalEstimatedTime: string // Temps total estimé
-    difficulty: string         // Niveau global (Débutant, Intermédiaire, Avancé)
+  id: string                    // Identifiant unique de l'objectif
+  title: string                 // Titre principal de l'objectif
+  description: string           // Description motivante
+  category: 'personal' | 'professional' | 'health' | 'learning' | 'creative' | 'social' | 'financial' | 'other'
+  status: 'active' | 'completed' | 'paused' | 'abandoned'
+  progress: number              // Pourcentage de progression (0-100)
+  xpReward: number              // Total XP possible pour cet objectif
+  xpEarned?: number             // XP déjà gagné
+  difficulty: 'easy' | 'medium' | 'hard' | 'expert'
+  createdAt?: Date
+  updatedAt?: Date
+  completedAt?: Date
+  totalSteps: number            // Nombre total d'étapes
+  completedSteps: number        // Nombre d'étapes complétées
+  aiGenerated?: boolean         // Si généré par l'IA
+  userPrompt?: string           // Prompt original de l'utilisateur
+  milestones: Milestone[]       // Jalons principaux de l'objectif
+  skillTree: {
+    nodes: SkillNode[]          // Array des étapes détaillées
+    edges: Edge[]               // Connexions entre les nodes
   }
-  nodes: SkillNode[]          // Array des étapes
+  metadata?: ObjectiveMetadata  // Métadonnées enrichies
 }
 
 interface SkillNode {
@@ -68,12 +82,91 @@ interface Tool {
 }
 
 interface Milestone {
+  id: string                 // Identifiant unique du milestone
   title: string              // Titre du jalon (max 50 caractères)
+  description?: string       // Description détaillée optionnelle
   completed: boolean         // Toujours false au départ
+  completedAt?: Date         // Date de complétion
+  order: number              // Ordre d'affichage (1, 2, 3...)
+}
+
+interface Edge {
+  id: string                 // Identifiant unique de la connexion
+  source: string             // ID du node source
+  target: string             // ID du node cible
+}
+
+interface ObjectiveMetadata {
+  estimatedDuration?: string     // Durée totale estimée ("3 mois", "6 semaines")
+  nextMilestone?: string        // Prochain jalon à atteindre
+  category?: string             // Catégorie détaillée ("Musique & Arts")
+  tags?: string[]               // Tags pour recherche et filtrage
+  weeklyHours?: number          // Heures par semaine recommandées
+  caloriesGoal?: number         // Pour objectifs fitness
+  investmentNeeded?: string     // Budget nécessaire
+  prerequisites?: string[]      // Prérequis avant de commencer
+  targetAudience?: string       // Public cible
+  [key: string]: any           // Champs personnalisés selon le domaine
 }
 ```
 
-## 🎮 Exemple complet d'un node
+## 🎮 Exemple complet d'un objectif
+
+```json
+{
+  "id": "obj-guitar-2024",
+  "title": "Apprendre la guitare",
+  "description": "Maîtriser les bases de la guitare acoustique en 3 mois",
+  "category": "learning",
+  "status": "active",
+  "progress": 25,
+  "xpReward": 445,
+  "xpEarned": 60,
+  "difficulty": "medium",
+  "totalSteps": 12,
+  "completedSteps": 3,
+  "aiGenerated": true,
+  "userPrompt": "Je veux apprendre à jouer de la guitare",
+  "metadata": {
+    "estimatedDuration": "3 mois",
+    "nextMilestone": "Jouer votre première chanson",
+    "category": "Musique & Arts",
+    "tags": ["musique", "guitare", "créativité", "instrument"],
+    "weeklyHours": 7,
+    "prerequisites": ["Avoir une guitare", "30min par jour disponible"],
+    "targetAudience": "Débutants complets"
+  },
+  "milestones": [
+    {
+      "id": "m1",
+      "title": "Premiers accords maîtrisés",
+      "description": "Apprendre Do, Ré, Mi, Sol, La",
+      "completed": true,
+      "completedAt": "2024-02-01T10:00:00Z",
+      "order": 1
+    },
+    {
+      "id": "m2",
+      "title": "Première chanson complète",
+      "description": "Jouer une chanson simple du début à la fin",
+      "completed": false,
+      "order": 2
+    }
+  ],
+  "skillTree": {
+    "nodes": [/* Voir exemple de node ci-dessous */],
+    "edges": [
+      {
+        "id": "edge-1",
+        "source": "holding_guitar",
+        "target": "basic_chords"
+      }
+    ]
+  }
+}
+```
+
+## 📦 Exemple d'un node dans le skillTree
 
 ```json
 {
@@ -157,28 +250,86 @@ interface Milestone {
 ## 🎯 Prompt pour l'IA
 
 ```markdown
-Tu dois créer un parcours d'apprentissage gamifié pour : [OBJECTIF_UTILISATEUR]
+Tu es un expert en gamification et développement personnel. Crée un parcours d'apprentissage complet et motivant.
 
-Génère un JSON avec :
-- 12-20 nodes progressifs
-- 3-4 nodes bonus optionnels
-- 1-2 challenges difficiles
-- 1 node final épique (boss final)
+OBJECTIF : [OBJECTIF_UTILISATEUR]
 
-Pour chaque node, inclus :
-1. Des détails pratiques et motivants
-2. Des ressources réelles et accessibles
-3. Des milestones mesurables
-4. Des conseils avec emojis motivants
-5. Une progression logique et réaliste
+Génère EXACTEMENT cette structure JSON (format englishSkillData) :
 
-Structure l'arbre pour que :
-- Les premiers nodes soient accessibles (unlocked: true)
-- Chaque niveau débloque progressivement
-- Les chemins alternatifs soient possibles
-- La difficulté augmente graduellement
+{
+  "objective": {
+    "id": "learn-[domaine]-[niveau]",
+    "title": "🚀 [Titre inspirant avec emoji]",
+    "description": "[Description complète de ce que l'utilisateur va accomplir]",
+    "category": "learning", // ou health, professional, personal, creative, social, financial
+    "difficulty": "medium", // easy, medium, hard, expert
+    "totalXP": 2000, // Somme totale des XP de tous les nodes
+    "estimatedDuration": "3-6 mois",
+    "hoursPerWeek": "5-10 heures",
+    "prerequisites": "Aucun - adapté aux débutants", // ou liste des prérequis
+    "finalReward": "Capacité à [accomplissement final concret]",
+    "motivation": "Phrase inspirante personnalisée qui motive !",
+    "progress": 0,
+    "totalSteps": 18, // Nombre total de nodes
+    "completedSteps": 0
+  },
+  "milestones": [
+    {
+      "id": "milestone-1",
+      "title": "🌱 [Premier palier]",
+      "description": "[Ce qui sera accompli à ce stade]",
+      "order": 1
+    },
+    // 3-5 milestones qui marquent les grandes étapes
+  ],
+  "skillTree": {
+    "nodes": [
+      {
+        "id": "unique-node-id",
+        "title": "🎯 Titre avec emoji",
+        "description": "Description claire de l'étape",
+        "xp": 50, // 10-300 selon difficulté
+        "difficulty": "easy", // easy, medium, hard, expert
+        "category": "core", // core (principal), bonus (optionnel), challenge (défi)
+        "estimatedTime": "1 semaine",
+        "dependencies": [], // IDs des nodes prérequis (vide pour le premier)
+        "unlocked": true, // true si pas de dependencies
+        "completed": false, // Toujours false au départ
+        "position": { "x": 100, "y": 50 }, // Position visuelle
+        "resources": [
+          "https://exemple.com/ressource1",
+          "https://youtube.com/watch?v=xxx"
+        ],
+        "practiceSteps": [
+          "Action concrète 1 à faire",
+          "Action concrète 2 mesurable",
+          "Action concrète 3 avec objectif clair"
+        ],
+        "tips": "💡 Conseil pratique avec emoji pour réussir cette étape !"
+      },
+      // Total : 15-20 nodes
+      // - 12-15 nodes "core" (parcours principal)
+      // - 2-3 nodes "bonus" (optionnels pour approfondir)
+      // - 1-2 nodes "challenge" (défis ultimes)
+    ],
+    "edges": [
+      { "from": "node-source", "to": "node-target" },
+      // Créer une connexion pour chaque dependency
+    ]
+  }
+}
 
-Retourne UNIQUEMENT le JSON valide, sans commentaires.
+RÈGLES CRITIQUES :
+1. Structure EXACTE avec objective, milestones, skillTree
+2. Champs obligatoires dans objective : totalXP, estimatedDuration, hoursPerWeek, prerequisites, finalReward, motivation
+3. Nodes avec practiceSteps (3 actions concrètes) et tips (conseil avec emoji)
+4. Position des nodes pour créer un arbre visuel cohérent (x: 100-600, y: 50-550)
+5. Resources avec vraies URLs fonctionnelles
+6. XP proportionnel : easy(10-75), medium(100-175), hard(200-250), expert(300+)
+7. Premier node TOUJOURS avec dependencies: [] et unlocked: true
+8. Edges : créer un edge pour chaque dependency (from: source, to: target)
+
+RETOURNE UNIQUEMENT LE JSON VALIDE, sans commentaires.
 ```
 
 ## ✅ Checklist de validation
@@ -227,6 +378,47 @@ L'IA doit adapter la structure selon :
 - **Niveau initial** : Débutant complet, faux débutant, intermédiaire
 - **Objectif** : Loisir, professionnel, compétition
 - **Contraintes** : Temps disponible, budget, matériel nécessaire
+
+## 🌐 Architecture API
+
+### Endpoints principaux
+
+```typescript
+// Liste des objectifs de l'utilisateur
+GET /api/objectives
+Response: Objective[] (sans skillTree complet, juste les métadonnées)
+
+// Détail d'un objectif avec son skillTree
+GET /api/objectives/:id
+Response: Objective (avec skillTree complet)
+
+// Créer un nouvel objectif via IA
+POST /api/objectives/generate
+Body: { prompt: string, category?: string, difficulty?: string }
+Response: Objective
+
+// Mettre à jour la progression
+PATCH /api/objectives/:id/nodes/:nodeId/complete
+Response: { xpEarned: number, newLevel?: number, unlockedNodes: string[] }
+
+// Compléter un milestone
+PATCH /api/objectives/:id/milestones/:milestoneId/complete
+Response: { completed: boolean }
+```
+
+### Flow de données
+
+1. **Liste des objectifs** : La sidebar charge uniquement les métadonnées
+2. **Sélection d'objectif** : Click → fetch détail complet avec skillTree
+3. **Progression** : Mise à jour en temps réel via WebSocket ou polling
+4. **Génération IA** : Stream de la réponse pour feedback immédiat
+
+### Optimisations
+
+- **Lazy loading** : Ne charger le skillTree que quand nécessaire
+- **Cache** : Mettre en cache les objectifs consultés récemment
+- **Pagination** : Pour les utilisateurs avec beaucoup d'objectifs
+- **Compression** : Les skillTrees peuvent être volumineux, utiliser gzip
 
 ---
 

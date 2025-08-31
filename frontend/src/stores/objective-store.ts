@@ -63,7 +63,8 @@ export interface Objective {
   category: 'personal' | 'professional' | 'health' | 'learning' | 'creative' | 'social' | 'financial' | 'other'
   status: 'active' | 'completed' | 'paused' | 'abandoned'
   progress: number // 0-100
-  xpReward: number
+  xpReward: number // Total XP possible
+  xpEarned?: number // XP déjà gagné
   difficulty: 'easy' | 'medium' | 'hard' | 'expert'
   createdAt?: Date
   updatedAt?: Date
@@ -74,6 +75,16 @@ export interface Objective {
   aiGenerated?: boolean
   userPrompt?: string
   skillTree?: SkillTree
+  metadata?: {
+    estimatedDuration?: string
+    nextMilestone?: string
+    category?: string
+    tags?: string[]
+    weeklyHours?: number
+    caloriesGoal?: number
+    investmentNeeded?: string
+    [key: string]: any
+  }
 }
 
 interface ObjectiveState {
@@ -209,12 +220,24 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
     set({ isLoading: true })
     
     // Simulation d'un appel API
+    console.log(`🔄 Fetching objective ${id} from API...`)
+    
+    // Simuler un délai réseau
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    // Pour l'instant, on récupère depuis les mock data
     // Plus tard: const response = await fetch(`/api/objectives/${id}`)
-    await new Promise(resolve => setTimeout(resolve, 500))
+    // const objective = await response.json()
     
-    // Pour l'instant on retourne mock data
-    // Plus tard: const objective = await response.json()
+    const { mockObjectives } = await import('@/data/mockObjectives')
+    const objective = mockObjectives.find(obj => obj.id === id)
     
-    set({ isLoading: false })
+    if (objective) {
+      console.log(`✅ Objective loaded:`, objective.title)
+      set({ currentObjective: objective, isLoading: false })
+    } else {
+      console.error(`❌ Objective ${id} not found`)
+      set({ isLoading: false })
+    }
   }
 }))
