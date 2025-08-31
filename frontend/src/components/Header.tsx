@@ -43,7 +43,7 @@ export default function Header() {
         </button>
       <nav className="hidden md:flex items-center gap-8">
         <a 
-          href="#" 
+          href="/how-it-works" 
           className={`relative transition-colors ${
             pathname === '/how-it-works' 
               ? 'text-foreground font-medium' 
@@ -137,7 +137,7 @@ export default function Header() {
 
         <nav className="flex flex-col p-4 space-y-2">
           <a 
-            href="#"
+            href="/how-it-works"
             onClick={() => setIsMobileMenuOpen(false)}
             className={`px-4 py-3 rounded-lg transition-colors ${
               pathname === '/how-it-works'
