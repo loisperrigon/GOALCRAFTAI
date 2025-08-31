@@ -7,9 +7,17 @@ interface ChatMessage {
 interface ChatResponse {
   conversationId: string
   response: string
-  objective?: any
+  objective?: any  // Optionnel - peut être null pendant la discussion
+  action?: "chat" | "create_objective"  // Type d'action de l'IA
   metadata?: any
   isFallback?: boolean
+}
+
+interface ChatRequest {
+  message: string
+  conversationId?: string
+  objectiveType?: string
+  action?: "chat" | "generate_objective"
 }
 
 class AIClient {
@@ -20,6 +28,7 @@ class AIClient {
     options?: {
       conversationId?: string
       objectiveType?: string
+      action?: "chat" | "generate_objective"
     }
   ): Promise<ChatResponse> {
     const response = await fetch(`${this.baseUrl}/chat`, {
@@ -121,4 +130,4 @@ class AIClient {
 }
 
 export const aiClient = new AIClient()
-export type { ChatMessage, ChatResponse }
+export type { ChatMessage, ChatResponse, ChatRequest }

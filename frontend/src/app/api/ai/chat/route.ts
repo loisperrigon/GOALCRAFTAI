@@ -5,9 +5,10 @@ import clientPromise from "@/lib/mongodb"
 import { z } from "zod"
 
 const chatSchema = z.object({
-  message: z.string().min(1).max(2000),
+  message: z.string().min(1).max(10000), // Permet des descriptions détaillées
   conversationId: z.string().optional(),
-  objectiveType: z.string().optional()
+  objectiveType: z.string().optional(),
+  action: z.enum(["chat", "generate_objective"]).optional().default("chat")
 })
 
 const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || "https://n8n.larefonte.store/webhook/333e2809-84c9-4bf7-bc9b-3c5c7aaceb49"
@@ -88,10 +89,12 @@ export async function POST(request: NextRequest) {
           message,
           conversationId: conversation._id.toString(),
           objectiveType: objectiveType || "general",
+          messageCount: (conversation.messages?.length || 0) + 1,
           context: {
             userName: session.user.name,
             userEmail: session.user.email,
-            previousMessages: conversation.messages?.slice(-5) || []
+            previousMessages: conversation.messages?.slice(-10) || [], // Plus de contexte
+            isFirstMessage: !conversation.messages || conversation.messages.length === 0
           }
         })
       })
@@ -118,8 +121,9 @@ export async function POST(request: NextRequest) {
         }
       )
 
-      // Si c'est un objectif généré, le sauvegarder
-      if (aiResponse.objective) {
+      // Si l'IA a généré un objectif (après discussion), le sauvegarder
+      // L'IA peut répondre plusieurs fois avant de générer l'objectif final
+      if (aiResponse.objective && aiResponse.action === "create_objective") {
         await db.collection("objectives").insertOne({
           userId: session.user.id,
           conversationId: conversation._id.toString(),
@@ -132,7 +136,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         conversationId: conversation._id.toString(),
         response: aiResponse.response || aiResponse.message,
-        objective: aiResponse.objective,
+        objective: aiResponse.objective, // Peut être null si on est encore en discussion
+        action: aiResponse.action || "chat", // "chat" ou "create_objective"
         metadata: aiResponse.metadata
       })
 
