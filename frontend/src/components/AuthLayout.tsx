@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import AuthModal from "@/components/AuthModal"
+import PricingModal from "@/components/PricingModal"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -45,6 +46,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const pathname = usePathname()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showPricingModal, setShowPricingModal] = useState(false)
   const { user, isAuthenticated } = useUserStore()
   const { fetchObjective, currentObjective } = useObjectiveStore()
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>('1')
@@ -226,22 +228,24 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                 </div>
 
                 {/* Premium CTA */}
-                <Card className="p-3 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30 mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Crown className="h-4 w-4 text-yellow-400" />
-                    <span className="text-sm font-semibold">Passer Premium</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Débloquez l'IA illimitée et toutes les fonctionnalités
-                  </p>
-                  <Button 
-                    size="sm"
-                    className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
-                    onClick={() => router.push("/pricing")}
-                  >
-                    Voir les offres
-                  </Button>
-                </Card>
+                {!user?.isPremium && (
+                  <Card className="p-3 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30 mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Crown className="h-4 w-4 text-yellow-400" />
+                      <span className="text-sm font-semibold">Passer Premium</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Débloquez l'IA illimitée et toutes les fonctionnalités
+                    </p>
+                    <Button 
+                      size="sm"
+                      className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                      onClick={() => setShowPricingModal(true)}
+                    >
+                      Voir les offres
+                    </Button>
+                  </Card>
+                )}
 
               </>
           </div>
@@ -365,25 +369,27 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                 </div>
 
                 {/* Mobile Premium CTA */}
-                <Card className="p-3 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30 mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Crown className="h-4 w-4 text-yellow-400" />
-                    <span className="text-sm font-semibold">Passer Premium</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Débloquez l'IA illimitée
-                  </p>
-                  <Button 
-                    size="sm"
-                    className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
-                    onClick={() => {
-                      router.push("/pricing")
-                      setIsMobileSidebarOpen(false)
-                    }}
-                  >
-                    Voir les offres
-                  </Button>
-                </Card>
+                {!user?.isPremium && (
+                  <Card className="p-3 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30 mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Crown className="h-4 w-4 text-yellow-400" />
+                      <span className="text-sm font-semibold">Passer Premium</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Débloquez l'IA illimitée
+                    </p>
+                    <Button 
+                      size="sm"
+                      className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                      onClick={() => {
+                        setShowPricingModal(true)
+                        setIsMobileSidebarOpen(false)
+                      }}
+                    >
+                      Voir les offres
+                    </Button>
+                  </Card>
+                )}
 
                 {/* Mobile User Profile Section */}
                 <div className="mt-auto border-t border-border pt-4">
@@ -434,6 +440,12 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           setShowAuthModal(false)
           window.location.reload()
         }}
+      />
+      
+      {/* Pricing Modal */}
+      <PricingModal 
+        isOpen={showPricingModal}
+        onClose={() => setShowPricingModal(false)}
       />
     </div>
   )
