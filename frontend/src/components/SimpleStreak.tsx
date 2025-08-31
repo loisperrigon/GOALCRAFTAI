@@ -29,28 +29,19 @@ export function SimpleStreak() {
   return (
     <div className="flex items-center gap-3">
       {/* Flame avec animation subtile */}
-      <div className="flex items-center gap-2">
-        <div className="relative">
-          <Flame 
-            className={cn(
-              "w-5 h-5 transition-all duration-300",
-              getStreakColor(),
-              isStreakActive && "drop-shadow-glow animate-pulse-subtle"
-            )} 
-          />
-          {currentStreak > 0 && (
-            <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-              {currentStreak}
-            </span>
-          )}
-        </div>
-        
-        <span className={cn(
-          "text-sm font-medium",
-          isStreakActive ? "text-white" : "text-gray-500"
-        )}>
-          {currentStreak} {currentStreak === 1 ? 'jour' : 'jours'}
-        </span>
+      <div className="relative">
+        <Flame 
+          className={cn(
+            "w-5 h-5 transition-all duration-300",
+            getStreakColor(),
+            isStreakActive && "drop-shadow-glow animate-pulse-subtle"
+          )} 
+        />
+        {currentStreak > 0 && (
+          <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+            {currentStreak}
+          </span>
+        )}
       </div>
 
       {/* Multiplicateur si actif */}

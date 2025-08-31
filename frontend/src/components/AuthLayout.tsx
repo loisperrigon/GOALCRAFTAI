@@ -109,45 +109,33 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               </div>
             </div>
             
-            {/* User Profile Section - Simplified */}
-            {!isSidebarCollapsed && (
-              <div 
-                className="mb-4 flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-purple-500/10 transition-colors"
-                onClick={() => router.push("/profile")}
-              >
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <User className="h-4 w-4 text-white" />
+            {/* User Profile Section with Streak */}
+            <div 
+              className="mb-6 flex items-center justify-between gap-2 p-2 bg-purple-500/10 rounded-lg cursor-pointer hover:bg-purple-500/20 transition-colors"
+              onClick={() => router.push("/profile")}
+            >
+              {/* Profile */}
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="h-3.5 w-3.5 text-white" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{currentUser.name}</p>
-                  <p className="text-xs text-muted-foreground">Niveau {currentUser.level}</p>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-white truncate">{currentUser.name}</p>
+                  <p className="text-[10px] text-muted-foreground">Niv. {currentUser.level}</p>
                 </div>
               </div>
-            )}
-            
-            {/* Streak Display */}
-            {!isSidebarCollapsed && (
-              <div className="mb-6 p-3 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-lg border border-orange-500/20">
+              
+              {/* Streak dans le même conteneur */}
+              <div className="flex-shrink-0">
                 <SimpleStreak />
               </div>
-            )}
-
-            <div className="flex items-center justify-between mb-4">
-              {!isSidebarCollapsed && (
-                <h2 className="text-sm font-medium text-muted-foreground">Navigation</h2>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="hover:bg-purple-500/10"
-              >
-                {isSidebarCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
-              </Button>
             </div>
 
-            {!isSidebarCollapsed && (
-              <>
+            <div className="mb-4">
+              <h2 className="text-sm font-medium text-muted-foreground">Navigation</h2>
+            </div>
+
+            <>
                 {/* Navigation Links */}
                 <div className="space-y-1 mb-6">
                   {navigationItems.map((item) => {
@@ -184,7 +172,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                     </Button>
                   </div>
                   
-                  <ScrollArea className="h-[200px]">
+                  <ScrollArea className="h-[320px]">
                     <div className="space-y-2">
                       {objectives.map((objective) => (
                         <Card 
@@ -244,31 +232,6 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                 </Card>
 
               </>
-            )}
-
-            {/* Collapsed State Icons */}
-            {isSidebarCollapsed && (
-              <div className="space-y-2">
-                {navigationItems.map((item) => {
-                  const Icon = item.icon
-                  return (
-                    <Button
-                      key={item.href}
-                      variant="ghost"
-                      size="sm"
-                      className={`w-full ${
-                        item.active 
-                          ? "bg-purple-500/10 text-purple-400" 
-                          : "hover:bg-purple-500/10"
-                      }`}
-                      onClick={() => router.push(item.href)}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </Button>
-                  )
-                })}
-              </div>
-            )}
           </div>
         </div>
 
@@ -346,7 +309,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                     </Button>
                   </div>
                   
-                  <ScrollArea className="h-[200px]">
+                  <ScrollArea className="h-[320px]">
                     <div className="space-y-2">
                       {objectives.map((objective) => (
                         <Card 

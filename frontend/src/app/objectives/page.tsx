@@ -185,32 +185,6 @@ export default function ObjectivesPage() {
                     <span className="hidden md:inline">Envoyer</span>
                   </GameButton>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <Badge 
-                    variant="outline" 
-                    className="border-purple-500/30 hover:bg-purple-500/10 cursor-pointer text-xs"
-                  >
-                    💪 Sport & Fitness
-                  </Badge>
-                  <Badge 
-                    variant="outline" 
-                    className="border-purple-500/30 hover:bg-purple-500/10 cursor-pointer text-xs"
-                  >
-                    📚 Apprentissage
-                  </Badge>
-                  <Badge 
-                    variant="outline" 
-                    className="border-purple-500/30 hover:bg-purple-500/10 cursor-pointer text-xs"
-                  >
-                    💼 Carrière
-                  </Badge>
-                  <Badge 
-                    variant="outline" 
-                    className="border-purple-500/30 hover:bg-purple-500/10 cursor-pointer text-xs"
-                  >
-                    🎨 Créativité
-                  </Badge>
-                </div>
               </div>
             </div>
           </div>
