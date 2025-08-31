@@ -48,8 +48,15 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>('1')
   const [isLoadingObjective, setIsLoadingObjective] = useState(false)
   
-  // Les objectifs viennent de la liste mockée (plus tard: API endpoint /api/objectives)
-  const objectives = mockObjectives
+  // Les objectifs viennent de la liste mockée, mais on met à jour celui qui est actif
+  const objectives = mockObjectives.map(obj => {
+    // Si c'est l'objectif actuellement actif, utiliser les données du store (qui sont à jour)
+    if (currentObjective && obj.id === currentObjective.id) {
+      return currentObjective
+    }
+    // Sinon utiliser les données mockées
+    return obj
+  })
 
   const navigationItems = [
     { 
