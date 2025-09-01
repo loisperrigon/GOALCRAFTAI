@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth-config"
 import { getDatabase } from "@/lib/db-init"
 import { z } from "zod"
 import { checkRateLimit, getUniqueIdentifier } from "@/lib/rate-limiter"
+import { storeWebhookContext } from "@/lib/webhook-cache"
 
 const chatSchema = z.object({
   message: z.string().min(1).max(10000), // Permet des descriptions détaillées
@@ -101,6 +102,9 @@ export async function POST(request: NextRequest) {
         }
       }
     )
+    
+    // Stocker le contexte pour retrouver la conversation plus tard
+    storeWebhookContext(messageId, conversation._id, userId)
     
     // Envoyer la requête à n8n de manière asynchrone
     console.log("[n8n] Envoi webhook asynchrone:", N8N_WEBHOOK_URL)

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/db-init"
 import { z } from "zod"
+import { getLastWebhookContext } from "@/lib/webhook-cache"
 
-// Schema pour valider la réponse de n8n
+// Schema pour valider la réponse de n8n (IDs optionnels maintenant)
 const webhookSchema = z.object({
-  messageId: z.string(),
-  conversationId: z.string(),
+  messageId: z.string().optional(),
+  conversationId: z.string().optional(),
   type: z.enum(["message", "objective"]), // Seulement 2 types
   content: z.string().optional(), // Contenu du message (si type = "message")
   isFinal: z.boolean().optional().default(false), // L'IA décide si c'est son dernier message
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const { 
+    let { 
       messageId, 
       conversationId, 
       type,
@@ -57,6 +58,21 @@ export async function POST(request: NextRequest) {
       isFinal,
       metadata 
     } = validationResult.data
+    
+    // Si n8n n'envoie pas les IDs, utiliser le cache
+    if (!messageId || !conversationId) {
+      const context = getLastWebhookContext()
+      if (!context) {
+        console.error("[Webhook] Pas de contexte trouvé dans le cache")
+        return NextResponse.json(
+          { error: "IDs manquants et pas de contexte en cache" },
+          { status: 400 }
+        )
+      }
+      messageId = messageId || context.messageId
+      conversationId = conversationId || context.conversationId
+      console.log("[Webhook] IDs récupérés du cache:", { messageId, conversationId })
+    }
     
     console.log("[Webhook] Message ID:", messageId)
     console.log("[Webhook] Type:", type)
