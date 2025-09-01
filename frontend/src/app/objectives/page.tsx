@@ -12,18 +12,13 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAIChat } from "@/hooks/useAIChat"
 import { useObjectiveStore } from "@/stores/objective-store"
 import { motion, AnimatePresence } from "framer-motion"
-import { Loader } from "@/components/ui/loader"
+import { Loader, Spinner } from "@/components/ui/loader"
 import { 
   Send, 
   Settings, 
   Target, 
   Zap,
-  Brain,
-  Maximize2,
-  Minimize2,
-  Map,
-  Bot,
-  Loader2
+  Brain
 } from "lucide-react"
 
 // Import dynamique pour éviter les erreurs SSR avec React Flow
@@ -31,12 +26,7 @@ const SkillTree = dynamic(() => import("@/components/SkillTree"), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-full">
-      <div className="text-center">
-        <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
-          <Brain className="h-10 w-10 text-purple-400" />
-        </div>
-        <p className="text-sm text-muted-foreground">Chargement de l'arbre...</p>
-      </div>
+      <Loader size="lg" text="Chargement de l'arbre de progression..." />
     </div>
   )
 })
@@ -50,7 +40,6 @@ export default function ObjectivesPage() {
   const { currentObjective, setActiveObjective } = useObjectiveStore()
   const [loadingLastObjective, setLoadingLastObjective] = useState(true)
   const [inputMessage, setInputMessage] = useState("")
-  const [isFullscreen, setIsFullscreen] = useState(false)
   const [activeView, setActiveView] = useState<"chat" | "tree">("chat")
   const scrollRef = useRef<HTMLDivElement>(null)
   
@@ -181,9 +170,7 @@ export default function ObjectivesPage() {
         {/* Navigation Tabs - Only show if we have an objective */}
         {currentObjective && (
           <div className="flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur flex-shrink-0">
-            <div className="flex items-center gap-4">
-              <span className="font-semibold text-sm md:text-base">Mes Objectifs</span>
-              <div className="flex gap-1 bg-background/50 p-1 rounded-lg">
+            <div className="flex gap-1 bg-background/50 p-1 rounded-lg">
                 <Button
                   variant={activeView === "chat" ? "default" : "ghost"}
                   size="sm"
@@ -209,7 +196,6 @@ export default function ObjectivesPage() {
                   <span className="ml-2">Arbre de progression</span>
                 </Button>
               </div>
-            </div>
           </div>
         )}
 
@@ -218,27 +204,7 @@ export default function ObjectivesPage() {
           <div className={`${
             !currentObjective || activeView === "chat" ? "flex" : "hidden"
           } h-full flex-col bg-background/50`}>
-            <div className="border-b border-border bg-card/50 backdrop-blur p-4 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-                    <Brain className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Coach IA</h3>
-                    <p className="text-xs text-muted-foreground">{isLoading ? "En train de réfléchir..." : "En ligne • Prêt à t'aider"}</p>
-                  </div>
-                </div>
-                <div className="hidden md:flex items-center gap-2">
-                  <Button variant="ghost" size="sm">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
+            <div className="flex-1 overflow-y-auto p-4 pt-6" ref={scrollRef}>
               <div className="space-y-4 max-w-2xl mx-auto">
                 {/* Message d'accueil si pas de messages */}
                 {messages.length === 0 && (
@@ -320,7 +286,7 @@ export default function ObjectivesPage() {
                   >
                     <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4 max-w-[85%] md:max-w-[70%]">
                       <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
+                        <Spinner size="sm" />
                         <span className="text-sm text-muted-foreground animate-pulse">
                           L'IA réfléchit à votre demande...
                         </span>
@@ -361,41 +327,11 @@ export default function ObjectivesPage() {
             </div>
           </div>
 
-          {/* Skill Tree Section - Only show if we have an objective */}
-          {currentObjective && (
-            <div className={`${activeView === "tree" ? "flex" : "hidden"} md:flex flex-1 flex-col min-h-0 ${
-              isFullscreen ? "md:flex fixed inset-0 z-50 bg-background" : ""
-            } animate-in slide-in-from-right duration-300`}>
-            <div className="border-b border-border bg-card/50 backdrop-blur p-4 flex-shrink-0">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Target className="h-5 w-5 text-purple-400" />
-                  <div>
-                    <h3 className="font-semibold text-sm md:text-base">Arbre de Progression</h3>
-                    <p className="text-xs text-muted-foreground">4/12 étapes complétées</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-purple-500/20 text-purple-300 text-xs">
-                    <Brain className="h-3 w-3 mr-1" />
-                    420 XP
-                  </Badge>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setIsFullscreen(!isFullscreen)}
-                    className="hidden md:inline-flex"
-                  >
-                    {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
+          {/* Skill Tree Section - Only show when tree view is active AND we have an objective */}
+          {currentObjective && activeView === "tree" && (
+            <div className="h-full bg-gradient-to-br from-purple-900/5 via-background to-blue-900/5">
+              <SkillTree isFullscreen={false} />
             </div>
-
-            <div className="flex-1 bg-gradient-to-br from-purple-900/5 via-background to-blue-900/5">
-              <SkillTree isFullscreen={isFullscreen} />
-            </div>
-          </div>
           )}
         </div>
       </div>
