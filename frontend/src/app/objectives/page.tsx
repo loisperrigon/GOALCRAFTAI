@@ -323,23 +323,23 @@ export default function ObjectivesPage() {
               </div>
             </div>
 
-            <div className="border-t border-border bg-card/50 backdrop-blur p-4 flex-shrink-0">
-              <div className="max-w-2xl mx-auto">
-                <div className="flex gap-2">
+            <div className="border-t border-border bg-card/50 backdrop-blur p-4 md:p-6 flex-shrink-0">
+              <div className="max-w-3xl mx-auto">
+                <div className="flex gap-3">
                   <Input
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                    placeholder={isLoading ? "L'IA réfléchit..." : "Décris ton objectif en détail..."}
-                    className="flex-1 bg-background/50"
+                    placeholder={isLoading ? "L'IA réfléchit..." : "Décrivez votre objectif... Ex: 'Je veux apprendre la guitare' ou 'Perdre 10kg en 3 mois'"}
+                    className="flex-1 bg-background/50 h-12 md:h-14 text-sm md:text-base px-4 md:px-6"
                     disabled={isLoading}
                   />
                   <GameButton 
                     onClick={handleSendMessage}
                     disabled={isLoading || !inputMessage.trim()}
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-4 md:px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-4 md:px-8 h-12 md:h-14 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Send className="h-4 w-4 md:mr-2" />
+                    <Send className="h-5 w-5 md:mr-2" />
                     <span className="hidden md:inline">Envoyer</span>
                   </GameButton>
                 </div>
