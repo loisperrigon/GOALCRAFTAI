@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react"
 import dynamic from "next/dynamic"
 import AuthLayout from "@/components/AuthLayout"
-import { useInitializeStores } from "@/hooks/useInitializeStores"
 import { Button } from "@/components/ui/button"
 import { GameButton } from "@/components/ui/game-button"
 import { useSound } from "@/hooks/useSound"
@@ -43,11 +42,12 @@ const SkillTree = dynamic(() => import("@/components/SkillTree"), {
 
 
 export default function ObjectivesPage() {
-  // Initialiser les stores avec les données mock
-  useInitializeStores()
+  // NE PAS initialiser avec les données mock
+  // useInitializeStores() // SUPPRIMÉ
   
   const { playNotification, playWhoosh } = useSound()
-  const { currentObjective } = useObjectiveStore()
+  const { currentObjective, setActiveObjective } = useObjectiveStore()
+  const [loadingLastObjective, setLoadingLastObjective] = useState(true)
   const [inputMessage, setInputMessage] = useState("")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [activeView, setActiveView] = useState<"chat" | "tree">("chat")
@@ -60,7 +60,8 @@ export default function ObjectivesPage() {
     error,
     sendMessage,
     clearMessages,
-    streamingContent
+    streamingContent,
+    loadMessages
   } = useAIChat({
     objectiveType: currentObjective?.category || "general",
     useStreaming: false, // Pour l'instant on garde le mode normal
@@ -71,6 +72,51 @@ export default function ObjectivesPage() {
       setTimeout(() => setActiveView("tree"), 1500)
     }
   })
+  
+  // Charger le dernier objectif depuis MongoDB au montage
+  useEffect(() => {
+    loadLastObjective()
+  }, [])
+  
+  const loadLastObjective = async () => {
+    try {
+      setLoadingLastObjective(true)
+      
+      // Charger le dernier objectif
+      const objResponse = await fetch('/api/objectives')
+      const objData = await objResponse.json()
+      
+      if (objData.success && objData.objectives && objData.objectives.length > 0) {
+        // Prendre le dernier objectif (le plus récent)
+        const lastObjective = objData.objectives[0]
+        console.log("[ObjectivesPage] Dernier objectif chargé:", lastObjective.title)
+        setActiveObjective(lastObjective)
+        
+        // Charger la conversation associée si elle existe
+        if (lastObjective.conversationId) {
+          const convResponse = await fetch(`/api/conversations?id=${lastObjective.conversationId}`)
+          const convData = await convResponse.json()
+          
+          if (convData.success && convData.messages) {
+            console.log(`[ObjectivesPage] ${convData.messages.length} messages chargés`)
+            // Charger les messages dans le chat
+            loadMessages(convData.messages, lastObjective.conversationId)
+          }
+        }
+        
+        // Afficher l'arbre si on a un objectif
+        setActiveView("tree")
+      } else {
+        console.log("[ObjectivesPage] Aucun objectif trouvé, mode chat")
+        // Pas d'objectif, rester en mode chat
+        setActiveView("chat")
+      }
+    } catch (error) {
+      console.error("[ObjectivesPage] Erreur chargement:", error)
+    } finally {
+      setLoadingLastObjective(false)
+    }
+  }
   
   // Auto-scroll quand de nouveaux messages arrivent
   useEffect(() => {
@@ -93,7 +139,7 @@ export default function ObjectivesPage() {
 
   return (
     <AuthLayout>
-      <div className="h-full">
+      <div className="h-full flex flex-col">
         {/* Mobile View Toggle */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur">
           <span className="font-semibold">Mes Objectifs</span>
@@ -119,9 +165,9 @@ export default function ObjectivesPage() {
           </div>
         </div>
 
-        <div className="flex h-[calc(100%-65px)] md:h-full relative">
+        <div className="flex-1 flex overflow-hidden">
           {/* Chat Section */}
-          <div className={`${activeView === "chat" ? "flex" : "hidden"} md:flex flex-1 flex-col bg-background/50 md:border-r md:border-border ${
+          <div className={`${activeView === "chat" ? "flex" : "hidden"} md:flex flex-1 flex-col min-h-0 bg-background/50 md:border-r md:border-border ${
             isFullscreen ? "md:hidden" : ""
           }`}>
             <div className="border-b border-border bg-card/50 backdrop-blur p-4">
@@ -144,8 +190,8 @@ export default function ObjectivesPage() {
               
             </div>
 
-            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-              <div className="space-y-4 max-w-3xl mx-auto">
+            <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
+              <div className="space-y-4 max-w-2xl mx-auto">
                 <AnimatePresence>
                 {messages.map((message, index) => (
                   <motion.div
@@ -198,10 +244,10 @@ export default function ObjectivesPage() {
                 )}
                 </AnimatePresence>
               </div>
-            </ScrollArea>
+            </div>
 
             <div className="border-t border-border bg-card/50 backdrop-blur p-4">
-              <div className="max-w-3xl mx-auto">
+              <div className="max-w-2xl mx-auto">
                 <div className="flex gap-2">
                   <Input
                     value={inputMessage}
@@ -225,7 +271,7 @@ export default function ObjectivesPage() {
           </div>
 
           {/* Skill Tree Section */}
-          <div className={`${activeView === "tree" ? "flex" : "hidden"} md:flex flex-1 flex-col ${
+          <div className={`${activeView === "tree" ? "flex" : "hidden"} md:flex flex-1 flex-col min-h-0 ${
             isFullscreen ? "md:flex fixed inset-0 z-50 bg-background" : ""
           }`}>
             <div className="border-b border-border bg-card/50 backdrop-blur p-4">

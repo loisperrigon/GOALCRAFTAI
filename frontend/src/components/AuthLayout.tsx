@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import AuthModal from "@/components/AuthModal"
 import PricingModal from "@/components/PricingModal"
 import { useRouter, usePathname } from "next/navigation"
@@ -11,7 +11,6 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { SimpleStreak } from "@/components/SimpleStreak"
 import { useObjectiveStore } from "@/stores/objective-store"
 import { useUserStore } from "@/stores/user-store"
-import { mockObjectives } from "@/data/mockObjectives"
 import { 
   LayoutDashboard,
   Target,
@@ -48,19 +47,39 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showPricingModal, setShowPricingModal] = useState(false)
   const { user, isAuthenticated } = useUserStore()
-  const { fetchObjective, currentObjective } = useObjectiveStore()
-  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>('1')
+  const { setActiveObjective, currentObjective } = useObjectiveStore()
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null)
   const [isLoadingObjective, setIsLoadingObjective] = useState(false)
+  const [objectives, setObjectives] = useState<any[]>([])
+  const [loadingObjectives, setLoadingObjectives] = useState(true)
   
-  // Les objectifs viennent de la liste mockée, mais on met à jour celui qui est actif
-  const objectives = mockObjectives.map(obj => {
-    // Si c'est l'objectif actuellement actif, utiliser les données du store (qui sont à jour)
-    if (currentObjective && obj.id === currentObjective.id) {
-      return currentObjective
+  // Charger les objectifs depuis MongoDB au montage et quand l'objectif actif change
+  useEffect(() => {
+    loadObjectives()
+    // Recharger quand un nouvel objectif est créé
+    if (currentObjective) {
+      loadObjectives()
     }
-    // Sinon utiliser les données mockées
-    return obj
-  })
+  }, [currentObjective?.id]) // Se déclenche quand l'ID change
+  
+  const loadObjectives = async () => {
+    try {
+      setLoadingObjectives(true)
+      const response = await fetch('/api/objectives')
+      const data = await response.json()
+      
+      if (data.success && data.objectives) {
+        console.log(`[AuthLayout] ${data.objectives.length} objectifs chargés depuis MongoDB`)
+        setObjectives(data.objectives)
+      } else {
+        console.error("[AuthLayout] Erreur lors du chargement des objectifs")
+      }
+    } catch (error) {
+      console.error("[AuthLayout] Erreur:", error)
+    } finally {
+      setLoadingObjectives(false)
+    }
+  }
 
   const navigationItems = [
     { 
@@ -80,12 +99,12 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     xp: 0
   }
 
-  const handleObjectiveClick = async (objectiveId: string) => {
-    setSelectedObjectiveId(objectiveId)
+  const handleObjectiveClick = async (objective: any) => {
+    setSelectedObjectiveId(objective.id)
     setIsLoadingObjective(true)
     
-    // Simuler l'appel API pour charger l'objectif
-    await fetchObjective(objectiveId)
+    // Charger l'objectif dans le store
+    setActiveObjective(objective)
     
     setIsLoadingObjective(false)
     router.push("/objectives")
@@ -183,7 +202,20 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                   
                   <ScrollArea className="h-[320px]">
                     <div className="space-y-2">
-                      {objectives.map((objective) => (
+                      {loadingObjectives ? (
+                        <div className="flex items-center justify-center h-32">
+                          <div className="text-center">
+                            <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                            <p className="text-xs text-muted-foreground">Chargement des objectifs...</p>
+                          </div>
+                        </div>
+                      ) : objectives.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                          <p className="text-xs text-muted-foreground">Aucun objectif créé</p>
+                          <p className="text-xs text-muted-foreground mt-1">Commencez par discuter avec l'IA</p>
+                        </div>
+                      ) : objectives.map((objective) => (
                         <Card 
                           key={objective.id}
                           className={`p-3 cursor-pointer transition-all hover:shadow-md relative ${
@@ -191,7 +223,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                               ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10" 
                               : "border-border hover:border-purple-500/20 hover:bg-purple-500/5"
                           } ${isLoadingObjective && objective.id === selectedObjectiveId ? "opacity-60" : ""}`}
-                          onClick={() => !isLoadingObjective && handleObjectiveClick(objective.id)}
+                          onClick={() => !isLoadingObjective && handleObjectiveClick(objective)}
                         >
                           {isLoadingObjective && objective.id === selectedObjectiveId && (
                             <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-lg">
@@ -202,23 +234,23 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                             <div className="flex-1">
                               <h4 className="font-medium text-xs line-clamp-1">{objective.title}</h4>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {objective.completedSteps}/{objective.totalSteps} étapes
+                                {objective.completedSteps?.length || 0}/{objective.skillTree?.nodes?.length || 0} étapes
                               </p>
                             </div>
                             <Badge className="bg-purple-500/20 text-purple-300 text-xs px-1.5 py-0">
-                              {Math.round(objective.progress)}%
+                              {Math.round(objective.progress || 0)}%
                             </Badge>
                           </div>
                           <div className="w-full bg-background/50 rounded-full h-1">
                             <div 
                               className="bg-gradient-to-r from-purple-500 to-blue-500 h-1 rounded-full transition-all"
-                              style={{ width: `${objective.progress}%` }}
+                              style={{ width: `${objective.progress || 0}%` }}
                             />
                           </div>
                           <div className="flex items-center gap-2 mt-1.5">
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Trophy className="h-3 w-3" />
-                              {objective.xpReward} XP
+                              {objective.skillTree?.nodes?.reduce((sum: number, node: any) => sum + (node.xpReward || 0), 0) || 0} XP
                             </span>
                           </div>
                         </Card>
@@ -332,7 +364,20 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                   
                   <ScrollArea className="h-[320px]">
                     <div className="space-y-2">
-                      {objectives.map((objective) => (
+                      {loadingObjectives ? (
+                        <div className="flex items-center justify-center h-32">
+                          <div className="text-center">
+                            <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                            <p className="text-xs text-muted-foreground">Chargement des objectifs...</p>
+                          </div>
+                        </div>
+                      ) : objectives.length === 0 ? (
+                        <div className="text-center py-8">
+                          <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                          <p className="text-xs text-muted-foreground">Aucun objectif créé</p>
+                          <p className="text-xs text-muted-foreground mt-1">Commencez par discuter avec l'IA</p>
+                        </div>
+                      ) : objectives.map((objective) => (
                         <Card 
                           key={objective.id}
                           className={`p-3 cursor-pointer transition-all ${
@@ -349,7 +394,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                             <div className="flex-1">
                               <h4 className="font-medium text-xs">{objective.title}</h4>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {objective.completedSteps}/{objective.totalSteps} étapes
+                                {objective.completedSteps?.length || 0}/{objective.skillTree?.nodes?.length || 0} étapes
                               </p>
                             </div>
                             <Badge className="bg-purple-500/20 text-purple-300 text-xs">
@@ -359,7 +404,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                           <div className="w-full bg-background/50 rounded-full h-1">
                             <div 
                               className="bg-gradient-to-r from-purple-500 to-blue-500 h-1 rounded-full"
-                              style={{ width: `${objective.progress}%` }}
+                              style={{ width: `${objective.progress || 0}%` }}
                             />
                           </div>
                         </Card>

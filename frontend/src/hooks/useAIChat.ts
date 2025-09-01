@@ -16,10 +16,24 @@ export function useAIChat(options: UseAIChatOptions = {}) {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [streamingContent, setStreamingContent] = useState("")
   
-  const { setCurrentObjective } = useObjectiveStore()
+  const { setActiveObjective } = useObjectiveStore()
   const { isAuthenticated } = useUserStore()
   
   const abortControllerRef = useRef<AbortController | null>(null)
+  
+  // Fonction pour charger des messages existants
+  const loadMessages = useCallback((existingMessages: ChatMessage[], existingConversationId?: string) => {
+    console.log(`[useAIChat] Chargement de ${existingMessages.length} messages existants`)
+    // Convertir les timestamps en objets Date
+    const messagesWithDates = existingMessages.map(msg => ({
+      ...msg,
+      timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+    }))
+    setMessages(messagesWithDates)
+    if (existingConversationId) {
+      setConversationId(existingConversationId)
+    }
+  }, [])
 
   const sendMessage = useCallback(async (content: string) => {
     // Retirer la vérification d'authentification pour permettre l'accès anonyme
@@ -127,7 +141,7 @@ export function useAIChat(options: UseAIChatOptions = {}) {
               })
               
               // Mettre à jour le store avec le nouvel objectif
-              setCurrentObjective(data.objective)
+              setActiveObjective(data.objective)
               
               // Appeler le callback si fourni
               if (options.onObjectiveGenerated) {
@@ -179,7 +193,7 @@ export function useAIChat(options: UseAIChatOptions = {}) {
       setIsLoading(false)
       setStreamingContent("")
     }
-  }, [conversationId, options, setCurrentObjective, streamingContent])
+  }, [conversationId, options, setActiveObjective, streamingContent])
 
   const clearMessages = useCallback(() => {
     setMessages([])
@@ -217,6 +231,7 @@ export function useAIChat(options: UseAIChatOptions = {}) {
     streamingContent,
     sendMessage,
     clearMessages,
+    loadMessages,
     loadConversation,
     stopStreaming
   }
