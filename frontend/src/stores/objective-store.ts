@@ -61,7 +61,7 @@ export interface Objective {
   title: string
   description?: string
   category: 'personal' | 'professional' | 'health' | 'learning' | 'creative' | 'social' | 'financial' | 'other'
-  status: 'active' | 'completed' | 'paused' | 'abandoned'
+  status: 'active' | 'completed' | 'paused' | 'abandoned' | 'generating'
   progress: number // 0-100
   xpReward: number // Total XP possible
   xpEarned?: number // XP déjà gagné
@@ -75,6 +75,8 @@ export interface Objective {
   aiGenerated?: boolean
   userPrompt?: string
   skillTree?: SkillTree
+  isGenerating?: boolean // Indique si l'objectif est en cours de génération
+  generationProgress?: number // Progression de la génération (0-100)
   metadata?: {
     estimatedDuration?: string
     nextMilestone?: string
@@ -99,6 +101,13 @@ interface ObjectiveState {
   toggleNodeMilestone: (nodeId: string, milestoneIndex: number) => void
   completeMilestone: (milestoneId: string) => void
   clearObjective: () => void
+  
+  // Actions pour la génération progressive
+  startObjectiveGeneration: (metadata: Partial<Objective>) => void
+  addNodeToObjective: (node: SkillNode) => void
+  addEdgeToObjective: (edge: { id: string; source: string; target: string }) => void
+  updateGenerationProgress: (progress: number) => void
+  completeObjectiveGeneration: () => void
   
   // API calls (mock pour l'instant)
   fetchObjective: (id: string) => Promise<void>
@@ -216,6 +225,108 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
   clearObjective: () => {
     console.log("[ObjectiveStore] Clearing current objective")
     set({ currentObjective: null })
+  },
+
+  // Méthodes pour la génération progressive
+  startObjectiveGeneration: (metadata) => {
+    console.log("[ObjectiveStore] Démarrage de la génération progressive:", metadata.title)
+    set({
+      currentObjective: {
+        id: metadata.id || `generating-${Date.now()}`,
+        title: metadata.title || "Nouvel objectif",
+        description: metadata.description,
+        category: metadata.category || 'other',
+        status: 'generating',
+        progress: 0,
+        xpReward: 0,
+        difficulty: metadata.difficulty || 'medium',
+        milestones: [],
+        totalSteps: metadata.totalSteps || 0,
+        completedSteps: 0,
+        skillTree: { nodes: [], edges: [] },
+        isGenerating: true,
+        generationProgress: 0,
+        metadata: metadata.metadata
+      }
+    })
+  },
+
+  addNodeToObjective: (node) => {
+    set(state => {
+      if (!state.currentObjective || !state.currentObjective.isGenerating) {
+        console.warn("[ObjectiveStore] Pas d'objectif en cours de génération")
+        return state
+      }
+
+      const updatedNodes = [...(state.currentObjective.skillTree?.nodes || []), node]
+      const totalSteps = updatedNodes.length
+      
+      console.log(`[ObjectiveStore] Ajout du node ${node.id}: "${node.title}" (${totalSteps} nodes total)`)
+      
+      return {
+        currentObjective: {
+          ...state.currentObjective,
+          skillTree: {
+            nodes: updatedNodes,
+            edges: [...(state.currentObjective.skillTree?.edges || [])]
+          },
+          totalSteps,
+          xpReward: updatedNodes.reduce((acc, n) => acc + (n.xpReward || 0), 0)
+        }
+      }
+    })
+  },
+
+  addEdgeToObjective: (edge) => {
+    set(state => {
+      if (!state.currentObjective || !state.currentObjective.isGenerating) {
+        return state
+      }
+
+      return {
+        currentObjective: {
+          ...state.currentObjective,
+          skillTree: {
+            ...state.currentObjective.skillTree!,
+            edges: [...(state.currentObjective.skillTree?.edges || []), edge]
+          }
+        }
+      }
+    })
+  },
+
+  updateGenerationProgress: (progress) => {
+    set(state => {
+      if (!state.currentObjective || !state.currentObjective.isGenerating) {
+        return state
+      }
+
+      return {
+        currentObjective: {
+          ...state.currentObjective,
+          generationProgress: progress
+        }
+      }
+    })
+  },
+
+  completeObjectiveGeneration: () => {
+    set(state => {
+      if (!state.currentObjective || !state.currentObjective.isGenerating) {
+        return state
+      }
+
+      console.log("[ObjectiveStore] Génération terminée:", state.currentObjective.title)
+      
+      return {
+        currentObjective: {
+          ...state.currentObjective,
+          status: 'active',
+          isGenerating: false,
+          generationProgress: 100
+        }
+      }
+    })
   },
 
   fetchObjective: async (id) => {

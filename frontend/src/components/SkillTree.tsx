@@ -18,6 +18,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 import '@/styles/skill-tree.css'
 import dagre from 'dagre'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useObjectiveStore } from '@/stores/objective-store'
 import { useUserStore } from '@/stores/user-store'
 import { useStreakStore } from '@/stores/streak-store'
@@ -26,7 +27,6 @@ import { Button } from '@/components/ui/button'
 import { Lock, CheckCircle2, Circle, Star, Zap, Trophy, RotateCcw, Save, Download, Layout, Move, Target } from 'lucide-react'
 import ObjectiveDetailModal from '@/components/ObjectiveDetailModal'
 import Confetti from '@/components/Confetti'
-import FreeLimitBanner from '@/components/FreeLimitBanner'
 import { useSound } from '@/hooks/useSound'
 import { SimpleStreakNotification } from '@/components/SimpleStreakNotification'
 
@@ -123,17 +123,28 @@ const SkillNode = ({ data, selected }: NodeProps) => {
   }
 
   return (
-    <Card
-      className={`
-        w-48 p-3 cursor-pointer transition-all duration-300 transform
-        ${getNodeStyle()}
-        ${selected ? 'ring-2 ring-purple-400 scale-105' : ''}
-        ${node.unlocked && !node.completed ? 'hover:scale-105' : ''}
-        ${isCurrentLearning ? 'next-to-unlock ring-2 ring-purple-500 ring-opacity-50' : ''}
-      `}
-      data-current={isCurrentLearning}
-      onClick={handleClick}
+    <motion.div
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ 
+        duration: 0.5,
+        type: "spring",
+        stiffness: 260,
+        damping: 20,
+        delay: (currentObjective?.isGenerating && node.index !== undefined) ? node.index * 0.1 : 0
+      }}
     >
+      <Card
+        className={`
+          w-48 p-3 cursor-pointer transition-all duration-300 transform
+          ${getNodeStyle()}
+          ${selected ? 'ring-2 ring-purple-400 scale-105' : ''}
+          ${node.unlocked && !node.completed ? 'hover:scale-105' : ''}
+          ${isCurrentLearning ? 'next-to-unlock ring-2 ring-purple-500 ring-opacity-50' : ''}
+        `}
+        data-current={isCurrentLearning}
+        onClick={handleClick}
+      >
       <Handle
         type="target"
         position={Position.Top}
@@ -173,6 +184,7 @@ const SkillNode = ({ data, selected }: NodeProps) => {
         className="w-2 h-2 bg-purple-500 border-none"
       />
     </Card>
+    </motion.div>
   )
 }
 
@@ -199,6 +211,13 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const completedNodes = nodes.filter(n => n.completed).map(n => n.id)
   const userXP = user?.xp || 0
   const userLevel = user?.level || 1
+  
+  // Log pour debug de la génération progressive
+  useEffect(() => {
+    if (currentObjective?.isGenerating) {
+      console.log(`[SkillTree] Génération en cours: ${nodes.length} nodes, progress: ${currentObjective.generationProgress}%`)
+    }
+  }, [nodes.length, currentObjective?.isGenerating, currentObjective?.generationProgress])
   
   const { playComplete, playLevelUp, playXpGain, playWhoosh } = useSound()
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState([])
@@ -383,7 +402,7 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
         }, 10)
       }
     }
-  }, [nodes, currentObjective?.id, isPositioning])
+  }, [nodes.length, currentObjective?.id, currentObjective?.isGenerating, currentObjective?.generationProgress, isPositioning])
 
   // Centrage sur le nœud actuel - SIMPLE ET DIRECT
   useEffect(() => {
@@ -520,15 +539,6 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   
   return (
     <div ref={containerRef} className="h-full w-full relative bg-background">
-      {/* Bannière limite Free */}
-      {!isPremium && (
-        <FreeLimitBanner 
-          currentSteps={currentSteps}
-          maxSteps={maxStepsInFree}
-          show={true}
-        />
-      )}
-      
       {/* Header avec stats - visible seulement en plein écran */}
       {isFullscreen && (
         <div className="absolute top-4 left-4 right-4 z-10 pointer-events-none">

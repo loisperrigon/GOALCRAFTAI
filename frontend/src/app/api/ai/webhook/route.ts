@@ -7,20 +7,43 @@ import { getLastWebhookContext } from "@/lib/webhook-cache"
 const webhookSchema = z.object({
   messageId: z.string().optional(),
   conversationId: z.string().optional(),
-  type: z.enum(["message", "objective"]), // Seulement 2 types
+  type: z.enum(["message", "objective_start", "objective_step", "objective_complete"]), // Types pour génération progressive uniquement
   content: z.string().optional(), // Contenu du message (si type = "message")
   isFinal: z.boolean().optional().default(false), // L'IA décide si c'est son dernier message
-  objective: z.object({ // Structure de l'objectif (si type = "objective")
+  objectiveMetadata: z.object({ // Métadonnées de l'objectif (si type = "objective_start")
+    id: z.string().optional(),
     title: z.string(),
     description: z.string(),
     category: z.string(),
     difficulty: z.string(),
     estimatedDuration: z.string(),
-    skillTree: z.object({
-      nodes: z.array(z.any()),
-      edges: z.array(z.any())
-    })
+    totalSteps: z.number().optional()
   }).optional(),
+  step: z.object({ // Une étape individuelle (si type = "objective_step")
+    id: z.string(),
+    title: z.string(),
+    description: z.string().optional(),
+    xpReward: z.number().optional(),
+    requiredLevel: z.number().optional(),
+    dependencies: z.array(z.string()).optional(),
+    optional: z.boolean().optional(),
+    category: z.string().optional(), // Accepter n'importe quelle catégorie
+    estimatedTime: z.string().optional(),
+    position: z.object({
+      x: z.number(),
+      y: z.number()
+    }).optional(),
+    details: z.object({
+      why: z.string(),
+      howTo: z.array(z.string()),
+      difficulty: z.string(),
+      tools: z.array(z.any()),
+      tips: z.array(z.string()),
+      milestones: z.array(z.any())
+    }).optional()
+  }).optional(),
+  isLastStep: z.boolean().optional().default(false), // Indique si c'est la dernière étape
+  generationProgress: z.number().optional(), // Pourcentage de progression (0-100)
   metadata: z.any().optional()
 })
 
@@ -54,7 +77,10 @@ export async function POST(request: NextRequest) {
       conversationId, 
       type,
       content,
-      objective, 
+      objectiveMetadata,
+      step,
+      isLastStep,
+      generationProgress,
       isFinal,
       metadata 
     } = validationResult.data
@@ -111,60 +137,184 @@ export async function POST(request: NextRequest) {
             }
           },
           $set: {
-            status: isFinal ? "completed" : "ai_responding",
+            status: isFinal ? "waiting_for_generation" : "ai_responding", // Ne pas mettre "completed" si on attend une génération
             lastResponse: content,
             lastResponseAt: new Date()
           }
         }
       )
-    } else if (type === "objective" && objective) {
-      // Sauvegarder l'objectif généré
-      console.log("[Webhook] Sauvegarde de l'objectif généré")
+    } else if (type === "objective_start" && objectiveMetadata) {
+      // Début de la génération progressive d'un objectif
+      console.log("[Webhook] Début de génération progressive:", objectiveMetadata.title)
       
+      // Créer l'objectif avec statut "generating"
       const newObjective = await db.collection("objectives").insertOne({
         userId: conversation.userId,
         conversationId: conversationId,
-        ...objective,
+        ...objectiveMetadata,
+        status: "generating",
+        skillTree: { nodes: [], edges: [] }, // Arbre vide pour commencer
+        generationProgress: 0,
         createdAt: new Date(),
         updatedAt: new Date()
       })
       
-      // Ajouter un message pour informer que l'objectif est créé
+      // Sauvegarder l'ID de l'objectif ET le messageId original dans la conversation
       await db.collection("conversations").updateOne(
         { _id: conversationId },
         {
-          $push: {
-            messages: {
-              role: "assistant",
-              content: `J'ai créé votre parcours personnalisé "${objective.title}" avec ${objective.skillTree.nodes.length} étapes !`,
-              timestamp: new Date(),
-              hasObjective: true,
-              objectiveId: newObjective.insertedId
-            }
-          },
           $set: {
-            status: "completed",
-            hasObjective: true,
-            objectiveId: newObjective.insertedId,
-            lastResponseAt: new Date()
+            currentObjectiveId: newObjective.insertedId,
+            status: "generating_objective",
+            originalMessageId: conversation.lastMessageId // Garder le messageId original
           }
         }
       )
+    } else if (type === "objective_step" && step) {
+      // Ajout d'une étape à l'objectif en cours de génération
+      console.log("[Webhook] Ajout d'une étape:", step.title)
+      
+      // Récupérer l'objectif en cours
+      const objectiveId = conversation.currentObjectiveId
+      if (!objectiveId) {
+        console.error("[Webhook] Pas d'objectif en cours de génération")
+        return NextResponse.json(
+          { error: "Pas d'objectif en cours de génération" },
+          { status: 400 }
+        )
+      }
+      
+      // Ajouter l'étape à l'objectif
+      await db.collection("objectives").updateOne(
+        { _id: objectiveId },
+        {
+          $push: {
+            "skillTree.nodes": {
+              ...step,
+              completed: false,
+              unlocked: !step.dependencies || step.dependencies.length === 0
+            }
+          },
+          $set: {
+            generationProgress: generationProgress || 50,
+            updatedAt: new Date()
+          }
+        }
+      )
+      
+      // Ajouter les edges si des dépendances existent
+      if (step.dependencies && step.dependencies.length > 0) {
+        const edges = step.dependencies.map(depId => ({
+          id: `edge-${depId}-${step.id}`,
+          source: depId,
+          target: step.id
+        }))
+        
+        await db.collection("objectives").updateOne(
+          { _id: objectiveId },
+          {
+            $push: {
+              "skillTree.edges": { $each: edges }
+            }
+          }
+        )
+      }
+    } else if (type === "objective_complete") {
+      // Fin de la génération de l'objectif
+      console.log("[Webhook] Génération de l'objectif terminée")
+      
+      const objectiveId = conversation.currentObjectiveId
+      if (objectiveId) {
+        // Marquer l'objectif comme complété
+        const objective = await db.collection("objectives").findOneAndUpdate(
+          { _id: objectiveId },
+          {
+            $set: {
+              status: "active",
+              generationProgress: 100,
+              updatedAt: new Date()
+            }
+          },
+          { returnDocument: "after" }
+        )
+        
+        // Ajouter un message de confirmation
+        await db.collection("conversations").updateOne(
+          { _id: conversationId },
+          {
+            $push: {
+              messages: {
+                role: "assistant",
+                content: `Votre parcours "${objective.value?.title}" est prêt ! J'ai créé ${objective.value?.skillTree?.nodes?.length || 0} étapes personnalisées pour vous.`,
+                timestamp: new Date(),
+                hasObjective: true,
+                objectiveId: objectiveId
+              }
+            },
+            $set: {
+              status: "completed",
+              hasObjective: true,
+              objectiveId: objectiveId,
+              lastResponseAt: new Date()
+            }
+          }
+        )
+      }
     }
     
-    // Notifier les clients connectés via SSE
-    // Import dynamique pour éviter les problèmes de dépendances circulaires
-    const { notifySSEClients } = await import("../sse/route")
+    // Notifier les clients connectés via le serveur WebSocket
+    const notifyWebSocket = async (data: any) => {
+      try {
+        const response = await fetch('http://localhost:3002/notify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            conversationId,
+            data
+          })
+        })
+        
+        const result = await response.json()
+        console.log(`[Webhook] Notification WebSocket: ${result.message}`)
+      } catch (error) {
+        console.error('[Webhook] Erreur envoi WebSocket:', error)
+      }
+    }
     
-    // Envoyer la notification appropriée
-    if (type === "objective" && objective) {
-      notifySSEClients(conversationId, messageId, {
-        type: "objective_created",
-        objective: objective,
-        message: `Objectif "${objective.title}" créé avec succès !`
+    // Envoyer la notification appropriée via WebSocket
+    if (type === "objective_start" && objectiveMetadata) {
+      console.log(`[Webhook] Notification WebSocket pour objective_start`)
+      await notifyWebSocket({
+        type: "objective_started",
+        objectiveMetadata: objectiveMetadata,
+        message: `Création de votre parcours "${objectiveMetadata.title}"...`,
+        generationProgress: 0
       })
+    } else if (type === "objective_step" && step) {
+      console.log(`[Webhook] Notification WebSocket pour step_added: ${step.title}`)
+      await notifyWebSocket({
+        type: "step_added",
+        step: step,
+        isLastStep: isLastStep,
+        generationProgress: generationProgress || 50
+      })
+    } else if (type === "objective_complete") {
+      const objectiveId = conversation.currentObjectiveId
+      if (objectiveId) {
+        // Récupérer l'objectif complet pour l'envoyer
+        const completeObjective = await db.collection("objectives").findOne({ _id: objectiveId })
+        console.log(`[Webhook] Notification WebSocket pour objective_completed`)
+        await notifyWebSocket({
+          type: "objective_completed",
+          objective: completeObjective,
+          message: `Parcours créé avec succès !`,
+          generationProgress: 100
+        })
+      }
     } else if (type === "message") {
-      notifySSEClients(conversationId, messageId, {
+      await notifyWebSocket({
         type: "message",
         content: content,
         isFinal: isFinal, // L'IA décide si elle a fini

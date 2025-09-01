@@ -25,7 +25,7 @@ export class WebSocketService {
   
   constructor(config: Partial<WSConfig> = {}) {
     this.config = {
-      url: config.url || 'ws://localhost:3001',
+      url: config.url || 'ws://localhost:3002',  // Port 3002 pour notre serveur WebSocket
       reconnect: config.reconnect !== false,
       reconnectAttempts: config.reconnectAttempts || 5,
       reconnectDelay: config.reconnectDelay || 1000,
@@ -33,27 +33,32 @@ export class WebSocketService {
       reconnectDecay: config.reconnectDecay || 1.5,
       timeout: config.timeout || 20000,
       pingInterval: config.pingInterval || 30000,
-      debug: config.debug || false
+      debug: config.debug || true  // Activer le debug pour voir les logs
     }
     
     this.eventEmitter = new EventEmitter()
   }
 
   /**
-   * Connexion au serveur WebSocket
+   * Connexion au serveur WebSocket avec conversationId optionnel
    */
-  connect(): Promise<void> {
+  connect(conversationId?: string): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.state === WSConnectionState.CONNECTED) {
         resolve()
         return
       }
 
-      this.log('Connecting to WebSocket...')
+      // Construire l'URL avec le conversationId si fourni
+      const url = conversationId 
+        ? `${this.config.url}?conversationId=${conversationId}`
+        : this.config.url
+
+      this.log(`Connecting to WebSocket: ${url}`)
       this.setState(WSConnectionState.CONNECTING)
 
       try {
-        this.ws = new WebSocket(this.config.url)
+        this.ws = new WebSocket(url)
         
         // Timeout de connexion
         const timeoutId = setTimeout(() => {

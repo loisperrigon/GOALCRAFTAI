@@ -9,10 +9,11 @@ import { useSound } from "@/hooks/useSound"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useAIChat } from "@/hooks/useAIChat"
+import { useAIChatWS } from "@/hooks/useAIChatWS"
 import { useObjectiveStore } from "@/stores/objective-store"
 import { motion, AnimatePresence } from "framer-motion"
 import { Loader, Spinner } from "@/components/ui/loader"
+import GenerationProgress from "@/components/GenerationProgress"
 import { 
   Send, 
   Settings, 
@@ -43,7 +44,7 @@ export default function ObjectivesPage() {
   const [activeView, setActiveView] = useState<"chat" | "tree">("chat")
   const scrollRef = useRef<HTMLDivElement>(null)
   
-  // Utiliser le hook AI Chat pour la vraie intégration
+  // Utiliser le hook AI Chat WebSocket pour la vraie intégration
   const {
     messages,
     isLoading,
@@ -51,15 +52,17 @@ export default function ObjectivesPage() {
     sendMessage,
     clearMessages,
     streamingContent,
-    loadMessages
-  } = useAIChat({
+    loadMessages,
+    isConnected
+  } = useAIChatWS({
     objectiveType: currentObjective?.category || "general",
     useStreaming: false, // Pour l'instant on garde le mode normal
     onObjectiveGenerated: (objective) => {
       // L'agent a décidé de créer l'objectif
       playNotification()
       // Passer automatiquement à la vue arbre
-      setTimeout(() => setActiveView("tree"), 1500)
+      console.log("[ObjectivesPage] Passage à la vue arbre pour génération")
+      setTimeout(() => setActiveView("tree"), 500)
     }
   })
   
@@ -336,7 +339,16 @@ export default function ObjectivesPage() {
 
           {/* Skill Tree Section - Only show when tree view is active AND we have an objective */}
           {currentObjective && activeView === "tree" && (
-            <div className="h-full bg-gradient-to-br from-purple-900/5 via-background to-blue-900/5">
+            <div className="h-full bg-gradient-to-br from-purple-900/5 via-background to-blue-900/5 relative">
+              {/* Barre de progression de génération */}
+              <AnimatePresence>
+                {currentObjective.isGenerating && (
+                  <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-md px-4">
+                    <GenerationProgress />
+                  </div>
+                )}
+              </AnimatePresence>
+              
               <SkillTree isFullscreen={false} />
             </div>
           )}
