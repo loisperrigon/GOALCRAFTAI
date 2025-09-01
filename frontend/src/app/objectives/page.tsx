@@ -78,6 +78,44 @@ export default function ObjectivesPage() {
     loadLastObjective()
   }, [])
   
+  // Écouter les changements d'objectif depuis la sidebar
+  useEffect(() => {
+    if (!loadingLastObjective) {
+      if (currentObjective) {
+        // Un objectif a été sélectionné depuis la sidebar
+        loadConversationForObjective(currentObjective)
+      } else {
+        // Bouton "+" cliqué - nouvelle conversation
+        console.log("[ObjectivesPage] Nouvelle conversation démarrée")
+        clearMessages()
+        setActiveView("chat")
+      }
+    }
+  }, [currentObjective?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  
+  const loadConversationForObjective = async (objective: any) => {
+    try {
+      // Vider les messages actuels d'abord
+      clearMessages()
+      
+      if (objective.conversationId) {
+        const convResponse = await fetch(`/api/conversations?id=${objective.conversationId}`)
+        const convData = await convResponse.json()
+        
+        if (convData.success && convData.messages) {
+          console.log(`[ObjectivesPage] Chargement de ${convData.messages.length} messages pour l'objectif ${objective.title}`)
+          // Charger les messages dans le chat
+          loadMessages(convData.messages, objective.conversationId)
+        }
+      }
+      
+      // Afficher l'arbre
+      setActiveView("tree")
+    } catch (error) {
+      console.error("[ObjectivesPage] Erreur chargement conversation:", error)
+    }
+  }
+  
   const loadLastObjective = async () => {
     try {
       setLoadingLastObjective(true)
@@ -92,20 +130,8 @@ export default function ObjectivesPage() {
         console.log("[ObjectivesPage] Dernier objectif chargé:", lastObjective.title)
         setActiveObjective(lastObjective)
         
-        // Charger la conversation associée si elle existe
-        if (lastObjective.conversationId) {
-          const convResponse = await fetch(`/api/conversations?id=${lastObjective.conversationId}`)
-          const convData = await convResponse.json()
-          
-          if (convData.success && convData.messages) {
-            console.log(`[ObjectivesPage] ${convData.messages.length} messages chargés`)
-            // Charger les messages dans le chat
-            loadMessages(convData.messages, lastObjective.conversationId)
-          }
-        }
-        
-        // Afficher l'arbre si on a un objectif
-        setActiveView("tree")
+        // Charger la conversation associée
+        await loadConversationForObjective(lastObjective)
       } else {
         console.log("[ObjectivesPage] Aucun objectif trouvé, mode chat")
         // Pas d'objectif, rester en mode chat

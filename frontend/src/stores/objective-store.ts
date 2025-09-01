@@ -109,6 +109,7 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
   isLoading: false,
 
   setActiveObjective: (objective) => {
+    console.log("[ObjectiveStore] Setting active objective:", objective?.title || "null")
     set({ currentObjective: objective })
   },
 
@@ -213,6 +214,7 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
   },
 
   clearObjective: () => {
+    console.log("[ObjectiveStore] Clearing current objective")
     set({ currentObjective: null })
   },
 

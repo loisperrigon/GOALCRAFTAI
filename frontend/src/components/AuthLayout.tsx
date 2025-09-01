@@ -48,7 +48,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const [showPricingModal, setShowPricingModal] = useState(false)
   const { user, isAuthenticated } = useUserStore()
   const { setActiveObjective, currentObjective } = useObjectiveStore()
-  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null)
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(currentObjective?.id || null)
   const [isLoadingObjective, setIsLoadingObjective] = useState(false)
   const [objectives, setObjectives] = useState<any[]>([])
   const [loadingObjectives, setLoadingObjectives] = useState(true)
@@ -59,6 +59,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     // Recharger quand un nouvel objectif est créé
     if (currentObjective) {
       loadObjectives()
+      setSelectedObjectiveId(currentObjective.id)
     }
   }, [currentObjective?.id]) // Se déclenche quand l'ID change
   
@@ -192,6 +193,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                         if (!isAuthenticated) {
                           setShowAuthModal(true)
                         } else {
+                          // Vider l'objectif actuel pour commencer une nouvelle conversation
+                          setActiveObjective(null)
                           router.push("/objectives")
                         }
                       }}
@@ -219,7 +222,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                         <Card 
                           key={objective.id}
                           className={`p-3 cursor-pointer transition-all hover:shadow-md relative ${
-                            objective.id === selectedObjectiveId 
+                            objective.id === currentObjective?.id
                               ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10" 
                               : "border-border hover:border-purple-500/20 hover:bg-purple-500/5"
                           } ${isLoadingObjective && objective.id === selectedObjectiveId ? "opacity-60" : ""}`}
@@ -353,6 +356,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                           setShowAuthModal(true)
                           setIsMobileSidebarOpen(false)
                         } else {
+                          // Vider l'objectif actuel pour commencer une nouvelle conversation
+                          setActiveObjective(null)
                           router.push("/objectives")
                           setIsMobileSidebarOpen(false)
                         }
@@ -381,12 +386,12 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                         <Card 
                           key={objective.id}
                           className={`p-3 cursor-pointer transition-all ${
-                            objective.isActive 
+                            objective.id === currentObjective?.id
                               ? "border-purple-500/30 bg-purple-500/5" 
                               : "border-border"
                           }`}
                           onClick={() => {
-                            router.push("/objectives")
+                            handleObjectiveClick(objective)
                             setIsMobileSidebarOpen(false)
                           }}
                         >
