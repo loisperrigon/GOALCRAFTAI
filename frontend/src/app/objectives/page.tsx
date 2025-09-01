@@ -139,9 +139,9 @@ export default function ObjectivesPage() {
 
   return (
     <AuthLayout>
-      <div className="h-full flex flex-col">
+      <div className="h-screen max-h-screen flex flex-col overflow-hidden">
         {/* Mobile View Toggle */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur">
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur flex-shrink-0">
           <span className="font-semibold">Mes Objectifs</span>
           <div className="flex gap-1">
             <Button
@@ -165,12 +165,12 @@ export default function ObjectivesPage() {
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden min-h-0">
           {/* Chat Section */}
           <div className={`${activeView === "chat" ? "flex" : "hidden"} md:flex flex-1 flex-col min-h-0 bg-background/50 md:border-r md:border-border ${
             isFullscreen ? "md:hidden" : ""
           }`}>
-            <div className="border-b border-border bg-card/50 backdrop-blur p-4">
+            <div className="border-b border-border bg-card/50 backdrop-blur p-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
@@ -246,7 +246,7 @@ export default function ObjectivesPage() {
               </div>
             </div>
 
-            <div className="border-t border-border bg-card/50 backdrop-blur p-4">
+            <div className="border-t border-border bg-card/50 backdrop-blur p-4 flex-shrink-0">
               <div className="max-w-2xl mx-auto">
                 <div className="flex gap-2">
                   <Input
@@ -274,7 +274,7 @@ export default function ObjectivesPage() {
           <div className={`${activeView === "tree" ? "flex" : "hidden"} md:flex flex-1 flex-col min-h-0 ${
             isFullscreen ? "md:flex fixed inset-0 z-50 bg-background" : ""
           }`}>
-            <div className="border-b border-border bg-card/50 backdrop-blur p-4">
+            <div className="border-b border-border bg-card/50 backdrop-blur p-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Target className="h-5 w-5 text-purple-400" />
