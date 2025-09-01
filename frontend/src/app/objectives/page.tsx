@@ -72,10 +72,17 @@ export default function ObjectivesPage() {
   useEffect(() => {
     if (!loadingLastObjective) {
       if (currentObjective) {
-        // Un objectif a été sélectionné depuis la sidebar
-        loadConversationForObjective(currentObjective)
+        // Si c'est un objectif temporaire, vider le chat pour une nouvelle conversation
+        if (currentObjective.isTemporary) {
+          console.log("[ObjectivesPage] Nouvel objectif temporaire - vidage du chat")
+          clearMessages()
+          setActiveView("chat")
+        } else {
+          // Un objectif existant a été sélectionné depuis la sidebar
+          loadConversationForObjective(currentObjective)
+        }
       } else {
-        // Bouton "+" cliqué - nouvelle conversation
+        // Pas d'objectif - nouvelle conversation
         console.log("[ObjectivesPage] Nouvelle conversation démarrée")
         clearMessages()
         setActiveView("chat")

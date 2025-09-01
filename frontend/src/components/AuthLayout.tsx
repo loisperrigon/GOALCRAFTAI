@@ -54,15 +54,47 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const [objectives, setObjectives] = useState<any[]>([])
   const [loadingObjectives, setLoadingObjectives] = useState(true)
   
-  // Charger les objectifs depuis MongoDB au montage et quand l'objectif actif change
+  // Charger les objectifs depuis MongoDB au montage
   useEffect(() => {
     loadObjectives()
-    // Recharger quand un nouvel objectif est créé
+  }, [])
+  
+  // Gérer les changements d'objectif actif
+  useEffect(() => {
     if (currentObjective) {
-      loadObjectives()
       setSelectedObjectiveId(currentObjective.id)
+      
+      // Si c'est un objectif temporaire, l'ajouter/mettre à jour dans la liste
+      if (currentObjective.isTemporary) {
+        setObjectives(prev => {
+          const exists = prev.find(obj => obj.id === currentObjective.id)
+          if (!exists) {
+            return [currentObjective, ...prev]
+          }
+          // Mettre à jour l'objectif existant
+          return prev.map(obj => 
+            obj.id === currentObjective.id ? currentObjective : obj
+          )
+        })
+      } else {
+        // Si ce n'est plus temporaire, remplacer l'objectif temporaire par le permanent
+        setObjectives(prev => {
+          // Enlever l'objectif temporaire avec le même ID
+          const filtered = prev.filter(obj => obj.id !== currentObjective.id || !obj.isTemporary)
+          // Ajouter la version non-temporaire si elle n'existe pas déjà
+          const exists = filtered.find(obj => obj.id === currentObjective.id)
+          if (!exists) {
+            return [currentObjective, ...filtered]
+          }
+          return filtered.map(obj => 
+            obj.id === currentObjective.id ? currentObjective : obj
+          )
+        })
+        // Recharger depuis MongoDB après un délai pour avoir la version à jour
+        setTimeout(() => loadObjectives(), 1000)
+      }
     }
-  }, [currentObjective?.id]) // Se déclenche quand l'ID change
+  }, [currentObjective])
   
   const loadObjectives = async () => {
     try {
@@ -76,7 +108,12 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       
       if (data.success && data.objectives) {
         console.log(`[AuthLayout] ${data.objectives.length} objectifs chargés depuis MongoDB`)
-        setObjectives(data.objectives)
+        
+        // Préserver les objectifs temporaires existants
+        setObjectives(prev => {
+          const tempObjectives = prev.filter(obj => obj.isTemporary)
+          return [...tempObjectives, ...data.objectives]
+        })
       } else {
         console.error("[AuthLayout] Erreur lors du chargement des objectifs")
       }
@@ -196,13 +233,37 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                   size="sm"
                   variant="ghost"
                   className="h-7 px-2 hover:bg-purple-500/10"
-                  onClick={() => {
+                  onClick={async () => {
                     if (!isAuthenticated) {
                       setShowAuthModal(true)
                     } else {
-                      // Vider l'objectif actuel pour commencer une nouvelle conversation
-                      setActiveObjective(null)
-                      router.push("/objectives")
+                      // Vérifier s'il y a déjà un objectif temporaire
+                      const existingTemp = objectives.find(obj => obj.isTemporary)
+                      
+                      if (existingTemp) {
+                        // S'il existe déjà, le sélectionner au lieu d'en créer un nouveau
+                        setActiveObjective(existingTemp)
+                        router.push("/objectives")
+                      } else {
+                        // Créer un nouvel objectif temporaire
+                        const tempObjective = {
+                          id: `temp-${Date.now()}`,
+                          title: "Nouvel objectif",
+                          description: "En attente de votre description...",
+                          category: "general",
+                          difficulty: "intermediate",
+                          progress: 0,
+                          completedSteps: [],
+                          skillTree: { nodes: [] },
+                          createdAt: new Date(),
+                          isTemporary: true
+                        }
+                        
+                        // Ajouter l'objectif temporaire à la liste
+                        setObjectives(prev => [tempObjective, ...prev])
+                        setActiveObjective(tempObjective)
+                        router.push("/objectives")
+                      }
                     }
                   }}
                 >
@@ -231,8 +292,21 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                             objective.id === currentObjective?.id
                               ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10" 
                               : "border-border hover:border-purple-500/20 hover:bg-purple-500/5"
-                          } ${isLoadingObjective && objective.id === selectedObjectiveId ? "opacity-60" : ""}`}
-                          onClick={() => !isLoadingObjective && handleObjectiveClick(objective)}
+                          } ${isLoadingObjective && objective.id === selectedObjectiveId ? "opacity-60" : ""} ${
+                            objective.isTemporary ? "animate-pulse" : ""
+                          }`}
+                          onClick={() => {
+                            if (!isLoadingObjective) {
+                              if (objective.isTemporary) {
+                                // Pour un objectif temporaire, juste le sélectionner et aller à /objectives
+                                setActiveObjective(objective)
+                                router.push("/objectives")
+                              } else {
+                                // Pour un objectif normal, utiliser handleObjectiveClick
+                                handleObjectiveClick(objective)
+                              }
+                            }
+                          }}
                         >
                           {isLoadingObjective && objective.id === selectedObjectiveId && (
                             <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-lg">
@@ -361,8 +435,31 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                           setShowAuthModal(true)
                           setIsMobileSidebarOpen(false)
                         } else {
-                          // Vider l'objectif actuel pour commencer une nouvelle conversation
-                          setActiveObjective(null)
+                          // Vérifier s'il y a déjà un objectif temporaire
+                          const existingTemp = objectives.find(obj => obj.isTemporary)
+                          
+                          if (existingTemp) {
+                            // S'il existe déjà, le sélectionner au lieu d'en créer un nouveau
+                            setActiveObjective(existingTemp)
+                          } else {
+                            // Créer un nouvel objectif temporaire
+                            const tempObjective = {
+                              id: `temp-${Date.now()}`,
+                              title: "Nouvel objectif",
+                              description: "En attente de votre description...",
+                              category: "general",
+                              difficulty: "intermediate",
+                              progress: 0,
+                              completedSteps: [],
+                              skillTree: { nodes: [] },
+                              createdAt: new Date(),
+                              isTemporary: true
+                            }
+                            
+                            // Ajouter l'objectif temporaire à la liste
+                            setObjectives(prev => [tempObjective, ...prev])
+                            setActiveObjective(tempObjective)
+                          }
                           router.push("/objectives")
                           setIsMobileSidebarOpen(false)
                         }
@@ -394,9 +491,16 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                             objective.id === currentObjective?.id
                               ? "border-purple-500/30 bg-purple-500/5" 
                               : "border-border"
-                          }`}
+                          } ${objective.isTemporary ? "animate-pulse" : ""}`}
                           onClick={() => {
-                            handleObjectiveClick(objective)
+                            if (objective.isTemporary) {
+                              // Pour un objectif temporaire, juste le sélectionner
+                              setActiveObjective(objective)
+                              router.push("/objectives")
+                            } else {
+                              // Pour un objectif normal, utiliser handleObjectiveClick
+                              handleObjectiveClick(objective)
+                            }
                             setIsMobileSidebarOpen(false)
                           }}
                         >

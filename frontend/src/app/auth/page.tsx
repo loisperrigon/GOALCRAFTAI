@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { Chrome, Github, Mail, Lock, User, Sparkles, Trophy, Target, Zap } from "lucide-react"
 import Header from "@/components/Header"
+import { Spinner } from "@/components/ui/loader"
 import Footer from "@/components/Footer"
 
 export default function AuthPage() {
@@ -182,7 +183,7 @@ export default function AuthPage() {
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <Spinner size="sm" />
                   Chargement...
                 </div>
               ) : (

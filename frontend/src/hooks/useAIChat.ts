@@ -141,6 +141,13 @@ export function useAIChat(options: UseAIChatOptions = {}) {
               })
               
               // Mettre à jour le store avec le nouvel objectif
+              // Si on a un objectif temporaire, le remplacer avec les vraies données
+              const currentObj = useObjectiveStore.getState().currentObjective
+              if (currentObj?.isTemporary) {
+                // Garder le même ID et remplacer dans la liste de la sidebar
+                data.objective.id = currentObj.id
+                delete data.objective.isTemporary
+              }
               setActiveObjective(data.objective)
               
               // Appeler le callback si fourni
