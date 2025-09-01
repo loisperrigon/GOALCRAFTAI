@@ -88,7 +88,7 @@ export default function ObjectivesPage() {
         setActiveView("chat")
       }
     }
-  }, [currentObjective?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentObjective?.id, currentObjective?.isTemporary]) // eslint-disable-line react-hooks/exhaustive-deps
   
   const loadConversationForObjective = async (objective: any) => {
     try {
