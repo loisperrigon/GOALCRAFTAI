@@ -166,36 +166,44 @@ export default function ObjectivesPage() {
   return (
     <AuthLayout>
       <div className="h-screen max-h-screen flex flex-col overflow-hidden">
-        {/* Mobile View Toggle */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur flex-shrink-0">
-          <span className="font-semibold">Mes Objectifs</span>
-          <div className="flex gap-1">
-            <Button
-              variant={activeView === "chat" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveView("chat")}
-              className={activeView === "chat" ? "bg-gradient-to-r from-purple-500 to-blue-500" : ""}
-            >
-              <Bot className="h-4 w-4" />
-              <span className="ml-1 hidden sm:inline">Chat</span>
-            </Button>
-            <Button
-              variant={activeView === "tree" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveView("tree")}
-              className={activeView === "tree" ? "bg-gradient-to-r from-purple-500 to-blue-500" : ""}
-            >
-              <Map className="h-4 w-4" />
-              <span className="ml-1 hidden sm:inline">Arbre</span>
-            </Button>
+        {/* Mobile View Toggle - Only show if we have an objective */}
+        {currentObjective && (
+          <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur flex-shrink-0">
+            <span className="font-semibold">Mes Objectifs</span>
+            <div className="flex gap-1">
+              <Button
+                variant={activeView === "chat" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveView("chat")}
+                className={activeView === "chat" ? "bg-gradient-to-r from-purple-500 to-blue-500" : ""}
+              >
+                <Bot className="h-4 w-4" />
+                <span className="ml-1 hidden sm:inline">Chat</span>
+              </Button>
+              <Button
+                variant={activeView === "tree" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setActiveView("tree")}
+                className={activeView === "tree" ? "bg-gradient-to-r from-purple-500 to-blue-500" : ""}
+              >
+                <Map className="h-4 w-4" />
+                <span className="ml-1 hidden sm:inline">Arbre</span>
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex-1 flex overflow-hidden min-h-0">
-          {/* Chat Section */}
-          <div className={`${activeView === "chat" ? "flex" : "hidden"} md:flex flex-1 flex-col min-h-0 bg-background/50 md:border-r md:border-border ${
+          {/* Chat Section - Always visible on desktop when no objective, or based on activeView */}
+          <div className={`${
+            !currentObjective 
+              ? "flex" 
+              : activeView === "chat" ? "flex" : "hidden"
+            } md:flex flex-1 flex-col min-h-0 bg-background/50 ${
+            currentObjective ? "md:border-r md:border-border" : ""
+          } ${
             isFullscreen ? "md:hidden" : ""
-          }`}>
+          } transition-all duration-300`}>
             <div className="border-b border-border bg-card/50 backdrop-blur p-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -218,6 +226,49 @@ export default function ObjectivesPage() {
 
             <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
               <div className="space-y-4 max-w-2xl mx-auto">
+                {/* Message d'accueil si pas de messages */}
+                {messages.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-8"
+                  >
+                    <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                      <Brain className="h-10 w-10 text-purple-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">Bonjour ! Je suis votre Coach IA 🎯</h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                      Je peux vous aider à transformer vos rêves en objectifs concrets avec un parcours personnalisé.
+                    </p>
+                    <div className="grid gap-3 max-w-lg mx-auto text-left">
+                      <div className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border">
+                        <Target className="h-5 w-5 text-purple-400 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-sm">Créer des objectifs structurés</p>
+                          <p className="text-xs text-muted-foreground">Décrivez votre rêve et je créerai un parcours étape par étape</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border">
+                        <Zap className="h-5 w-5 text-yellow-400 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-sm">Gamification motivante</p>
+                          <p className="text-xs text-muted-foreground">Gagnez des XP, débloquez des étapes et suivez votre progression</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border">
+                        <Brain className="h-5 w-5 text-blue-400 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-sm">Conseils personnalisés</p>
+                          <p className="text-xs text-muted-foreground">Recevez des recommandations adaptées à votre parcours</p>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-6">
+                      💬 Commencez par me dire quel objectif vous souhaitez atteindre !
+                    </p>
+                  </motion.div>
+                )}
+                
                 <AnimatePresence>
                 {messages.map((message, index) => (
                   <motion.div
@@ -296,10 +347,11 @@ export default function ObjectivesPage() {
             </div>
           </div>
 
-          {/* Skill Tree Section */}
-          <div className={`${activeView === "tree" ? "flex" : "hidden"} md:flex flex-1 flex-col min-h-0 ${
-            isFullscreen ? "md:flex fixed inset-0 z-50 bg-background" : ""
-          }`}>
+          {/* Skill Tree Section - Only show if we have an objective */}
+          {currentObjective && (
+            <div className={`${activeView === "tree" ? "flex" : "hidden"} md:flex flex-1 flex-col min-h-0 ${
+              isFullscreen ? "md:flex fixed inset-0 z-50 bg-background" : ""
+            } animate-in slide-in-from-right duration-300`}>
             <div className="border-b border-border bg-card/50 backdrop-blur p-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -330,6 +382,7 @@ export default function ObjectivesPage() {
               <SkillTree isFullscreen={isFullscreen} />
             </div>
           </div>
+          )}
         </div>
       </div>
     </AuthLayout>
