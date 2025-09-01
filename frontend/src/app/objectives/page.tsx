@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAIChat } from "@/hooks/useAIChat"
 import { useObjectiveStore } from "@/stores/objective-store"
 import { motion, AnimatePresence } from "framer-motion"
+import { Loader } from "@/components/ui/loader"
 import { 
   Send, 
   Settings, 
@@ -163,47 +164,60 @@ export default function ObjectivesPage() {
     playNotification() // Son de notification pour la réponse
   }
 
+  // Afficher le loader pendant le chargement initial
+  if (loadingLastObjective) {
+    return (
+      <AuthLayout>
+        <div className="h-screen max-h-screen flex items-center justify-center">
+          <Loader size="lg" text="Chargement de vos objectifs..." />
+        </div>
+      </AuthLayout>
+    )
+  }
+
   return (
     <AuthLayout>
-      <div className="h-screen max-h-screen flex flex-col overflow-hidden">
-        {/* Mobile View Toggle - Only show if we have an objective */}
+      <div className="h-full flex flex-col overflow-hidden">
+        {/* Navigation Tabs - Only show if we have an objective */}
         {currentObjective && (
-          <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur flex-shrink-0">
-            <span className="font-semibold">Mes Objectifs</span>
-            <div className="flex gap-1">
-              <Button
-                variant={activeView === "chat" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveView("chat")}
-                className={activeView === "chat" ? "bg-gradient-to-r from-purple-500 to-blue-500" : ""}
-              >
-                <Bot className="h-4 w-4" />
-                <span className="ml-1 hidden sm:inline">Chat</span>
-              </Button>
-              <Button
-                variant={activeView === "tree" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setActiveView("tree")}
-                className={activeView === "tree" ? "bg-gradient-to-r from-purple-500 to-blue-500" : ""}
-              >
-                <Map className="h-4 w-4" />
-                <span className="ml-1 hidden sm:inline">Arbre</span>
-              </Button>
+          <div className="flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur flex-shrink-0">
+            <div className="flex items-center gap-4">
+              <span className="font-semibold text-sm md:text-base">Mes Objectifs</span>
+              <div className="flex gap-1 bg-background/50 p-1 rounded-lg">
+                <Button
+                  variant={activeView === "chat" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveView("chat")}
+                  className={activeView === "chat" 
+                    ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white" 
+                    : "hover:bg-purple-500/10"
+                  }
+                >
+                  <Brain className="h-4 w-4" />
+                  <span className="ml-2">Chat IA</span>
+                </Button>
+                <Button
+                  variant={activeView === "tree" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setActiveView("tree")}
+                  className={activeView === "tree" 
+                    ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white" 
+                    : "hover:bg-purple-500/10"
+                  }
+                >
+                  <Target className="h-4 w-4" />
+                  <span className="ml-2">Arbre de progression</span>
+                </Button>
+              </div>
             </div>
           </div>
         )}
 
-        <div className="flex-1 flex overflow-hidden min-h-0">
-          {/* Chat Section - Always visible on desktop when no objective, or based on activeView */}
+        <div className="flex-1 overflow-hidden">
+          {/* Chat Section - Show when no objective OR when chat view is active */}
           <div className={`${
-            !currentObjective 
-              ? "flex" 
-              : activeView === "chat" ? "flex" : "hidden"
-            } md:flex flex-1 flex-col min-h-0 bg-background/50 ${
-            currentObjective ? "md:border-r md:border-border" : ""
-          } ${
-            isFullscreen ? "md:hidden" : ""
-          } transition-all duration-300`}>
+            !currentObjective || activeView === "chat" ? "flex" : "hidden"
+          } h-full flex-col bg-background/50`}>
             <div className="border-b border-border bg-card/50 backdrop-blur p-4 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

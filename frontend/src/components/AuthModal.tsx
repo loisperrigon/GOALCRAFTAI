@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Chrome, Github, Mail, Lock, User, X } from "lucide-react"
+import { Spinner } from "@/components/ui/loader"
 
 interface AuthModalProps {
   isOpen: boolean
@@ -195,7 +196,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, redirectTo = "/o
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <Spinner size="sm" />
                   Chargement...
                 </div>
               ) : (

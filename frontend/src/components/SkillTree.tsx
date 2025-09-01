@@ -368,10 +368,11 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
       
       // Marquer qu'on doit centrer sur le nœud
       if (isFirstLoad || isObjectiveChange) {
-        // Attendre un peu puis centrer
-        setTimeout(() => {
+        // Si React Flow est déjà initialisé, on peut centrer tout de suite
+        if (reactFlowInstance) {
           setShouldCenter(true)
-        }, 200)
+        }
+        // Sinon, onInit le fera quand React Flow sera prêt
       }
       
       // Ne pas toucher au viewport si on garde les positions
@@ -481,10 +482,11 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
 
   const onInit = (instance: ReactFlowInstance) => {
     setReactFlowInstance(instance)
-    // Centrer au premier chargement
-    setTimeout(() => {
-      instance.fitView({ padding: 0.2, duration: 800 })
-    }, 100)
+    // React Flow est maintenant complètement chargé
+    // On peut déclencher le centrage immédiatement si nécessaire
+    if (layoutedNodesRef.current.length > 0) {
+      setShouldCenter(true)
+    }
   }
 
   // Simuler le statut Free/Premium (à remplacer par vraie logique)

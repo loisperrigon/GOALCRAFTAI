@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { SimpleStreak } from "@/components/SimpleStreak"
 import { useObjectiveStore } from "@/stores/objective-store"
 import { useUserStore } from "@/stores/user-store"
+import { Spinner } from "@/components/ui/loader"
 import { 
   LayoutDashboard,
   Target,
@@ -65,7 +66,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   
   const loadObjectives = async () => {
     try {
-      setLoadingObjectives(true)
+      // Ne montrer le loader que si on n'a pas encore d'objectifs
+      if (objectives.length === 0) {
+        setLoadingObjectives(true)
+      }
+      
       const response = await fetch('/api/objectives')
       const data = await response.json()
       
@@ -112,11 +117,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex flex-1 h-screen">
-        {/* Desktop Sidebar */}
-        <div className="hidden md:block w-64 border-r border-border bg-card/50 backdrop-blur">
-          <div className="p-4 h-full flex flex-col">
+    <div className="h-screen overflow-hidden bg-background flex">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex w-64 border-r border-border bg-card/50 backdrop-blur h-screen flex-col overflow-hidden">
+          {/* Fixed header section */}
+          <div className="p-4 flex-shrink-0">
             {/* Logo Section */}
             <div className="mb-4">
               <div 
@@ -157,58 +162,59 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             <div className="mb-4">
               <h2 className="text-sm font-medium text-muted-foreground">Navigation</h2>
             </div>
+          </div>
 
-            <>
-                {/* Navigation Links */}
-                <div className="space-y-1 mb-6">
-                  {navigationItems.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <Button
-                        key={item.href}
-                        variant="ghost"
-                        className={`w-full justify-start ${
-                          item.active 
-                            ? "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20" 
-                            : "hover:bg-purple-500/10"
-                        }`}
-                        onClick={() => router.push(item.href)}
-                      >
-                        <Icon className="h-4 w-4 mr-3" />
-                        {item.label}
-                      </Button>
-                    )
-                  })}
-                </div>
+          {/* Scrollable content section */}
+          <div className="flex-1 overflow-y-auto px-4">
+            {/* Navigation Links */}
+            <div className="space-y-1 mb-6">
+              {navigationItems.map((item) => {
+                const Icon = item.icon
+                return (
+                  <Button
+                    key={item.href}
+                    variant="ghost"
+                    className={`w-full justify-start ${
+                      item.active 
+                        ? "bg-purple-500/10 text-purple-400 hover:bg-purple-500/20" 
+                        : "hover:bg-purple-500/10"
+                    }`}
+                    onClick={() => router.push(item.href)}
+                  >
+                    <Icon className="h-4 w-4 mr-3" />
+                    {item.label}
+                  </Button>
+                )
+              })}
+            </div>
 
-                {/* Objectives Section */}
-                <div className="border-t border-border pt-4 mb-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">Mes Objectifs</h3>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 hover:bg-purple-500/10"
-                      onClick={() => {
-                        if (!isAuthenticated) {
-                          setShowAuthModal(true)
-                        } else {
-                          // Vider l'objectif actuel pour commencer une nouvelle conversation
-                          setActiveObjective(null)
-                          router.push("/objectives")
-                        }
-                      }}
-                    >
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  
-                  <ScrollArea className="h-[320px]">
-                    <div className="space-y-2">
+            {/* Objectives Section */}
+            <div className="border-t border-border pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-muted-foreground">Mes Objectifs</h3>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 hover:bg-purple-500/10"
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      setShowAuthModal(true)
+                    } else {
+                      // Vider l'objectif actuel pour commencer une nouvelle conversation
+                      setActiveObjective(null)
+                      router.push("/objectives")
+                    }
+                  }}
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+              
+              <div className="space-y-2 pb-4">
                       {loadingObjectives ? (
                         <div className="flex items-center justify-center h-32">
                           <div className="text-center">
-                            <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                            <Spinner size="md" className="mx-auto mb-2" />
                             <p className="text-xs text-muted-foreground">Chargement des objectifs...</p>
                           </div>
                         </div>
@@ -230,7 +236,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                         >
                           {isLoadingObjective && objective.id === selectedObjectiveId && (
                             <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-lg">
-                              <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                              <Spinner size="sm" />
                             </div>
                           )}
                           <div className="flex items-start justify-between mb-2">
@@ -257,34 +263,33 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                             </span>
                           </div>
                         </Card>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </div>
-
-                {/* Premium CTA */}
-                {!user?.isPremium && (
-                  <Card className="p-3 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30 mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Crown className="h-4 w-4 text-yellow-400" />
-                      <span className="text-sm font-semibold">Passer Premium</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Débloquez l'IA illimitée et toutes les fonctionnalités
-                    </p>
-                    <Button 
-                      size="sm"
-                      className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
-                      onClick={() => setShowPricingModal(true)}
-                    >
-                      Voir les offres
-                    </Button>
-                  </Card>
-                )}
-
-              </>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+
+          {/* Premium CTA Footer - Always visible */}
+          {!user?.isPremium && (
+            <div className="p-4 border-t border-border flex-shrink-0">
+              <Card className="p-3 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Crown className="h-4 w-4 text-yellow-400" />
+                  <span className="text-sm font-semibold">Passer Premium</span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Débloquez l'IA illimitée et toutes les fonctionnalités
+                </p>
+                <Button 
+                  size="sm"
+                  className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                  onClick={() => setShowPricingModal(true)}
+                >
+                  Voir les offres
+                </Button>
+              </Card>
+            </div>
+          )}
+      </div>
 
         {/* Mobile Sidebar Button */}
         <button
@@ -367,12 +372,12 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                     </Button>
                   </div>
                   
-                  <ScrollArea className="h-[320px]">
+                  <div className="h-[320px] overflow-y-auto">
                     <div className="space-y-2">
                       {loadingObjectives ? (
                         <div className="flex items-center justify-center h-32">
                           <div className="text-center">
-                            <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                            <Spinner size="md" className="mx-auto mb-2" />
                             <p className="text-xs text-muted-foreground">Chargement des objectifs...</p>
                           </div>
                         </div>
@@ -415,7 +420,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                         </Card>
                       ))}
                     </div>
-                  </ScrollArea>
+                  </div>
                 </div>
 
                 {/* Mobile Premium CTA */}
@@ -476,11 +481,10 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           </>
         )}
 
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {children}
-        </main>
-      </div>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col overflow-hidden h-screen">
+        {children}
+      </main>
       
       {/* Auth Modal */}
       <AuthModal 
