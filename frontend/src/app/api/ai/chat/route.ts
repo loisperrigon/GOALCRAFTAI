@@ -4,6 +4,7 @@ import { getDatabase } from "@/lib/db-init"
 import { z } from "zod"
 import { checkRateLimit, getUniqueIdentifier } from "@/lib/rate-limiter"
 import { storeWebhookContext } from "@/lib/webhook-cache"
+import { encrypt, decrypt } from "@/lib/encryption"
 
 const chatSchema = z.object({
   message: z.string().min(1).max(10000), // Permet des descriptions détaillées
@@ -85,14 +86,14 @@ export async function POST(request: NextRequest) {
       conversation = { _id: newConversationId, messages: [] }
     }
 
-    // Ajouter le message utilisateur
+    // Ajouter le message utilisateur (CHIFFRÉ)
     await db.collection("conversations").updateOne(
       { _id: conversation._id },
       {
         $push: {
           messages: {
             role: "user",
-            content: message,
+            content: encrypt(message), // Chiffrer le contenu
             timestamp: new Date()
           }
         },
@@ -122,6 +123,19 @@ export async function POST(request: NextRequest) {
     console.log("[n8n] Message ID:", messageId)
     console.log("[n8n] Conversation ID:", conversation._id)
     
+    // Déchiffrer les messages précédents pour le contexte n8n
+    const decryptedPreviousMessages = (conversation.messages?.slice(-10) || []).map((msg: any) => {
+      try {
+        return {
+          ...msg,
+          content: decrypt(msg.content) // Déchiffrer pour n8n
+        }
+      } catch (error) {
+        // Si pas chiffré, garder tel quel
+        return msg
+      }
+    })
+    
     // Envoyer à n8n sans attendre la réponse
     fetch(N8N_WEBHOOK_URL, {
         method: "POST",
@@ -131,7 +145,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           messageId: messageId, // ID unique pour retrouver la réponse
           userId: userId,
-          message,
+          message, // Message en clair pour n8n
           conversationId: conversation._id, // Déjà un string maintenant
           objectiveType: objectiveType || "general",
           messageCount: (conversation.messages?.length || 0) + 1,
@@ -139,7 +153,7 @@ export async function POST(request: NextRequest) {
           context: {
             userName: userName,
             userEmail: userEmail,
-            previousMessages: conversation.messages?.slice(-10) || [],
+            previousMessages: decryptedPreviousMessages, // Messages déchiffrés pour le contexte
             isFirstMessage: !conversation.messages || conversation.messages.length === 0
           }
         })

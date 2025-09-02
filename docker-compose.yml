@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   # Application Next.js + Backend
@@ -12,8 +12,17 @@ services:
       - MONGODB_URI=mongodb://admin:${MONGO_PASSWORD:-goalcraft2024}@mongodb:27017/goalcraft?authSource=admin
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-secret-key-change-this-in-production}
-      - N8N_WEBHOOK_URL=http://n8n:5678/webhook
+      # Google OAuth
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      # Encryption pour les conversations
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      # n8n Webhook
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://n8n:5678/webhook}
       - N8N_API_KEY=${N8N_API_KEY:-}
+      # URLs publiques
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - SERVER_URL=${SERVER_URL:-http://localhost:3000}
     depends_on:
       - mongodb
       - n8n
@@ -61,48 +70,10 @@ services:
     networks:
       - goalcraft-network
 
-  # Ollama pour IA locale (optionnel)
-  ollama:
-    image: ollama/ollama:latest
-    container_name: goalcraft-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    restart: unless-stopped
-    networks:
-      - goalcraft-network
-    # Décommenter si GPU disponible
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
-
-  # Nginx reverse proxy (optionnel pour production)
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: goalcraft-nginx
-  #   ports:
-  #     - "80:80"
-  #     - "443:443"
-  #   volumes:
-  #     - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
-  #     - ./docker/ssl:/etc/ssl:ro
-  #   depends_on:
-  #     - app
-  #   restart: unless-stopped
-  #   networks:
-  #     - goalcraft-network
-
 volumes:
   mongodb_data:
     driver: local
   n8n_data:
-    driver: local
-  ollama_data:
     driver: local
 
 networks:

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/db-init"
 import { z } from "zod"
 import { getLastWebhookContext } from "@/lib/webhook-cache"
+import { encrypt } from "@/lib/encryption"
 
 // Schema pour valider la réponse de n8n (IDs optionnels maintenant)
 const webhookSchema = z.object({
@@ -123,14 +124,14 @@ export async function POST(request: NextRequest) {
     
     // Traiter selon le type
     if (type === "message") {
-      // Ajouter un message de chat
+      // Ajouter un message de chat (CHIFFRÉ)
       await db.collection("conversations").updateOne(
         { _id: conversationId },
         {
           $push: {
             messages: {
               role: "assistant",
-              content: content || "Message reçu",
+              content: encrypt(content || "Message reçu"), // Chiffrer le contenu
               timestamp: new Date(),
               metadata: metadata,
               isFinal: isFinal
@@ -138,7 +139,7 @@ export async function POST(request: NextRequest) {
           },
           $set: {
             status: isFinal ? "waiting_for_generation" : "ai_responding", // Ne pas mettre "completed" si on attend une génération
-            lastResponse: content,
+            lastResponse: encrypt(content || ""), // Chiffrer aussi lastResponse
             lastResponseAt: new Date()
           }
         }
