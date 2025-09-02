@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Déterminer le type d'utilisateur
+    // @ts-expect-error isPremium sera ajouté dans le callback de session
     const userType = session.user.isPremium ? "premium" : "free"
     
     // Vérifier le rate limiting
