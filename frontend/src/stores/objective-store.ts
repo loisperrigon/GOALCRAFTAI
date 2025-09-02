@@ -276,7 +276,7 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
       const updatedNodes = [...existingNodes, node]
       const totalSteps = updatedNodes.length
       
-      console.log(`[ObjectiveStore] Ajout du node ${node.id}: "${node.title}" (${totalSteps} nodes total)`)
+      // console.log(`[ObjectiveStore] Ajout du node ${node.id}: "${node.title}" (${totalSteps} nodes total)`)
       
       return {
         currentObjective: {

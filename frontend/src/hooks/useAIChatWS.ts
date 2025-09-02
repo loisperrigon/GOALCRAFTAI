@@ -52,7 +52,7 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
           return
         }
         
-        console.log(`[useAIChatWS] Message reçu: ${data.type}`)
+        // console.log(`[useAIChatWS] Message reçu: ${data.type}`) // Commenté pour réduire les logs
         
         if (data.type === "connected") {
           console.log("[useAIChatWS] Connexion confirmée")

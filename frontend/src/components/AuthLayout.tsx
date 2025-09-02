@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, memo } from "react"
 import AuthModal from "@/components/AuthModal"
 import PricingModal from "@/components/PricingModal"
 import { useRouter, usePathname } from "next/navigation"
@@ -41,7 +41,7 @@ interface Objective {
   isActive?: boolean
 }
 
-export default function AuthLayout({ children }: AuthLayoutProps) {
+function AuthLayout({ children }: AuthLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
@@ -59,15 +59,15 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     loadConversations()
   }, [])
   
-  // Recharger les conversations quand un objectif est créé
+  // Recharger les conversations quand un objectif est créé (pas pour les placeholders)
   useEffect(() => {
-    if (currentObjective && !currentObjective.isTemporary) {
-      // Recharger les conversations après création d'un objectif
+    if (currentObjective && !currentObjective.isPlaceholder && currentObjective.status === 'active') {
+      // Recharger seulement si c'est un vrai objectif qui vient d'être complété
       setTimeout(() => loadConversations(), 1000)
     }
-  }, [currentObjective?.id])
+  }, [currentObjective?.status]) // Dépendre du status plutôt que de l'id
   
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     try {
       // Ne montrer le loader que si on n'a pas encore de conversations
       if (conversations.length === 0) {
@@ -88,7 +88,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     } finally {
       setLoadingConversations(false)
     }
-  }
+  }, [conversations.length])
 
   const navigationItems = [
     { 
@@ -108,7 +108,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     xp: 0
   }
 
-  const handleConversationClick = async (conversation: any) => {
+  const handleConversationClick = useCallback(async (conversation: any) => {
     setSelectedObjectiveId(conversation._id)
     setIsLoadingObjective(true)
     
@@ -163,7 +163,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
       setIsLoadingObjective(false)
       router.push("/objectives")
     }
-  }
+  }, [router, setActiveObjective])
 
   return (
     <div className="h-screen overflow-hidden bg-background flex">
@@ -617,3 +617,5 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     </div>
   )
 }
+
+export default memo(AuthLayout)

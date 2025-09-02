@@ -198,11 +198,9 @@ interface SkillTreeProps {
 }
 
 export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
-  // Récupérer l'objectif actif depuis objective-store
-  const { 
-    currentObjective,
-    completeNode: completeObjectiveNode
-  } = useObjectiveStore()
+  // Récupérer l'objectif actif depuis objective-store avec sélecteurs optimisés
+  const currentObjective = useObjectiveStore(state => state.currentObjective)
+  const completeObjectiveNode = useObjectiveStore(state => state.completeNode)
   
   const { user, addXP } = useUserStore()
   
@@ -212,12 +210,12 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   const userXP = user?.xp || 0
   const userLevel = user?.level || 1
   
-  // Log pour debug de la génération progressive
-  useEffect(() => {
-    if (currentObjective?.isGenerating) {
-      console.log(`[SkillTree] Génération en cours: ${nodes.length} nodes, progress: ${currentObjective.generationProgress}%`)
-    }
-  }, [nodes.length, currentObjective?.isGenerating, currentObjective?.generationProgress])
+  // Log pour debug de la génération progressive - Supprimé pour éviter les re-renders
+  // useEffect(() => {
+  //   if (currentObjective?.isGenerating) {
+  //     console.log(`[SkillTree] Génération en cours: ${nodes.length} nodes, progress: ${currentObjective.generationProgress}%`)
+  //   }
+  // }, [nodes.length, currentObjective?.isGenerating, currentObjective?.generationProgress])
   
   const { playComplete, playLevelUp, playXpGain, playWhoosh } = useSound()
   const [flowNodes, setFlowNodes, onNodesChange] = useNodesState([])
