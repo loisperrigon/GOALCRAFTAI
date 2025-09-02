@@ -69,7 +69,14 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
         } else if (data.type === "objective_started" && data.objectiveMetadata) {
           // Vérifier que c'est bien pour la conversation active
           if (data.conversationId && data.conversationId !== conversationId) {
-            console.log(`[WS] Message ignoré, conversationId différent: ${data.conversationId} != ${conversationId}`)
+            console.log(`[WS] Objective_started ignoré, conversationId différent: ${data.conversationId} != ${conversationId}`)
+            return
+          }
+          
+          // Vérifier aussi que l'objectif actuel correspond à cette conversation
+          const currentObj = useObjectiveStore.getState().currentObjective
+          if (currentObj && currentObj.conversationId && currentObj.conversationId !== conversationId) {
+            console.log(`[WS] Objective_started ignoré, objectif actuel est pour une autre conversation`)
             return
           }
           
@@ -78,16 +85,22 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
           
           // Si on a un objectiveId et conversationId, mettre à jour l'objectif existant
           if (data.objectiveId && data.conversationId) {
-            const { updateObjectiveByConversationId } = useObjectiveStore.getState()
-            updateObjectiveByConversationId(data.conversationId, {
+            const { setActiveObjective } = useObjectiveStore.getState()
+            // Forcer la mise à jour de l'objectif actuel avec le bon conversationId
+            setActiveObjective({
               id: data.objectiveId,
+              conversationId: data.conversationId, // S'assurer que le conversationId est correct
               ...data.objectiveMetadata,
               isGenerating: true,
-              status: 'generating'
+              status: 'generating',
+              skillTree: { nodes: [], edges: [] }
             })
           } else {
             const { startObjectiveGeneration } = useObjectiveStore.getState()
-            startObjectiveGeneration(data.objectiveMetadata)
+            startObjectiveGeneration({
+              ...data.objectiveMetadata,
+              conversationId: data.conversationId || conversationId
+            })
           }
           
           setMessages(prev => {
@@ -106,6 +119,13 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
           // Vérifier que c'est bien pour la conversation active
           if (data.conversationId && data.conversationId !== conversationId) {
             console.log(`[WS] Step ignoré, conversationId différent: ${data.conversationId} != ${conversationId}`)
+            return
+          }
+          
+          // Vérifier aussi que l'objectif actuel correspond à cette conversation
+          const currentObj = useObjectiveStore.getState().currentObjective
+          if (currentObj && currentObj.conversationId !== conversationId) {
+            console.log(`[WS] Step ignoré, objectif actuel est pour une autre conversation: ${currentObj.conversationId} != ${conversationId}`)
             return
           }
           
@@ -130,8 +150,8 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
             updateGenerationProgress(data.generationProgress)
           }
           
-          const currentObj = useObjectiveStore.getState().currentObjective
-          const stepCount = currentObj?.skillTree?.nodes.length || 0
+          const updatedObj = useObjectiveStore.getState().currentObjective
+          const stepCount = updatedObj?.skillTree?.nodes.length || 0
           setMessages(prev => {
             const newMessages = [...prev]
             const lastMessage = newMessages[newMessages.length - 1]
@@ -147,6 +167,14 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
           // Vérifier que c'est bien pour la conversation active
           if (data.conversationId && data.conversationId !== conversationId) {
             console.log(`[WS] Completion ignorée, conversationId différent: ${data.conversationId} != ${conversationId}`)
+            return
+          }
+          
+          // Vérifier aussi que l'objectif actuel correspond à cette conversation
+          const currentObj = useObjectiveStore.getState().currentObjective
+          if (currentObj && currentObj.conversationId !== conversationId) {
+            console.log(`[WS] Completion ignorée, objectif actuel est pour une autre conversation: ${currentObj.conversationId} != ${conversationId}`)
+            console.log(`[WS] Objectif actuel:`, currentObj.id, currentObj.title)
             return
           }
           

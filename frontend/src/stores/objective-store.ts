@@ -240,6 +240,7 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
     set({
       currentObjective: {
         id: metadata.id || `generating-${Date.now()}`,
+        conversationId: metadata.conversationId, // Ajouter le conversationId
         title: metadata.title || "Nouvel objectif",
         description: metadata.description,
         category: metadata.category || 'other',
@@ -265,7 +266,14 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
         return state
       }
 
-      const updatedNodes = [...(state.currentObjective.skillTree?.nodes || []), node]
+      // Vérifier si le node existe déjà
+      const existingNodes = state.currentObjective.skillTree?.nodes || []
+      if (existingNodes.some(n => n.id === node.id)) {
+        console.log(`[ObjectiveStore] Node ${node.id} existe déjà, ignoré`)
+        return state
+      }
+
+      const updatedNodes = [...existingNodes, node]
       const totalSteps = updatedNodes.length
       
       console.log(`[ObjectiveStore] Ajout du node ${node.id}: "${node.title}" (${totalSteps} nodes total)`)
@@ -333,12 +341,19 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
         return state
       }
 
+      // Vérifier si l'edge existe déjà
+      const existingEdges = state.currentObjective.skillTree?.edges || []
+      if (existingEdges.some(e => e.id === edge.id)) {
+        console.log(`[ObjectiveStore] Edge ${edge.id} existe déjà, ignoré`)
+        return state
+      }
+
       return {
         currentObjective: {
           ...state.currentObjective,
           skillTree: {
             ...state.currentObjective.skillTree!,
-            edges: [...(state.currentObjective.skillTree?.edges || []), edge]
+            edges: [...existingEdges, edge]
           }
         }
       }
