@@ -2,11 +2,12 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
-import { Chrome, Github, Mail, Lock, User, Sparkles, Trophy, Target, Zap } from "lucide-react"
+import { Chrome, Mail, Lock, User, Sparkles, Trophy, Target, Zap } from "lucide-react"
 import Header from "@/components/Header"
 import { Spinner } from "@/components/ui/loader"
 import Footer from "@/components/Footer"
@@ -23,18 +24,28 @@ export default function AuthPage() {
     e.preventDefault()
     setIsLoading(true)
     
-    // Simulation de connexion/inscription
-    setTimeout(() => {
-      router.push("/objectives")
-    }, 1000)
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
+      
+      if (result?.error) {
+        console.error("Erreur de connexion:", result.error)
+        setIsLoading(false)
+      } else {
+        router.push("/objectives")
+      }
+    } catch (error) {
+      console.error("Erreur:", error)
+      setIsLoading(false)
+    }
   }
 
-  const handleSocialAuth = (provider: string) => {
+  const handleSocialAuth = async (provider: string) => {
     setIsLoading(true)
-    // Simulation de connexion sociale
-    setTimeout(() => {
-      router.push("/objectives")
-    }, 1000)
+    await signIn(provider, { callbackUrl: "/objectives" })
   }
 
   return (
@@ -89,16 +100,6 @@ export default function AuthPage() {
             >
               <Chrome className="mr-2 h-4 w-4" />
               Continuer avec Google
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-purple-500/30 hover:bg-purple-500/10"
-              onClick={() => handleSocialAuth("github")}
-              disabled={isLoading}
-            >
-              <Github className="mr-2 h-4 w-4" />
-              Continuer avec GitHub
             </Button>
           </div>
 

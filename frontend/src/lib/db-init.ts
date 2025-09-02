@@ -51,7 +51,7 @@ export async function initDatabase(): Promise<void> {
     setInterval(async () => {
       try {
         await database?.admin().ping()
-        console.log("💓 [MongoDB] Heartbeat - connexion active")
+        // Heartbeat silencieux - pas de log
       } catch (error) {
         console.error("⚠️ [MongoDB] Heartbeat failed, tentative de reconnexion...")
         await reconnect()

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-config"
+import { auth } from "@/lib/auth"
 import { getDatabase } from "@/lib/db-init"
 import { z } from "zod"
 import { checkRateLimit, getUniqueIdentifier } from "@/lib/rate-limiter"
@@ -17,11 +16,17 @@ const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || "https://n8n.larefonte.st
 
 export async function POST(request: NextRequest) {
   try {
-    // Vérifier l'authentification (optionnel - tout le monde peut tester)
-    const session = await getServerSession(authOptions)
+    // Vérifier l'authentification - OBLIGATOIRE
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Non authentifié" },
+        { status: 401 }
+      )
+    }
     
     // Déterminer le type d'utilisateur
-    const userType = session?.user?.isPremium ? "premium" : session?.user ? "free" : "anon"
+    const userType = session.user.isPremium ? "premium" : "free"
     
     // Vérifier le rate limiting
     const rateLimitResponse = await checkRateLimit(request, userType)
@@ -29,11 +34,9 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse // Retourne 429 si limité
     }
     
-    // Utiliser l'user authentifié OU un identifiant unique pour anonyme
-    const uniqueId = getUniqueIdentifier(request)
-    const userId = session?.user?.id || `anon-${uniqueId}`
-    const userName = session?.user?.name || "Utilisateur"
-    const userEmail = session?.user?.email || "anonymous@example.com"
+    const userId = session.user.id
+    const userName = session.user.name || "Utilisateur"
+    const userEmail = session.user.email || "user@example.com"
 
     const body = await request.json()
     
@@ -166,14 +169,19 @@ export async function POST(request: NextRequest) {
 // GET pour récupérer l'historique
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    const userId = session?.user?.id || `anon-${request.headers.get("x-forwarded-for") || "unknown"}`
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Non authentifié" },
+        { status: 401 }
+      )
+    }
+    const userId = session.user.id
 
     const { searchParams } = new URL(request.url)
     const conversationId = searchParams.get("conversationId")
 
-    const client = await clientPromise
-    const db = client.db()
+    const db = await getDatabase()
 
     if (conversationId) {
       // Récupérer une conversation spécifique

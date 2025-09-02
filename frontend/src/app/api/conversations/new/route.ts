@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/db-init"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-config"
+import { auth } from "@/lib/auth"
 import { getUniqueIdentifier } from "@/lib/rate-limiter"
 
 // POST - Créer une nouvelle conversation vide
@@ -9,13 +8,17 @@ export async function POST(request: NextRequest) {
   try {
     console.log("[Conversations/New] Création d'une nouvelle conversation")
     
-    // Vérifier l'authentification
-    const session = await getServerSession(authOptions)
+    // Vérifier l'authentification - OBLIGATOIRE
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Non authentifié" },
+        { status: 401 }
+      )
+    }
     
-    // Utiliser l'user authentifié OU un identifiant unique pour anonyme
-    const uniqueId = getUniqueIdentifier(request)
-    const userId = session?.user?.id || `anon-${uniqueId}`
-    const userName = session?.user?.name || "Utilisateur"
+    const userId = session.user.id
+    const userName = session.user.name || "Utilisateur"
     
     const db = await getDatabase()
     

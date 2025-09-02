@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Chrome, Github, Mail, Lock, User, X } from "lucide-react"
+import { Chrome, Mail, Lock, User, X } from "lucide-react"
 import { Spinner } from "@/components/ui/loader"
+import { signIn } from "next-auth/react"
 
 interface AuthModalProps {
   isOpen: boolean
@@ -28,30 +29,31 @@ export default function AuthModal({ isOpen, onClose, onSuccess, redirectTo = "/o
     e.preventDefault()
     setIsLoading(true)
     
-    // Simulation de connexion/inscription
-    setTimeout(() => {
-      setIsLoading(false)
-      if (onSuccess) {
-        onSuccess()
+    try {
+      // Pour l'instant, on utilise la connexion avec credentials (à implémenter dans NextAuth)
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
+      
+      if (result?.error) {
+        // Gérer l'erreur
+        console.error("Erreur de connexion:", result.error)
+        setIsLoading(false)
       } else {
-        router.push(redirectTo)
+        // Succès
+        if (onSuccess) {
+          onSuccess()
+        } else {
+          router.push(redirectTo)
+        }
+        onClose()
       }
-      onClose()
-    }, 1000)
-  }
-
-  const handleSocialAuth = (provider: string) => {
-    setIsLoading(true)
-    // Simulation de connexion sociale
-    setTimeout(() => {
+    } catch (error) {
+      console.error("Erreur:", error)
       setIsLoading(false)
-      if (onSuccess) {
-        onSuccess()
-      } else {
-        router.push(redirectTo)
-      }
-      onClose()
-    }, 1000)
+    }
   }
 
   return (
@@ -97,22 +99,16 @@ export default function AuthModal({ isOpen, onClose, onSuccess, redirectTo = "/o
               type="button"
               variant="outline"
               className="w-full border-purple-500/30 hover:bg-purple-500/10"
-              onClick={() => handleSocialAuth("google")}
+              onClick={() => {
+                setIsLoading(true)
+                signIn("google", { callbackUrl: redirectTo })
+              }}
               disabled={isLoading}
             >
               <Chrome className="mr-2 h-4 w-4" />
               Continuer avec Google
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-purple-500/30 hover:bg-purple-500/10"
-              onClick={() => handleSocialAuth("github")}
-              disabled={isLoading}
-            >
-              <Github className="mr-2 h-4 w-4" />
-              Continuer avec GitHub
-            </Button>
+            
           </div>
 
           {/* Separator */}

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/db-init"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-config"
+import { auth } from "@/lib/auth"
 import { getUniqueIdentifier } from "@/lib/rate-limiter"
 
 // GET - Récupérer une conversation par ID ou toutes les conversations
@@ -11,10 +10,15 @@ export async function GET(request: NextRequest) {
     const conversationId = searchParams.get("id")
     const all = searchParams.get("all") === "true"
     
-    // Vérifier l'authentification
-    const session = await getServerSession(authOptions)
-    const uniqueId = getUniqueIdentifier(request)
-    const userId = session?.user?.id || `anon-${uniqueId}`
+    // Vérifier l'authentification - OBLIGATOIRE
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Non authentifié" },
+        { status: 401 }
+      )
+    }
+    const userId = session.user.id
     
     const db = await getDatabase()
     
