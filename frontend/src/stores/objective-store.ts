@@ -125,7 +125,6 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
   isLoading: false,
 
   setActiveObjective: (objective) => {
-    console.log("[ObjectiveStore] Setting active objective:", objective?.title || "null")
     set({ currentObjective: objective })
   },
 
@@ -142,14 +141,17 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
       if (!state.currentObjective?.skillTree) return state
 
       const updatedNodes = state.currentObjective.skillTree.nodes.map(node => {
+        // Marquer le node comme complété
         if (node.id === nodeId && node.unlocked) {
           return { ...node, completed: true }
         }
+        
         // Débloquer les nodes dépendants
-        if (node.dependencies.includes(nodeId)) {
+        if (node.dependencies && node.dependencies.includes(nodeId)) {
           const allDepsCompleted = node.dependencies.every(depId => {
             const depNode = state.currentObjective?.skillTree?.nodes.find(n => n.id === depId)
-            return depNode?.completed || depId === nodeId
+            const isCompleted = depNode?.completed || depId === nodeId
+            return isCompleted
           })
           if (allDepsCompleted) {
             return { ...node, unlocked: true }
@@ -161,16 +163,19 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
       const completedSteps = updatedNodes.filter(n => n.completed).length
       const progress = Math.round((completedSteps / updatedNodes.length) * 100)
 
-      return {
-        currentObjective: {
-          ...state.currentObjective,
-          completedSteps,
-          progress,
-          skillTree: {
-            ...state.currentObjective.skillTree,
-            nodes: updatedNodes
-          }
+      // Créer un nouvel objet pour forcer React à détecter le changement
+      const updatedObjective = {
+        ...state.currentObjective,
+        completedSteps,
+        progress,
+        skillTree: {
+          ...state.currentObjective.skillTree,
+          nodes: updatedNodes
         }
+      }
+      
+      return {
+        currentObjective: updatedObjective
       }
     })
   },
@@ -230,13 +235,11 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
   },
 
   clearObjective: () => {
-    console.log("[ObjectiveStore] Clearing current objective")
     set({ currentObjective: null })
   },
 
   // Méthodes pour la génération progressive
   startObjectiveGeneration: (metadata) => {
-    console.log("[ObjectiveStore] Démarrage de la génération progressive:", metadata.title)
     set({
       currentObjective: {
         id: metadata.id || `generating-${Date.now()}`,
@@ -269,14 +272,11 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
       // Vérifier si le node existe déjà
       const existingNodes = state.currentObjective.skillTree?.nodes || []
       if (existingNodes.some(n => n.id === node.id)) {
-        console.log(`[ObjectiveStore] Node ${node.id} existe déjà, ignoré`)
         return state
       }
 
       const updatedNodes = [...existingNodes, node]
       const totalSteps = updatedNodes.length
-      
-      // console.log(`[ObjectiveStore] Ajout du node ${node.id}: "${node.title}" (${totalSteps} nodes total)`)
       
       return {
         currentObjective: {
@@ -299,8 +299,6 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
         return state
       }
       
-      console.log(`[ObjectiveStore] Mise à jour de l'objectif pour conversation ${conversationId}`)
-      
       return {
         currentObjective: {
           ...state.currentObjective,
@@ -312,8 +310,6 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
   },
   
   createPlaceholderObjective: (conversationId: string) => {
-    console.log(`[ObjectiveStore] Création d'un placeholder pour conversation ${conversationId}`)
-    
     const placeholder: Objective = {
       id: `placeholder-${conversationId}`,
       conversationId,
@@ -344,7 +340,6 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
       // Vérifier si l'edge existe déjà
       const existingEdges = state.currentObjective.skillTree?.edges || []
       if (existingEdges.some(e => e.id === edge.id)) {
-        console.log(`[ObjectiveStore] Edge ${edge.id} existe déjà, ignoré`)
         return state
       }
 
@@ -381,8 +376,6 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
         return state
       }
 
-      console.log("[ObjectiveStore] Génération terminée:", state.currentObjective.title)
-      
       return {
         currentObjective: {
           ...state.currentObjective,
@@ -398,7 +391,6 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
     set({ isLoading: true })
     
     // Simulation d'un appel API
-    console.log(`🔄 Fetching objective ${id} from API...`)
     
     // Simuler un délai réseau
     await new Promise(resolve => setTimeout(resolve, 800))
@@ -411,10 +403,8 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
     const objective = mockObjectives.find(obj => obj.id === id)
     
     if (objective) {
-      console.log(`✅ Objective loaded:`, objective.title)
       set({ currentObjective: objective, isLoading: false })
     } else {
-      console.error(`❌ Objective ${id} not found`)
       set({ isLoading: false })
     }
   }

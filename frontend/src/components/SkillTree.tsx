@@ -39,7 +39,14 @@ const nodeHeight = 120
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
   const isHorizontal = direction === 'LR'
-  dagreGraph.setGraph({ rankdir: direction, ranksep: 100, nodesep: 80 })
+  dagreGraph.setGraph({ 
+    rankdir: direction, 
+    ranksep: 100,     // Espacement vertical entre les niveaux
+    nodesep: 80,      // Espacement horizontal entre les nodes
+    align: 'DR',      // Alignement centré pour les nodes isolés
+    marginx: 20,      // Petite marge horizontale
+    marginy: 20       // Petite marge verticale
+  })
 
   // Sauvegarder les positions d'origine si elles existent
   const originalPositions = new Map()
@@ -224,8 +231,12 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   
   const { user, addXP } = useUserStore()
   
-  // Extraire les données de l'objectif actif
-  const nodes = currentObjective?.skillTree?.nodes || []
+  // Extraire les données de l'objectif actif - Créer une nouvelle référence pour forcer les re-renders
+  // On utilise un shallow copy pour que React détecte les changements
+  const nodes = useMemo(() => {
+    return currentObjective?.skillTree?.nodes ? [...currentObjective.skillTree.nodes] : []
+  }, [currentObjective?.skillTree?.nodes])
+  
   const completedNodes = nodes.filter(n => n.completed).map(n => n.id)
   const userXP = user?.xp || 0
   const userLevel = user?.level || 1
@@ -363,7 +374,7 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
           id: 'root-objective',
           title: currentObjective.title,
           description: currentObjective.description || '',
-          completed: false,
+          completed: true, // Le nœud racine est toujours "complété" pour ne pas bloquer
           unlocked: true,
           xpReward: 0,
           dependencies: [],
@@ -430,11 +441,9 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
       let finalNodes = rfNodes
       let finalEdges = rfEdges
       
-      // Toujours calculer le layout avec dagre
-      console.log(`[SkillTree] Application du layout dagre pour ${rfNodes.length} nodes et ${rfEdges.length} edges`)
+      // Utiliser dagre pour calculer automatiquement les positions des nodes pour un layout propre
       // Directions disponibles : 'TB' (Top-Bottom), 'BT' (Bottom-Top), 'LR' (Left-Right), 'RL' (Right-Left)
       const layouted = getLayoutedElements(rfNodes, rfEdges, 'TB') // TB pour un layout vertical de haut en bas
-      console.log(`[SkillTree] Positions calculées:`, layouted.nodes.map(n => ({ id: n.id, x: n.position.x, y: n.position.y })))
       finalNodes = layouted.nodes
       finalEdges = layouted.edges
       layoutedNodesRef.current = layouted.nodes
@@ -467,7 +476,7 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
         }, 10)
       }
     }
-  }, [nodes.length, currentObjective?.id, currentObjective?.isGenerating, currentObjective?.generationProgress, isPositioning])
+  }, [nodes, currentObjective?.id, currentObjective?.isGenerating, currentObjective?.generationProgress, isPositioning])
 
   // Centrage sur le nœud actuel - SIMPLE ET DIRECT
   useEffect(() => {
@@ -592,7 +601,6 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
             className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
             onClick={() => {
               // TODO: Ouvrir le dialog de création d'objectif
-              console.log('Créer un nouvel objectif')
             }}
           >
             Créer un objectif

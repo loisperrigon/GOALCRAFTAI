@@ -67,9 +67,9 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
   const { updateStreak, streakMultiplier } = useStreakStore()
   const [previousMilestones, setPreviousMilestones] = useState<boolean[]>([])
   
-  // Récupérer les données actualisées depuis le store
+  // IMPORTANT: Toujours récupérer les données actualisées depuis le store, pas depuis nodeData
   const nodes = currentObjective?.skillTree?.nodes || []
-  const currentNode = nodeData ? (nodes.find(n => n.id === nodeData.id) || nodeData) : null
+  const currentNode = nodeData ? nodes.find(n => n.id === nodeData.id) : null
   const hasDetails = currentNode?.details
   
   // Détecter quand un milestone est complété
@@ -91,7 +91,7 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
     }
   }, [currentNode?.details?.milestones])
   
-  if (!nodeData || !currentNode) return null
+  if (!isOpen || !nodeData || !currentNode) return null
   
   const stepDetail: StepDetail = hasDetails ? {
     id: currentNode.id,
@@ -181,8 +181,8 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
             {/* Header */}
             <div className="flex items-start gap-3">
               <div className={`p-2 rounded-lg ${
-                nodeData.completed ? 'bg-green-500/20' :
-                nodeData.unlocked ? 'bg-purple-500/20' : 'bg-gray-500/20'
+                currentNode.completed ? 'bg-green-500/20' :
+                currentNode.unlocked ? 'bg-purple-500/20' : 'bg-gray-500/20'
               }`}>
                 {getIcon()}
               </div>
@@ -200,7 +200,7 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
                     {stepDetail.estimatedTime}
                   </div>
                   <Badge variant="outline" className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-                    +{nodeData.xpReward} XP
+                    +{currentNode.xpReward || 0} XP
                   </Badge>
                 </div>
               </div>
@@ -316,12 +316,11 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
 
             {/* Boutons d'action */}
             <div className="flex gap-3 pt-4 border-t border-border">
-              {nodeData.unlocked && !nodeData.completed && (
+              {currentNode?.unlocked && !currentNode?.completed && (
                 <Button 
                   className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
                   onClick={() => {
-                    console.log('Marquer comme complété:', nodeData.id)
-                    completeNode(nodeData.id)
+                    completeNode(currentNode?.id)
                     updateStreak() // Mise à jour du streak
                     onClose()
                   }}
@@ -330,13 +329,13 @@ export default function ObjectiveDetailModal({ isOpen, onClose, nodeData }: Obje
                     <span>Marquer comme complété</span>
                     {streakMultiplier > 1 && (
                       <span className="text-xs text-yellow-300">
-                        +{Math.round(nodeData.xpReward * streakMultiplier)} XP (x{streakMultiplier} streak bonus!)
+                        +{Math.round((currentNode?.xpReward || 0) * streakMultiplier)} XP (x{streakMultiplier} streak bonus!)
                       </span>
                     )}
                   </div>
                 </Button>
               )}
-              {!nodeData.unlocked && (
+              {!currentNode?.unlocked && (
                 <Button 
                   disabled
                   className="flex-1"

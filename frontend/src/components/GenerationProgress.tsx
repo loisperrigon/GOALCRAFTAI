@@ -17,7 +17,9 @@ export default function GenerationProgress({ className }: GenerationProgressProp
   }
   
   const progress = currentObjective.generationProgress || 0
-  const stepCount = currentObjective.skillTree?.nodes.length || 0
+  // Ne pas compter le nœud racine ajouté dans l'UI
+  const actualStepCount = currentObjective.skillTree?.nodes.length || 0
+  const stepCount = actualStepCount
   
   return (
     <motion.div

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getDatabase } from "@/lib/db-init"
-import { ObjectId } from "mongodb"
+import { getDatabase } from "@/lib/db-init";
+import { ObjectId } from "mongodb";
+import { NextRequest, NextResponse } from "next/server";
 
 // GET - Récupérer un objectif spécifique par ID
 export async function GET(
@@ -8,26 +8,26 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const objectiveId = params.id
-    console.log("[Objective API] Récupération de l'objectif:", objectiveId)
-    
-    const db = await getDatabase()
-    
+    const objectiveId = params.id;
+    console.log("[Objective API] Récupération de l'objectif:", objectiveId);
+
+    const db = await getDatabase();
+
     // Convertir l'ID string en ObjectId MongoDB
     const objective = await db.collection("objectives").findOne({
-      _id: new ObjectId(objectiveId)
-    })
-    
+      _id: new ObjectId(objectiveId),
+    });
+
     if (!objective) {
       return NextResponse.json(
-        { 
+        {
           success: false,
-          error: "Objectif non trouvé" 
+          error: "Objectif non trouvé",
         },
         { status: 404 }
-      )
+      );
     }
-    
+
     // Formater l'objectif pour le frontend
     const formattedObjective = {
       id: objective._id,
@@ -43,22 +43,21 @@ export async function GET(
       createdAt: objective.createdAt || new Date(),
       updatedAt: objective.updatedAt || new Date(),
       userId: objective.userId || "anonymous",
-      conversationId: objective.conversationId
-    }
-    
+      conversationId: objective.conversationId,
+    };
+
     return NextResponse.json({
       success: true,
-      objective: formattedObjective
-    })
-    
+      objective: formattedObjective,
+    });
   } catch (error) {
-    console.error("[Objective API] Erreur:", error)
+    console.error("[Objective API] Erreur:", error);
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: "Erreur lors de la récupération de l'objectif" 
+        error: "Erreur lors de la récupération de l'objectif",
       },
       { status: 500 }
-    )
+    );
   }
 }

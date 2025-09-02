@@ -185,9 +185,12 @@ export async function POST(request: NextRequest) {
         )
       }
       
+      // Importer ObjectId pour la conversion
+      const { ObjectId } = await import("mongodb")
+      
       // Ajouter l'étape à l'objectif
       await db.collection("objectives").updateOne(
-        { _id: objectiveId },
+        { _id: new ObjectId(objectiveId) },
         {
           $push: {
             "skillTree.nodes": {
@@ -212,7 +215,7 @@ export async function POST(request: NextRequest) {
         }))
         
         await db.collection("objectives").updateOne(
-          { _id: objectiveId },
+          { _id: new ObjectId(objectiveId) },
           {
             $push: {
               "skillTree.edges": { $each: edges }
@@ -226,9 +229,12 @@ export async function POST(request: NextRequest) {
       
       const objectiveId = conversation.currentObjectiveId
       if (objectiveId) {
+        // Importer ObjectId pour la conversion
+        const { ObjectId } = await import("mongodb")
+        
         // Marquer l'objectif comme complété
         const objective = await db.collection("objectives").findOneAndUpdate(
-          { _id: objectiveId },
+          { _id: new ObjectId(objectiveId) },
           {
             $set: {
               status: "active",
