@@ -1,9 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    instrumentationHook: true, // Active l'instrumentation pour initialiser MongoDB au démarrage
-  },
   eslint: {
     // Ignorer les erreurs ESLint pendant le build (pour Docker)
     ignoreDuringBuilds: true,
