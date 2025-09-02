@@ -164,6 +164,7 @@ export async function POST(request: NextRequest) {
         { _id: conversationId },
         {
           $set: {
+            objectiveId: newObjective.insertedId, // Ajouter objectiveId pour la relation permanente
             currentObjectiveId: newObjective.insertedId,
             status: "generating_objective",
             originalMessageId: conversation.lastMessageId // Garder le messageId original
@@ -286,8 +287,11 @@ export async function POST(request: NextRequest) {
     // Envoyer la notification appropriée via WebSocket
     if (type === "objective_start" && objectiveMetadata) {
       console.log(`[Webhook] Notification WebSocket pour objective_start`)
+      const objectiveId = conversation.currentObjectiveId
       await notifyWebSocket({
         type: "objective_started",
+        objectiveId: objectiveId,
+        conversationId: conversationId,
         objectiveMetadata: objectiveMetadata,
         message: `Création de votre parcours "${objectiveMetadata.title}"...`,
         generationProgress: 0
@@ -296,6 +300,7 @@ export async function POST(request: NextRequest) {
       console.log(`[Webhook] Notification WebSocket pour step_added: ${step.title}`)
       await notifyWebSocket({
         type: "step_added",
+        conversationId: conversationId,
         step: step,
         isLastStep: isLastStep,
         generationProgress: generationProgress || 50
@@ -308,6 +313,7 @@ export async function POST(request: NextRequest) {
         console.log(`[Webhook] Notification WebSocket pour objective_completed`)
         await notifyWebSocket({
           type: "objective_completed",
+          conversationId: conversationId,
           objective: completeObjective,
           message: `Parcours créé avec succès !`,
           generationProgress: 100

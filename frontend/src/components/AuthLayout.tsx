@@ -51,76 +51,42 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   const { setActiveObjective, currentObjective } = useObjectiveStore()
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(currentObjective?.id || null)
   const [isLoadingObjective, setIsLoadingObjective] = useState(false)
-  const [objectives, setObjectives] = useState<any[]>([])
-  const [loadingObjectives, setLoadingObjectives] = useState(true)
+  const [conversations, setConversations] = useState<any[]>([])
+  const [loadingConversations, setLoadingConversations] = useState(true)
   
-  // Charger les objectifs depuis MongoDB au montage
+  // Charger les conversations depuis MongoDB au montage
   useEffect(() => {
-    loadObjectives()
+    loadConversations()
   }, [])
   
-  // Gérer les changements d'objectif actif
+  // Recharger les conversations quand un objectif est créé
   useEffect(() => {
-    if (currentObjective) {
-      setSelectedObjectiveId(currentObjective.id)
-      
-      // Si c'est un objectif temporaire, l'ajouter/mettre à jour dans la liste
-      if (currentObjective.isTemporary) {
-        setObjectives(prev => {
-          const exists = prev.find(obj => obj.id === currentObjective.id)
-          if (!exists) {
-            return [currentObjective, ...prev]
-          }
-          // Mettre à jour l'objectif existant
-          return prev.map(obj => 
-            obj.id === currentObjective.id ? currentObjective : obj
-          )
-        })
-      } else {
-        // Si ce n'est plus temporaire, remplacer l'objectif temporaire par le permanent
-        setObjectives(prev => {
-          // Enlever l'objectif temporaire avec le même ID
-          const filtered = prev.filter(obj => obj.id !== currentObjective.id || !obj.isTemporary)
-          // Ajouter la version non-temporaire si elle n'existe pas déjà
-          const exists = filtered.find(obj => obj.id === currentObjective.id)
-          if (!exists) {
-            return [currentObjective, ...filtered]
-          }
-          return filtered.map(obj => 
-            obj.id === currentObjective.id ? currentObjective : obj
-          )
-        })
-        // Recharger depuis MongoDB après un délai pour avoir la version à jour
-        setTimeout(() => loadObjectives(), 1000)
-      }
+    if (currentObjective && !currentObjective.isTemporary) {
+      // Recharger les conversations après création d'un objectif
+      setTimeout(() => loadConversations(), 1000)
     }
-  }, [currentObjective])
+  }, [currentObjective?.id])
   
-  const loadObjectives = async () => {
+  const loadConversations = async () => {
     try {
-      // Ne montrer le loader que si on n'a pas encore d'objectifs
-      if (objectives.length === 0) {
-        setLoadingObjectives(true)
+      // Ne montrer le loader que si on n'a pas encore de conversations
+      if (conversations.length === 0) {
+        setLoadingConversations(true)
       }
       
-      const response = await fetch('/api/objectives')
+      const response = await fetch('/api/conversations?all=true')
       const data = await response.json()
       
-      if (data.success && data.objectives) {
-        console.log(`[AuthLayout] ${data.objectives.length} objectifs chargés depuis MongoDB`)
-        
-        // Préserver les objectifs temporaires existants
-        setObjectives(prev => {
-          const tempObjectives = prev.filter(obj => obj.isTemporary)
-          return [...tempObjectives, ...data.objectives]
-        })
+      if (data.success && data.conversations) {
+        console.log(`[AuthLayout] ${data.conversations.length} conversations chargées depuis MongoDB`)
+        setConversations(data.conversations)
       } else {
-        console.error("[AuthLayout] Erreur lors du chargement des objectifs")
+        console.error("[AuthLayout] Erreur lors du chargement des conversations")
       }
     } catch (error) {
       console.error("[AuthLayout] Erreur:", error)
     } finally {
-      setLoadingObjectives(false)
+      setLoadingConversations(false)
     }
   }
 
@@ -142,15 +108,61 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     xp: 0
   }
 
-  const handleObjectiveClick = async (objective: any) => {
-    setSelectedObjectiveId(objective.id)
+  const handleConversationClick = async (conversation: any) => {
+    setSelectedObjectiveId(conversation._id)
     setIsLoadingObjective(true)
     
-    // Charger l'objectif dans le store
-    setActiveObjective(objective)
-    
-    setIsLoadingObjective(false)
-    router.push("/objectives")
+    try {
+      // Si la conversation a un objectifId, charger l'objectif complet depuis la DB
+      if (conversation.objectiveId) {
+        console.log(`[AuthLayout] Chargement de l'objectif ${conversation.objectiveId}`)
+        const response = await fetch(`/api/objectives/${conversation.objectiveId}`)
+        const data = await response.json()
+        
+        if (data.success && data.objective) {
+          console.log(`[AuthLayout] Objectif chargé avec succès:`, data.objective.title)
+          setActiveObjective({
+            ...data.objective,
+            conversationId: conversation._id,
+            isPlaceholder: false // S'assurer que ce n'est pas un placeholder
+          })
+        } else {
+          // Si on ne peut pas charger l'objectif, créer un placeholder
+          console.warn(`[AuthLayout] Impossible de charger l'objectif ${conversation.objectiveId}`)
+          setActiveObjective({
+            id: conversation.objectiveId,
+            conversationId: conversation._id,
+            title: "Chargement...",
+            description: "",
+            category: "general",
+            difficulty: "intermediate",
+            progress: 0,
+            completedSteps: [],
+            skillTree: { nodes: [], edges: [] },
+            isPlaceholder: true
+          })
+        }
+      } else {
+        // Créer un placeholder pour la conversation vide
+        setActiveObjective({
+          id: `placeholder-${conversation._id}`,
+          conversationId: conversation._id,
+          title: "Nouvelle conversation",
+          description: "",
+          category: "general",
+          difficulty: "intermediate",
+          progress: 0,
+          completedSteps: [],
+          skillTree: { nodes: [], edges: [] },
+          isPlaceholder: true
+        })
+      }
+    } catch (error) {
+      console.error("[AuthLayout] Erreur chargement objectif:", error)
+    } finally {
+      setIsLoadingObjective(false)
+      router.push("/objectives")
+    }
   }
 
   return (
@@ -228,7 +240,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
             {/* Objectives Section */}
             <div className="border-t border-border pt-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Mes Objectifs</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Mes Conversations</h3>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -237,32 +249,37 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                     if (!isAuthenticated) {
                       setShowAuthModal(true)
                     } else {
-                      // Vérifier s'il y a déjà un objectif temporaire
-                      const existingTemp = objectives.find(obj => obj.isTemporary)
-                      
-                      if (existingTemp) {
-                        // S'il existe déjà, le sélectionner au lieu d'en créer un nouveau
-                        setActiveObjective(existingTemp)
-                        router.push("/objectives")
-                      } else {
-                        // Créer un nouvel objectif temporaire
-                        const tempObjective = {
-                          id: `temp-${Date.now()}`,
-                          title: "Nouvel objectif",
-                          description: "En attente de votre description...",
-                          category: "general",
-                          difficulty: "intermediate",
-                          progress: 0,
-                          completedSteps: [],
-                          skillTree: { nodes: [] },
-                          createdAt: new Date(),
-                          isTemporary: true
-                        }
+                      try {
+                        // Créer une nouvelle conversation vide
+                        console.log("[AuthLayout] Création d'une nouvelle conversation")
+                        const response = await fetch('/api/conversations/new', {
+                          method: 'POST'
+                        })
+                        const data = await response.json()
                         
-                        // Ajouter l'objectif temporaire à la liste
-                        setObjectives(prev => [tempObjective, ...prev])
-                        setActiveObjective(tempObjective)
-                        router.push("/objectives")
+                        if (data.success && data.conversationId) {
+                          console.log("[AuthLayout] Nouvelle conversation créée:", data.conversationId)
+                          
+                          // Créer un placeholder pour cette conversation
+                          setActiveObjective({
+                            id: `placeholder-${data.conversationId}`,
+                            conversationId: data.conversationId,
+                            title: "Nouvelle conversation",
+                            description: "",
+                            category: "general",
+                            difficulty: "intermediate",
+                            progress: 0,
+                            completedSteps: [],
+                            skillTree: { nodes: [], edges: [] },
+                            isPlaceholder: true
+                          })
+                          
+                          // Recharger les conversations pour afficher la nouvelle
+                          loadConversations()
+                          router.push("/objectives")
+                        }
+                      } catch (error) {
+                        console.error("[AuthLayout] Erreur création conversation:", error)
                       }
                     }
                   }}
@@ -272,70 +289,61 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               </div>
               
               <div className="space-y-2 pb-4">
-                      {loadingObjectives ? (
+                      {loadingConversations ? (
                         <div className="flex items-center justify-center h-32">
                           <div className="text-center">
                             <Spinner size="md" className="mx-auto mb-2" />
-                            <p className="text-xs text-muted-foreground">Chargement des objectifs...</p>
+                            <p className="text-xs text-muted-foreground">Chargement des conversations...</p>
                           </div>
                         </div>
-                      ) : objectives.length === 0 ? (
+                      ) : conversations.length === 0 ? (
                         <div className="text-center py-8">
                           <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-xs text-muted-foreground">Aucun objectif créé</p>
+                          <p className="text-xs text-muted-foreground">Aucune conversation</p>
                           <p className="text-xs text-muted-foreground mt-1">Commencez par discuter avec l'IA</p>
                         </div>
-                      ) : objectives.map((objective) => (
+                      ) : conversations.map((conversation) => (
                         <Card 
-                          key={objective.id}
+                          key={conversation._id}
                           className={`p-3 cursor-pointer transition-all hover:shadow-md relative ${
-                            objective.id === currentObjective?.id
+                            conversation._id === selectedObjectiveId
                               ? "border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10" 
                               : "border-border hover:border-purple-500/20 hover:bg-purple-500/5"
-                          } ${isLoadingObjective && objective.id === selectedObjectiveId ? "opacity-60" : ""} ${
-                            objective.isTemporary ? "animate-pulse" : ""
-                          }`}
+                          } ${isLoadingObjective && conversation._id === selectedObjectiveId ? "opacity-60" : ""}
+                          ${conversation.status === 'generating_objective' ? "animate-pulse bg-gradient-to-r from-purple-500/5 to-blue-500/5" : ""}`}
                           onClick={() => {
                             if (!isLoadingObjective) {
-                              if (objective.isTemporary) {
-                                // Pour un objectif temporaire, juste le sélectionner et aller à /objectives
-                                setActiveObjective(objective)
-                                router.push("/objectives")
-                              } else {
-                                // Pour un objectif normal, utiliser handleObjectiveClick
-                                handleObjectiveClick(objective)
-                              }
+                              handleConversationClick(conversation)
                             }
                           }}
                         >
-                          {isLoadingObjective && objective.id === selectedObjectiveId && (
+                          {isLoadingObjective && conversation._id === selectedObjectiveId && (
                             <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-lg">
                               <Spinner size="sm" />
                             </div>
                           )}
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
-                              <h4 className="font-medium text-xs line-clamp-1">{objective.title}</h4>
+                              <h4 className="font-medium text-xs line-clamp-1">
+                                {conversation.objectiveInfo?.title || 
+                                 (conversation.hasObjective ? "Objectif en cours" : "Nouvelle conversation")}
+                              </h4>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {objective.completedSteps?.length || 0}/{objective.skillTree?.nodes?.length || 0} étapes
+                                {conversation.messagesCount || 0} messages
+                                {conversation.objectiveInfo?.stepsCount > 0 && ` • ${conversation.objectiveInfo.stepsCount} étapes`}
                               </p>
                             </div>
-                            <Badge className="bg-purple-500/20 text-purple-300 text-xs px-1.5 py-0">
-                              {Math.round(objective.progress || 0)}%
-                            </Badge>
+                            {conversation.hasObjective && (
+                              <Badge className="bg-purple-500/20 text-purple-300 text-xs px-1.5 py-0">
+                                <Target className="h-3 w-3" />
+                              </Badge>
+                            )}
                           </div>
-                          <div className="w-full bg-background/50 rounded-full h-1">
-                            <div 
-                              className="bg-gradient-to-r from-purple-500 to-blue-500 h-1 rounded-full transition-all"
-                              style={{ width: `${objective.progress || 0}%` }}
-                            />
-                          </div>
-                          <div className="flex items-center gap-2 mt-1.5">
-                            <span className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Trophy className="h-3 w-3" />
-                              {objective.skillTree?.nodes?.reduce((sum: number, node: any) => sum + (node.xpReward || 0), 0) || 0} XP
-                            </span>
-                          </div>
+                          {conversation.lastMessage && (
+                            <div className="text-xs text-muted-foreground line-clamp-2 mt-2">
+                              "{conversation.lastMessage.content}"
+                            </div>
+                          )}
                         </Card>
                 ))}
               </div>
@@ -425,43 +433,46 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                 {/* Mobile Objectives Section */}
                 <div className="border-t border-border pt-4 mb-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-medium text-muted-foreground">Mes Objectifs</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground">Mes Conversations</h3>
                     <Button
                       size="sm"
                       variant="ghost"
                       className="h-7 px-2 hover:bg-purple-500/10"
-                      onClick={() => {
+                      onClick={async () => {
                         if (!isAuthenticated) {
                           setShowAuthModal(true)
                           setIsMobileSidebarOpen(false)
                         } else {
-                          // Vérifier s'il y a déjà un objectif temporaire
-                          const existingTemp = objectives.find(obj => obj.isTemporary)
-                          
-                          if (existingTemp) {
-                            // S'il existe déjà, le sélectionner au lieu d'en créer un nouveau
-                            setActiveObjective(existingTemp)
-                          } else {
-                            // Créer un nouvel objectif temporaire
-                            const tempObjective = {
-                              id: `temp-${Date.now()}`,
-                              title: "Nouvel objectif",
-                              description: "En attente de votre description...",
-                              category: "general",
-                              difficulty: "intermediate",
-                              progress: 0,
-                              completedSteps: [],
-                              skillTree: { nodes: [] },
-                              createdAt: new Date(),
-                              isTemporary: true
-                            }
+                          try {
+                            // Créer une nouvelle conversation vide
+                            const response = await fetch('/api/conversations/new', {
+                              method: 'POST'
+                            })
+                            const data = await response.json()
                             
-                            // Ajouter l'objectif temporaire à la liste
-                            setObjectives(prev => [tempObjective, ...prev])
-                            setActiveObjective(tempObjective)
+                            if (data.success && data.conversationId) {
+                              // Créer un placeholder pour cette conversation
+                              setActiveObjective({
+                                id: `placeholder-${data.conversationId}`,
+                                conversationId: data.conversationId,
+                                title: "Nouvelle conversation",
+                                description: "",
+                                category: "general",
+                                difficulty: "intermediate",
+                                progress: 0,
+                                completedSteps: [],
+                                skillTree: { nodes: [], edges: [] },
+                                isPlaceholder: true
+                              })
+                              
+                              // Recharger les conversations
+                              loadConversations()
+                              router.push("/objectives")
+                              setIsMobileSidebarOpen(false)
+                            }
+                          } catch (error) {
+                            console.error("[AuthLayout] Erreur création conversation:", error)
                           }
-                          router.push("/objectives")
-                          setIsMobileSidebarOpen(false)
                         }
                       }}
                     >
@@ -471,56 +482,54 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
                   
                   <div className="h-[320px] overflow-y-auto">
                     <div className="space-y-2">
-                      {loadingObjectives ? (
+                      {loadingConversations ? (
                         <div className="flex items-center justify-center h-32">
                           <div className="text-center">
                             <Spinner size="md" className="mx-auto mb-2" />
-                            <p className="text-xs text-muted-foreground">Chargement des objectifs...</p>
+                            <p className="text-xs text-muted-foreground">Chargement des conversations...</p>
                           </div>
                         </div>
-                      ) : objectives.length === 0 ? (
+                      ) : conversations.length === 0 ? (
                         <div className="text-center py-8">
                           <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-xs text-muted-foreground">Aucun objectif créé</p>
+                          <p className="text-xs text-muted-foreground">Aucune conversation</p>
                           <p className="text-xs text-muted-foreground mt-1">Commencez par discuter avec l'IA</p>
                         </div>
-                      ) : objectives.map((objective) => (
+                      ) : conversations.map((conversation) => (
                         <Card 
-                          key={objective.id}
+                          key={conversation._id}
                           className={`p-3 cursor-pointer transition-all ${
-                            objective.id === currentObjective?.id
+                            conversation._id === selectedObjectiveId
                               ? "border-purple-500/30 bg-purple-500/5" 
                               : "border-border"
-                          } ${objective.isTemporary ? "animate-pulse" : ""}`}
+                          } ${conversation.status === 'generating_objective' ? "animate-pulse bg-gradient-to-r from-purple-500/5 to-blue-500/5" : ""}`}
                           onClick={() => {
-                            if (objective.isTemporary) {
-                              // Pour un objectif temporaire, juste le sélectionner
-                              setActiveObjective(objective)
-                              router.push("/objectives")
-                            } else {
-                              // Pour un objectif normal, utiliser handleObjectiveClick
-                              handleObjectiveClick(objective)
-                            }
+                            handleConversationClick(conversation)
                             setIsMobileSidebarOpen(false)
                           }}
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
-                              <h4 className="font-medium text-xs">{objective.title}</h4>
+                              <h4 className="font-medium text-xs">
+                                {conversation.objectiveInfo?.title || 
+                                 (conversation.hasObjective ? "Objectif en cours" : "Nouvelle conversation")}
+                              </h4>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {objective.completedSteps?.length || 0}/{objective.skillTree?.nodes?.length || 0} étapes
+                                {conversation.messagesCount || 0} messages
+                                {conversation.objectiveInfo?.stepsCount > 0 && ` • ${conversation.objectiveInfo.stepsCount} étapes`}
                               </p>
                             </div>
-                            <Badge className="bg-purple-500/20 text-purple-300 text-xs">
-                              {objective.progress}%
-                            </Badge>
+                            {conversation.hasObjective && (
+                              <Badge className="bg-purple-500/20 text-purple-300 text-xs">
+                                <Target className="h-3 w-3" />
+                              </Badge>
+                            )}
                           </div>
-                          <div className="w-full bg-background/50 rounded-full h-1">
-                            <div 
-                              className="bg-gradient-to-r from-purple-500 to-blue-500 h-1 rounded-full"
-                              style={{ width: `${objective.progress || 0}%` }}
-                            />
-                          </div>
+                          {conversation.lastMessage && (
+                            <div className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                              "{conversation.lastMessage.content}"
+                            </div>
+                          )}
                         </Card>
                       ))}
                     </div>

@@ -53,11 +53,19 @@ export async function POST(request: NextRequest) {
     
     let conversation
     if (conversationId) {
-      // Récupérer la conversation existante
+      // Récupérer la conversation existante (sans vérifier userId pour permettre l'utilisation)
       conversation = await db.collection("conversations").findOne({
-        _id: conversationId,
-        userId: userId
+        _id: conversationId
       })
+      
+      // Si la conversation existe mais n'a pas de userId ou a un userId différent, le mettre à jour
+      if (conversation && (!conversation.userId || conversation.userId === "anonymous")) {
+        await db.collection("conversations").updateOne(
+          { _id: conversationId },
+          { $set: { userId: userId } }
+        )
+        conversation.userId = userId
+      }
     }
 
     if (!conversation) {

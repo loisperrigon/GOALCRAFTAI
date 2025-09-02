@@ -67,11 +67,28 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
             return newMessages
           })
         } else if (data.type === "objective_started" && data.objectiveMetadata) {
+          // Vérifier que c'est bien pour la conversation active
+          if (data.conversationId && data.conversationId !== conversationId) {
+            console.log(`[WS] Message ignoré, conversationId différent: ${data.conversationId} != ${conversationId}`)
+            return
+          }
+          
           // Début de la génération progressive
           console.log("[WS] Début de génération progressive:", data.objectiveMetadata.title)
           
-          const { startObjectiveGeneration } = useObjectiveStore.getState()
-          startObjectiveGeneration(data.objectiveMetadata)
+          // Si on a un objectiveId et conversationId, mettre à jour l'objectif existant
+          if (data.objectiveId && data.conversationId) {
+            const { updateObjectiveByConversationId } = useObjectiveStore.getState()
+            updateObjectiveByConversationId(data.conversationId, {
+              id: data.objectiveId,
+              ...data.objectiveMetadata,
+              isGenerating: true,
+              status: 'generating'
+            })
+          } else {
+            const { startObjectiveGeneration } = useObjectiveStore.getState()
+            startObjectiveGeneration(data.objectiveMetadata)
+          }
           
           setMessages(prev => {
             const newMessages = [...prev]
@@ -86,6 +103,12 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
             options.onObjectiveGenerated(data.objectiveMetadata)
           }
         } else if (data.type === "step_added" && data.step) {
+          // Vérifier que c'est bien pour la conversation active
+          if (data.conversationId && data.conversationId !== conversationId) {
+            console.log(`[WS] Step ignoré, conversationId différent: ${data.conversationId} != ${conversationId}`)
+            return
+          }
+          
           // Ajout d'une étape
           console.log("[WS] Nouvelle étape:", data.step.title)
           
@@ -121,6 +144,12 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
             return newMessages
           })
         } else if (data.type === "objective_completed" && data.objective) {
+          // Vérifier que c'est bien pour la conversation active
+          if (data.conversationId && data.conversationId !== conversationId) {
+            console.log(`[WS] Completion ignorée, conversationId différent: ${data.conversationId} != ${conversationId}`)
+            return
+          }
+          
           // Fin de la génération progressive
           console.log("[WS] Génération terminée:", data.objective.title)
           
@@ -190,6 +219,24 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
       
       // Établir une nouvelle connexion WebSocket
       connectWebSocket(existingConversationId)
+    }
+  }, [conversationId, connectWebSocket])
+  
+  // Établir la connexion WebSocket quand conversationId est défini ou change
+  useEffect(() => {
+    if (conversationId) {
+      // Si on a déjà une connexion pour un autre conversationId, la fermer
+      if (wsRef.current && wsRef.current.url && !wsRef.current.url.includes(conversationId)) {
+        console.log(`[useAIChatWS] Fermeture de l'ancienne connexion WebSocket`)
+        wsRef.current.close()
+        wsRef.current = null
+      }
+      
+      // Établir une nouvelle connexion si nécessaire
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        console.log(`[useAIChatWS] Établissement connexion WebSocket pour conversationId: ${conversationId}`)
+        connectWebSocket(conversationId)
+      }
     }
   }, [conversationId, connectWebSocket])
 
@@ -337,6 +384,7 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
     loadMessages,
     loadConversation,
     stopStreaming,
-    disconnectWebSocket
+    disconnectWebSocket,
+    setConversationId
   }
 }

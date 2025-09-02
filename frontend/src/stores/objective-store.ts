@@ -58,14 +58,15 @@ export interface Milestone {
 
 export interface Objective {
   id: string
+  conversationId?: string // ID de la conversation associée
   title: string
   description?: string
-  category: 'personal' | 'professional' | 'health' | 'learning' | 'creative' | 'social' | 'financial' | 'other'
-  status: 'active' | 'completed' | 'paused' | 'abandoned' | 'generating'
+  category: 'personal' | 'professional' | 'health' | 'learning' | 'creative' | 'social' | 'financial' | 'other' | 'general'
+  status: 'active' | 'completed' | 'paused' | 'abandoned' | 'generating' | 'draft'
   progress: number // 0-100
   xpReward: number // Total XP possible
   xpEarned?: number // XP déjà gagné
-  difficulty: 'easy' | 'medium' | 'hard' | 'expert'
+  difficulty: 'easy' | 'medium' | 'hard' | 'expert' | 'intermediate'
   createdAt?: Date
   updatedAt?: Date
   completedAt?: Date
@@ -77,6 +78,8 @@ export interface Objective {
   skillTree?: SkillTree
   isGenerating?: boolean // Indique si l'objectif est en cours de génération
   generationProgress?: number // Progression de la génération (0-100)
+  isPlaceholder?: boolean // Indique si c'est un placeholder
+  isTemporary?: boolean // Pour compatibilité
   metadata?: {
     estimatedDuration?: string
     nextMilestone?: string
@@ -108,6 +111,10 @@ interface ObjectiveState {
   addEdgeToObjective: (edge: { id: string; source: string; target: string }) => void
   updateGenerationProgress: (progress: number) => void
   completeObjectiveGeneration: () => void
+  
+  // Actions pour les conversations
+  updateObjectiveByConversationId: (conversationId: string, updates: Partial<Objective>) => void
+  createPlaceholderObjective: (conversationId: string) => void
   
   // API calls (mock pour l'instant)
   fetchObjective: (id: string) => Promise<void>
@@ -253,8 +260,8 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
 
   addNodeToObjective: (node) => {
     set(state => {
-      if (!state.currentObjective || !state.currentObjective.isGenerating) {
-        console.warn("[ObjectiveStore] Pas d'objectif en cours de génération")
+      if (!state.currentObjective) {
+        console.warn("[ObjectiveStore] Pas d'objectif actif")
         return state
       }
 
@@ -276,10 +283,53 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
       }
     })
   },
+  
+  updateObjectiveByConversationId: (conversationId: string, updates: Partial<Objective>) => {
+    set(state => {
+      if (!state.currentObjective || state.currentObjective.conversationId !== conversationId) {
+        console.warn(`[ObjectiveStore] Pas d'objectif avec conversationId: ${conversationId}`)
+        return state
+      }
+      
+      console.log(`[ObjectiveStore] Mise à jour de l'objectif pour conversation ${conversationId}`)
+      
+      return {
+        currentObjective: {
+          ...state.currentObjective,
+          ...updates,
+          isGenerating: updates.status !== 'active'
+        }
+      }
+    })
+  },
+  
+  createPlaceholderObjective: (conversationId: string) => {
+    console.log(`[ObjectiveStore] Création d'un placeholder pour conversation ${conversationId}`)
+    
+    const placeholder: Objective = {
+      id: `placeholder-${conversationId}`,
+      conversationId,
+      title: "Nouvel objectif",
+      description: "En attente de votre description...",
+      category: "general",
+      difficulty: "intermediate",
+      status: "draft",
+      progress: 0,
+      xpReward: 0,
+      totalSteps: 0,
+      completedSteps: 0,
+      skillTree: { nodes: [], edges: [] },
+      isPlaceholder: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    
+    set({ currentObjective: placeholder })
+  },
 
   addEdgeToObjective: (edge) => {
     set(state => {
-      if (!state.currentObjective || !state.currentObjective.isGenerating) {
+      if (!state.currentObjective) {
         return state
       }
 
@@ -297,7 +347,7 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
 
   updateGenerationProgress: (progress) => {
     set(state => {
-      if (!state.currentObjective || !state.currentObjective.isGenerating) {
+      if (!state.currentObjective) {
         return state
       }
 
@@ -312,7 +362,7 @@ export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
 
   completeObjectiveGeneration: () => {
     set(state => {
-      if (!state.currentObjective || !state.currentObjective.isGenerating) {
+      if (!state.currentObjective) {
         return state
       }
 

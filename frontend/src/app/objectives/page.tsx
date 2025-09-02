@@ -53,7 +53,8 @@ export default function ObjectivesPage() {
     clearMessages,
     streamingContent,
     loadMessages,
-    isConnected
+    isConnected,
+    setConversationId
   } = useAIChatWS({
     objectiveType: currentObjective?.category || "general",
     useStreaming: false, // Pour l'instant on garde le mode normal
@@ -75,14 +76,26 @@ export default function ObjectivesPage() {
   useEffect(() => {
     if (!loadingLastObjective) {
       if (currentObjective) {
-        // Si c'est un objectif temporaire, vider le chat pour une nouvelle conversation
-        if (currentObjective.isTemporary) {
-          console.log("[ObjectivesPage] Nouvel objectif temporaire - vidage du chat")
-          clearMessages()
-          setActiveView("chat")
-        } else {
-          // Un objectif existant a été sélectionné depuis la sidebar
+        // Si on a un conversationId, le définir pour le chat
+        if (currentObjective.conversationId) {
+          console.log("[ObjectivesPage] Définition du conversationId:", currentObjective.conversationId)
+          setConversationId(currentObjective.conversationId)
+        }
+        
+        // Décider de la vue en fonction du contenu de l'objectif
+        if (currentObjective.skillTree && currentObjective.skillTree.nodes && currentObjective.skillTree.nodes.length > 0) {
+          // Si on a un arbre avec des nodes, afficher l'arbre
+          console.log("[ObjectivesPage] Objectif avec arbre - affichage de l'arbre")
           loadConversationForObjective(currentObjective)
+        } else {
+          // Sinon, afficher le chat
+          console.log("[ObjectivesPage] Objectif sans arbre - affichage du chat")
+          if (currentObjective.conversationId) {
+            loadConversationMessages(currentObjective.conversationId)
+          } else {
+            clearMessages()
+          }
+          setActiveView("chat")
         }
       } else {
         // Pas d'objectif - nouvelle conversation
@@ -92,6 +105,26 @@ export default function ObjectivesPage() {
       }
     }
   }, [currentObjective?.id, currentObjective?.isTemporary]) // eslint-disable-line react-hooks/exhaustive-deps
+  
+  const loadConversationMessages = async (conversationId: string) => {
+    try {
+      console.log(`[ObjectivesPage] Chargement des messages pour conversation ${conversationId}`)
+      const convResponse = await fetch(`/api/conversations?id=${conversationId}`)
+      const convData = await convResponse.json()
+      
+      if (convData.success && convData.messages) {
+        console.log(`[ObjectivesPage] ${convData.messages.length} messages chargés`)
+        // Charger les messages dans le chat
+        loadMessages(convData.messages, conversationId)
+      } else {
+        console.log("[ObjectivesPage] Aucun message trouvé")
+        clearMessages()
+      }
+    } catch (error) {
+      console.error("[ObjectivesPage] Erreur chargement messages:", error)
+      clearMessages()
+    }
+  }
   
   const loadConversationForObjective = async (objective: any) => {
     try {
@@ -120,21 +153,45 @@ export default function ObjectivesPage() {
     try {
       setLoadingLastObjective(true)
       
-      // Charger le dernier objectif
-      const objResponse = await fetch('/api/objectives')
-      const objData = await objResponse.json()
+      // Charger la dernière conversation
+      const convResponse = await fetch('/api/conversations')
+      const convData = await convResponse.json()
       
-      if (objData.success && objData.objectives && objData.objectives.length > 0) {
-        // Prendre le dernier objectif (le plus récent)
-        const lastObjective = objData.objectives[0]
-        console.log("[ObjectivesPage] Dernier objectif chargé:", lastObjective.title)
-        setActiveObjective(lastObjective)
+      if (convData.success && convData.conversation) {
+        console.log("[ObjectivesPage] Dernière conversation chargée:", convData.conversation.id)
         
-        // Charger la conversation associée
-        await loadConversationForObjective(lastObjective)
+        // Si la conversation a un objectif, le charger
+        if (convData.conversation.objectiveId) {
+          const objResponse = await fetch(`/api/objectives/${convData.conversation.objectiveId}`)
+          const objData = await objResponse.json()
+          
+          if (objData.success && objData.objective) {
+            console.log("[ObjectivesPage] Objectif associé chargé:", objData.objective.title)
+            setActiveObjective({
+              ...objData.objective,
+              conversationId: convData.conversation.id
+            })
+            
+            // Charger les messages
+            if (convData.messages && convData.messages.length > 0) {
+              loadMessages(convData.messages, convData.conversation.id)
+            }
+            
+            setActiveView("tree")
+          }
+        } else {
+          // Conversation sans objectif - mode chat
+          console.log("[ObjectivesPage] Conversation sans objectif, mode chat")
+          setConversationId(convData.conversation.id)
+          
+          if (convData.messages && convData.messages.length > 0) {
+            loadMessages(convData.messages, convData.conversation.id)
+          }
+          
+          setActiveView("chat")
+        }
       } else {
-        console.log("[ObjectivesPage] Aucun objectif trouvé, mode chat")
-        // Pas d'objectif, rester en mode chat
+        console.log("[ObjectivesPage] Aucune conversation trouvée")
         setActiveView("chat")
       }
     } catch (error) {
