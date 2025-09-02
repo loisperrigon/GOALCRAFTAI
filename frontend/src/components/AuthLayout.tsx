@@ -62,6 +62,14 @@ function AuthLayout({ children }: AuthLayoutProps) {
       }
       
       const response = await fetch('/api/conversations?all=true')
+      
+      // Si non authentifié, afficher le modal
+      if (response.status === 401) {
+        console.log("[AuthLayout] Utilisateur non authentifié, affichage du modal")
+        setShowAuthModal(true)
+        return []
+      }
+      
       const data = await response.json()
       
       if (data.success && data.conversations) {
@@ -630,7 +638,10 @@ function AuthLayout({ children }: AuthLayoutProps) {
       {/* Auth Modal */}
       <AuthModal 
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={() => {
+          // Ne pas fermer le modal si l'utilisateur n'est pas connecté
+          // On le laisse ouvert pour forcer la connexion
+        }}
         onSuccess={() => {
           setShowAuthModal(false)
           window.location.reload()

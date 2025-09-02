@@ -57,8 +57,18 @@ export default function AuthModal({ isOpen, onClose, onSuccess, redirectTo = "/o
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur border-purple-500/20">
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Empêcher la fermeture si l'utilisateur essaie de fermer le modal
+      // Seulement permettre la fermeture via onClose après connexion réussie
+      if (!open && onClose) {
+        onClose()
+      }
+    }}>
+      <DialogContent 
+        className="sm:max-w-md bg-card/95 backdrop-blur border-purple-500/20"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold">
             {isLogin ? "Connexion requise" : "Créer un compte"}

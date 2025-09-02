@@ -62,5 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: "database",
+    maxAge: 30 * 24 * 60 * 60, // 30 jours en secondes
+    updateAge: 24 * 60 * 60, // Mise à jour toutes les 24 heures
   },
 })
