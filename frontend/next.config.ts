@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'standalone', // Nécessaire pour Docker
   eslint: {
     // Ignorer les erreurs ESLint pendant le build (pour Docker)
     ignoreDuringBuilds: true,
