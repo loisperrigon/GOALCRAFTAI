@@ -83,6 +83,10 @@ const SkillNode = ({ data, selected }: NodeProps) => {
     )
 
   const getNodeStyle = () => {
+    // Style spécial pour le nœud racine (titre de l'objectif)
+    if (node.isRoot) {
+      return 'bg-gradient-to-br from-amber-500/40 to-orange-500/40 border-2 border-amber-500 shadow-lg shadow-amber-500/30 scale-125'
+    }
     if (node.completed) {
       return 'bg-gradient-to-br from-green-500/20 to-green-600/20 border-green-500/50 shadow-green-500/20'
     }
@@ -101,6 +105,7 @@ const SkillNode = ({ data, selected }: NodeProps) => {
   }
 
   const getIcon = () => {
+    if (node.isRoot) return <Target className="h-6 w-6 text-amber-400" /> // Icône spéciale pour le nœud racine
     if (node.completed) return <CheckCircle2 className="h-5 w-5 text-green-400" />
     if (!node.unlocked) return <Lock className="h-5 w-5 text-gray-500" />
     if (node.category === 'challenge') return <Zap className="h-5 w-5 text-pink-400" />
@@ -110,6 +115,11 @@ const SkillNode = ({ data, selected }: NodeProps) => {
   }
 
   const handleClick = () => {
+    // Ne pas permettre le clic sur le nœud racine
+    if (node.isRoot) {
+      return
+    }
+    
     if (node.unlocked) {
       playClick()
     } else {
@@ -136,10 +146,11 @@ const SkillNode = ({ data, selected }: NodeProps) => {
     >
       <Card
         className={`
-          w-48 p-3 cursor-pointer transition-all duration-300 transform
+          ${node.isRoot ? 'w-64' : 'w-48'} p-3 transition-all duration-300 transform
+          ${node.isRoot ? '' : 'cursor-pointer'}
           ${getNodeStyle()}
           ${selected ? 'ring-2 ring-purple-400 scale-105' : ''}
-          ${node.unlocked && !node.completed ? 'hover:scale-105' : ''}
+          ${!node.isRoot && node.unlocked && !node.completed ? 'hover:scale-105' : ''}
           ${isCurrentLearning ? 'next-to-unlock ring-2 ring-purple-500 ring-opacity-50' : ''}
         `}
         data-current={isCurrentLearning}
@@ -154,22 +165,31 @@ const SkillNode = ({ data, selected }: NodeProps) => {
       <div className="flex items-start gap-2">
         <div className="mt-1">{getIcon()}</div>
         <div className="flex-1">
-          <h3 className="font-semibold text-sm mb-1 text-white line-clamp-1">
+          <h3 className={`font-semibold text-sm mb-1 text-white ${node.isRoot ? '' : 'line-clamp-2'}`}>
             {node.title}
           </h3>
-          <p className="text-xs text-gray-300 line-clamp-2 mb-2">
+          <p className={`text-xs text-gray-300 mb-2 ${node.isRoot ? '' : 'line-clamp-2'}`}>
             {node.description}
           </p>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-purple-300">
-              +{node.xpReward} XP
-            </span>
-            {node.estimatedTime && (
-              <span className="text-xs text-gray-400 line-clamp-1">
-                {node.estimatedTime}
+          {!node.isRoot && (
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-purple-300">
+                +{node.xpReward} XP
               </span>
-            )}
-          </div>
+              {node.estimatedTime && (
+                <span className="text-xs text-gray-400 line-clamp-1">
+                  {node.estimatedTime}
+                </span>
+              )}
+            </div>
+          )}
+          {node.isRoot && (
+            <div className="text-center">
+              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                Objectif Principal
+              </span>
+            </div>
+          )}
           {node.optional && (
             <span className="text-xs text-blue-300 mt-1 inline-block">
               Optionnel
@@ -330,17 +350,61 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
     // on garde les positions existantes
     const shouldKeepPositions = !isFirstLoad && !isObjectiveChange
     
-    const rfNodes: Node[] = nodes.map((node) => {
-      return {
+    // Ajouter le titre de l'objectif comme nœud racine
+    const rfNodes: Node[] = []
+    
+    // Nœud racine avec le titre de l'objectif
+    if (currentObjective?.title) {
+      rfNodes.push({
+        id: 'root-objective',
+        type: 'skillNode',
+        position: { x: 0, y: 0 },
+        data: {
+          id: 'root-objective',
+          title: currentObjective.title,
+          description: currentObjective.description || '',
+          completed: false,
+          unlocked: true,
+          xpReward: 0,
+          dependencies: [],
+          category: 'objective',
+          isRoot: true // Marqueur pour styliser différemment
+        }
+      })
+    }
+    
+    // Ajouter les autres nœuds
+    nodes.forEach((node) => {
+      rfNodes.push({
         id: node.id,
         type: 'skillNode',
         position: node.position || { x: 0, y: 0 },
         data: node,
-      }
+      })
     })
 
     // Créer les edges basés sur les dépendances
     const rfEdges: Edge[] = []
+    
+    // Connecter le nœud racine aux nœuds sans dépendances (premiers nœuds)
+    if (currentObjective?.title) {
+      nodes.forEach((node) => {
+        if (!node.dependencies || node.dependencies.length === 0) {
+          rfEdges.push({
+            id: `root-${node.id}`,
+            source: 'root-objective',
+            target: node.id,
+            animated: node.unlocked && !node.completed,
+            style: {
+              stroke: node.completed ? '#10b981' : node.unlocked ? '#a855f7' : '#4b5563',
+              strokeWidth: 2,
+            },
+          })
+        }
+      })
+    }
+    
+    // Ajouter les edges normaux entre les nœuds
     nodes.forEach((node) => {
       node.dependencies.forEach((depId) => {
         const isActive = node.unlocked || node.completed
@@ -367,7 +431,10 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
       let finalEdges = rfEdges
       
       // Toujours calculer le layout avec dagre
-      const layouted = getLayoutedElements(rfNodes, rfEdges, 'TB')
+      console.log(`[SkillTree] Application du layout dagre pour ${rfNodes.length} nodes et ${rfEdges.length} edges`)
+      // Directions disponibles : 'TB' (Top-Bottom), 'BT' (Bottom-Top), 'LR' (Left-Right), 'RL' (Right-Left)
+      const layouted = getLayoutedElements(rfNodes, rfEdges, 'TB') // TB pour un layout vertical de haut en bas
+      console.log(`[SkillTree] Positions calculées:`, layouted.nodes.map(n => ({ id: n.id, x: n.position.x, y: n.position.y })))
       finalNodes = layouted.nodes
       finalEdges = layouted.edges
       layoutedNodesRef.current = layouted.nodes
