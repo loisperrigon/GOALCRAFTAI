@@ -88,7 +88,7 @@ export interface Objective {
     weeklyHours?: number
     caloriesGoal?: number
     investmentNeeded?: string
-    [key: string]: any
+    [key: string]: string | number | undefined
   }
 }
 
@@ -120,7 +120,7 @@ interface ObjectiveState {
   fetchObjective: (id: string) => Promise<void>
 }
 
-export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
+export const useObjectiveStore = create<ObjectiveState>((set) => ({
   currentObjective: null,
   isLoading: false,
 

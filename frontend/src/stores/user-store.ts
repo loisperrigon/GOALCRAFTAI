@@ -65,7 +65,7 @@ export const useUserStore = create<UserState>()(
       isAuthenticated: false,
       isLoading: false,
 
-      login: async (email: string, password: string) => {
+      login: async (email: string, _password: string) => {
         set({ isLoading: true });
 
         // Simulation de login - À remplacer par vraie API

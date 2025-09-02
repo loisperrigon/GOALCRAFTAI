@@ -114,7 +114,7 @@ export function decrypt(encryptedText: string): string {
 /**
  * Chiffre un objet complet (le convertit en JSON puis chiffre)
  */
-export function encryptObject(obj: any): string {
+export function encryptObject(obj: unknown): string {
   const jsonString = JSON.stringify(obj)
   return encrypt(jsonString)
 }
@@ -122,7 +122,7 @@ export function encryptObject(obj: any): string {
 /**
  * Déchiffre et parse un objet JSON chiffré
  */
-export function decryptObject(encryptedText: string): any {
+export function decryptObject(encryptedText: string): unknown {
   const jsonString = decrypt(encryptedText)
   return JSON.parse(jsonString)
 }
@@ -130,13 +130,13 @@ export function decryptObject(encryptedText: string): any {
 /**
  * Chiffre uniquement les champs sensibles d'une conversation
  */
-export function encryptConversation(conversation: any) {
+export function encryptConversation(conversation: Record<string, any>) {
   // Copier l'objet pour ne pas le modifier
   const encrypted = { ...conversation }
   
   // Chiffrer les messages
   if (encrypted.messages && Array.isArray(encrypted.messages)) {
-    encrypted.messages = encrypted.messages.map((msg: any) => ({
+    encrypted.messages = encrypted.messages.map((msg: Record<string, any>) => ({
       ...msg,
       content: encrypt(msg.content), // Chiffrer le contenu du message
       role: msg.role, // Garder le rôle en clair pour les requêtes
@@ -160,13 +160,13 @@ export function encryptConversation(conversation: any) {
 /**
  * Déchiffre une conversation
  */
-export function decryptConversation(conversation: any) {
+export function decryptConversation(conversation: Record<string, any>) {
   // Copier l'objet
   const decrypted = { ...conversation }
   
   // Déchiffrer les messages
   if (decrypted.messages && Array.isArray(decrypted.messages)) {
-    decrypted.messages = decrypted.messages.map((msg: any) => {
+    decrypted.messages = decrypted.messages.map((msg: Record<string, any>) => {
       try {
         return {
           ...msg,
