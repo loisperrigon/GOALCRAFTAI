@@ -67,11 +67,14 @@ function AuthLayout({ children }: AuthLayoutProps) {
       if (data.success && data.conversations) {
         console.log(`[AuthLayout] ${data.conversations.length} conversations chargées depuis MongoDB`)
         setConversations(data.conversations)
+        return data.conversations // Retourner les conversations pour pouvoir les utiliser
       } else {
         console.error("[AuthLayout] Erreur lors du chargement des conversations")
+        return []
       }
     } catch (error) {
       console.error("[AuthLayout] Erreur:", error)
+      return []
     } finally {
       setLoadingConversations(false)
     }
@@ -79,8 +82,31 @@ function AuthLayout({ children }: AuthLayoutProps) {
   
   // Charger les conversations depuis MongoDB au montage
   useEffect(() => {
-    loadConversations()
-  }, [loadConversations])
+    const initializeConversations = async () => {
+      const loadedConversations = await loadConversations()
+      
+      // Sélectionner automatiquement la dernière conversation si disponible et si on n'a pas déjà une sélection
+      if (!selectedObjectiveId && !currentObjective && loadedConversations && loadedConversations.length > 0) {
+        // Trier les conversations par date de dernière activité (plus récent en premier)
+        const sortedConversations = [...loadedConversations].sort((a, b) => {
+          // Utiliser updatedAt ou le timestamp du dernier message, ou createdAt en fallback
+          const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 
+                        a.lastMessage?.timestamp ? new Date(a.lastMessage.timestamp).getTime() :
+                        a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 
+                        b.lastMessage?.timestamp ? new Date(b.lastMessage.timestamp).getTime() :
+                        b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return dateB - dateA // Ordre décroissant (plus récent en premier)
+        })
+        
+        // Sélectionner la conversation avec l'activité la plus récente
+        const mostRecentConversation = sortedConversations[0]
+        handleConversationClick(mostRecentConversation)
+      }
+    }
+    
+    initializeConversations()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   
   // Recharger les conversations quand un objectif change de status
   useEffect(() => {

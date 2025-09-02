@@ -39,9 +39,17 @@ export default function ObjectivesPage() {
   
   const { playNotification, playWhoosh } = useSound()
   const { currentObjective, setActiveObjective } = useObjectiveStore()
-  const [loadingLastObjective, setLoadingLastObjective] = useState(true)
   const [inputMessage, setInputMessage] = useState("")
-  const [activeView, setActiveView] = useState<"chat" | "tree">("chat")
+  // Initialiser activeView en fonction de l'objectif actuel
+  const [activeView, setActiveView] = useState<"chat" | "tree">(() => {
+    // Si on a déjà un objectif avec un arbre, commencer sur tree
+    if (currentObjective?.skillTree?.nodes && currentObjective.skillTree.nodes.length > 0) {
+      return "tree"
+    }
+    return "chat"
+  })
+  const [isInitializing, setIsInitializing] = useState(true)
+  const hasInitialized = useRef(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   
   // Utiliser le hook AI Chat WebSocket pour la vraie intégration
@@ -67,14 +75,31 @@ export default function ObjectivesPage() {
     }
   })
   
-  // Charger le dernier objectif depuis MongoDB au montage
+  // Ne plus charger automatiquement - laisser AuthLayout gérer la sélection
+  
+  // Marquer comme initialisé quand on reçoit une conversation ou après un timeout de sécurité
   useEffect(() => {
-    loadLastObjective()
-  }, [])
+    // Si on a déjà une conversation ou des messages, on n'est plus en initialisation
+    if (currentObjective || messages.length > 0) {
+      setIsInitializing(false)
+      
+      // Si on a un objectif avec un arbre, passer directement à la vue tree
+      if (currentObjective?.skillTree?.nodes && currentObjective.skillTree.nodes.length > 0) {
+        setActiveView("tree")
+      }
+      return
+    }
+    
+    // Timeout de sécurité si aucune conversation n'arrive après 3 secondes
+    const timer = setTimeout(() => {
+      setIsInitializing(false)
+    }, 3000)
+    
+    return () => clearTimeout(timer)
+  }, [currentObjective, messages.length])
   
   // Écouter les changements d'objectif depuis la sidebar
   useEffect(() => {
-    if (!loadingLastObjective) {
       if (currentObjective) {
         // Si on a un conversationId, le définir pour le chat
         if (currentObjective.conversationId) {
@@ -103,7 +128,6 @@ export default function ObjectivesPage() {
         clearMessages()
         setActiveView("chat")
       }
-    }
   }, [currentObjective?.id, currentObjective?.isTemporary]) // eslint-disable-line react-hooks/exhaustive-deps
   
   const loadConversationMessages = async (conversationId: string) => {
@@ -149,57 +173,6 @@ export default function ObjectivesPage() {
     }
   }
   
-  const loadLastObjective = async () => {
-    try {
-      setLoadingLastObjective(true)
-      
-      // Charger la dernière conversation
-      const convResponse = await fetch('/api/conversations')
-      const convData = await convResponse.json()
-      
-      if (convData.success && convData.conversation) {
-        console.log("[ObjectivesPage] Dernière conversation chargée:", convData.conversation.id)
-        
-        // Si la conversation a un objectif, le charger
-        if (convData.conversation.objectiveId) {
-          const objResponse = await fetch(`/api/objectives/${convData.conversation.objectiveId}`)
-          const objData = await objResponse.json()
-          
-          if (objData.success && objData.objective) {
-            console.log("[ObjectivesPage] Objectif associé chargé:", objData.objective.title)
-            setActiveObjective({
-              ...objData.objective,
-              conversationId: convData.conversation.id
-            })
-            
-            // Charger les messages
-            if (convData.messages && convData.messages.length > 0) {
-              loadMessages(convData.messages, convData.conversation.id)
-            }
-            
-            setActiveView("tree")
-          }
-        } else {
-          // Conversation sans objectif - mode chat
-          console.log("[ObjectivesPage] Conversation sans objectif, mode chat")
-          setConversationId(convData.conversation.id)
-          
-          if (convData.messages && convData.messages.length > 0) {
-            loadMessages(convData.messages, convData.conversation.id)
-          }
-          
-          setActiveView("chat")
-        }
-      } else {
-        console.log("[ObjectivesPage] Aucune conversation trouvée")
-        setActiveView("chat")
-      }
-    } catch (error) {
-      console.error("[ObjectivesPage] Erreur chargement:", error)
-    } finally {
-      setLoadingLastObjective(false)
-    }
-  }
   
   // Auto-scroll quand de nouveaux messages arrivent
   useEffect(() => {
@@ -220,12 +193,19 @@ export default function ObjectivesPage() {
     playNotification() // Son de notification pour la réponse
   }
 
-  // Afficher le loader pendant le chargement initial
-  if (loadingLastObjective) {
+
+  // Si on est en initialisation, afficher UNIQUEMENT le loader
+  if (isInitializing) {
     return (
       <AuthLayout>
-        <div className="h-screen max-h-screen flex items-center justify-center">
-          <Loader size="lg" text="Chargement de vos objectifs..." />
+        <div className="h-full flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-20 h-20 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-2xl flex items-center justify-center mb-2">
+              <Brain className="h-10 w-10 text-purple-400" />
+            </div>
+            <Spinner size="lg" />
+            <p className="text-sm text-muted-foreground">Chargement de votre conversation...</p>
+          </div>
         </div>
       </AuthLayout>
     )
@@ -267,9 +247,9 @@ export default function ObjectivesPage() {
         )}
 
         <div className="flex-1 overflow-hidden">
-          {/* Chat Section - Show when no objective OR when chat view is active */}
+          {/* Chat Section - Show ONLY when chat view is active */}
           <div className={`${
-            !currentObjective || activeView === "chat" ? "flex" : "hidden"
+            activeView === "chat" ? "flex" : "hidden"
           } h-full flex-col bg-background/50`}>
             <div className="flex-1 overflow-y-auto p-4 pt-6" ref={scrollRef}>
               <div className="space-y-4 max-w-2xl mx-auto">
@@ -371,9 +351,9 @@ export default function ObjectivesPage() {
             </div>
 
             <div className="border-t border-border bg-card/50 backdrop-blur p-4 md:p-6 flex-shrink-0">
-              <div className="max-w-3xl mx-auto">
-                <div className="flex gap-3">
-                  <Input
+                <div className="max-w-3xl mx-auto">
+                  <div className="flex gap-3">
+                    <Input
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}

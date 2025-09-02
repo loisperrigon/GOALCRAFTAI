@@ -31,14 +31,17 @@ import { useSound } from '@/hooks/useSound'
 import { SimpleStreakNotification } from '@/components/SimpleStreakNotification'
 
 // Layout automatique avec dagre
-const dagreGraph = new dagre.graphlib.Graph()
-dagreGraph.setDefaultEdgeLabel(() => ({}))
 
 const nodeWidth = 200
 const nodeHeight = 120
 
 const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
   const isHorizontal = direction === 'LR'
+  
+  // Créer une nouvelle instance de dagre pour chaque calcul (évite les problèmes de cache)
+  const dagreGraph = new dagre.graphlib.Graph()
+  dagreGraph.setDefaultEdgeLabel(() => ({}))
+  
   dagreGraph.setGraph({ 
     rankdir: direction, 
     ranksep: 100,     // Espacement vertical entre les niveaux
@@ -457,6 +460,16 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
       // Mettre à jour la ref de l'objectif
       if (isObjectiveChange) {
         previousObjectiveIdRef.current = currentObjective?.id
+        
+        // IMPORTANT: Forcer un reset complet du viewport quand on change d'objectif
+        if (reactFlowInstance) {
+          // Reset le viewport à la position par défaut
+          reactFlowInstance.setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 0 })
+          // Puis marquer qu'on doit recentrer
+          setTimeout(() => {
+            setShouldCenter(true)
+          }, 50)
+        }
       }
       
       // Marquer qu'on doit centrer sur le nœud
