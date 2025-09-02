@@ -5,10 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 // GET - Récupérer un objectif spécifique par ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const objectiveId = params.id;
+    const { id: objectiveId } = await params;
     console.log("[Objective API] Récupération de l'objectif:", objectiveId);
 
     const db = await getDatabase();

@@ -461,15 +461,8 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
       if (isObjectiveChange) {
         previousObjectiveIdRef.current = currentObjective?.id
         
-        // IMPORTANT: Forcer un reset complet du viewport quand on change d'objectif
-        if (reactFlowInstance) {
-          // Reset le viewport à la position par défaut
-          reactFlowInstance.setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 0 })
-          // Puis marquer qu'on doit recentrer
-          setTimeout(() => {
-            setShouldCenter(true)
-          }, 50)
-        }
+        // Marquer qu'on doit recentrer (sans reset manuel du viewport)
+        setShouldCenter(true)
       }
       
       // Marquer qu'on doit centrer sur le nœud
@@ -496,28 +489,18 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
     if (shouldCenter && reactFlowInstance && layoutedNodesRef.current.length > 0) {
       setShouldCenter(false)
       
-      // Trouver le nœud actuel
-      const skillNodes = currentObjective?.skillTree?.nodes || []
-      let currentNode = skillNodes.find(n => n.unlocked && !n.completed) ||
-                       skillNodes.filter(n => n.completed).pop() ||
-                       skillNodes.find(n => n.unlocked) ||
-                       skillNodes[0]
-      
-      if (currentNode) {
-        // Trouver la position du nœud dans les nodes layoutés
-        const targetNode = layoutedNodesRef.current.find(n => n.id === currentNode.id)
-        if (targetNode && targetNode.position) {
-          // ZOOM DIRECT AU CENTRE DU NŒUD
-          // nodeWidth = 200, nodeHeight = 120 (définis plus haut)
-          reactFlowInstance.setCenter(
-            targetNode.position.x + nodeWidth / 2,
-            targetNode.position.y + nodeHeight / 2,
-            { zoom: 1.5, duration: 800 }
-          )
-        }
-      }
+      // Attendre un peu pour que le layout soit bien appliqué
+      setTimeout(() => {
+        // Utiliser fitView pour voir tout l'arbre avec un zoom approprié
+        reactFlowInstance.fitView({
+          padding: 0.2,
+          duration: 800,
+          maxZoom: 1.5,
+          minZoom: 0.5
+        })
+      }, 100)
     }
-  }, [shouldCenter, reactFlowInstance, currentObjective])
+  }, [shouldCenter, reactFlowInstance])
 
   // Ajuster la position lors du changement de mode plein écran
   useEffect(() => {
