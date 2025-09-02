@@ -54,19 +54,6 @@ function AuthLayout({ children }: AuthLayoutProps) {
   const [conversations, setConversations] = useState<any[]>([])
   const [loadingConversations, setLoadingConversations] = useState(true)
   
-  // Charger les conversations depuis MongoDB au montage
-  useEffect(() => {
-    loadConversations()
-  }, [])
-  
-  // Recharger les conversations quand un objectif est créé (pas pour les placeholders)
-  useEffect(() => {
-    if (currentObjective && !currentObjective.isPlaceholder && currentObjective.status === 'active') {
-      // Recharger seulement si c'est un vrai objectif qui vient d'être complété
-      setTimeout(() => loadConversations(), 1000)
-    }
-  }, [currentObjective?.status]) // Dépendre du status plutôt que de l'id
-  
   const loadConversations = useCallback(async () => {
     try {
       // Ne montrer le loader que si on n'a pas encore de conversations
@@ -89,6 +76,21 @@ function AuthLayout({ children }: AuthLayoutProps) {
       setLoadingConversations(false)
     }
   }, [conversations.length])
+  
+  // Charger les conversations depuis MongoDB au montage
+  useEffect(() => {
+    loadConversations()
+  }, [loadConversations])
+  
+  // Recharger les conversations quand un objectif change de status
+  useEffect(() => {
+    if (currentObjective) {
+      // Recharger quand l'objectif passe en génération ou est complété
+      if (currentObjective.status === 'generating' || currentObjective.status === 'active') {
+        loadConversations()
+      }
+    }
+  }, [currentObjective?.status, loadConversations])
 
   const navigationItems = [
     { 
