@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getDatabase } from "@/lib/db-init"
+import { getDatabase } from "@/lib/server/db-init"
 import { auth } from "@/lib/auth"
 import { getUniqueIdentifier } from "@/lib/rate-limiter"
 

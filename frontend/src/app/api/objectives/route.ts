@@ -1,17 +1,27 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getDatabase } from "@/lib/db-init"
+import { getDatabase } from "@/lib/server/db-init"
+import { auth } from "@/lib/auth"
 
-// GET - Récupérer tous les objectifs (sans filtre pour l'instant)
+// GET - Récupérer les objectifs de l'utilisateur connecté
 export async function GET(request: NextRequest) {
   try {
-    console.log("[Objectives API] Récupération de tous les objectifs")
+    // Vérifier l'authentification
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Non authentifié" },
+        { status: 401 }
+      )
+    }
+    
+    console.log("[Objectives API] Récupération des objectifs pour", session.user.id)
     
     // Récupérer la base de données
     const db = await getDatabase()
     
-    // Récupérer TOUS les objectifs (pas de filtre par user pour l'instant)
+    // Récupérer UNIQUEMENT les objectifs de l'utilisateur connecté
     const objectives = await db.collection("objectives")
-      .find({})
+      .find({ userId: session.user.id })
       .sort({ createdAt: -1 }) // Plus récents en premier
       .limit(50) // Limiter à 50 pour éviter de surcharger
       .toArray()
@@ -55,15 +65,25 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Créer un nouvel objectif (optionnel, pour tester)
+// POST - Créer un nouvel objectif
 export async function POST(request: NextRequest) {
   try {
+    // Vérifier l'authentification
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, error: "Non authentifié" },
+        { status: 401 }
+      )
+    }
+    
     const body = await request.json()
     
     const db = await getDatabase()
     
     const newObjective = {
       ...body,
+      userId: session.user.id, // Associer l'objectif à l'utilisateur
       createdAt: new Date(),
       updatedAt: new Date(),
       progress: 0,
@@ -93,9 +113,18 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// DELETE - Supprimer un objectif (pour le nettoyage)
+// DELETE - Supprimer un objectif de l'utilisateur
 export async function DELETE(request: NextRequest) {
   try {
+    // Vérifier l'authentification
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Non authentifié" },
+        { status: 401 }
+      )
+    }
+    
     const { searchParams } = new URL(request.url)
     const objectiveId = searchParams.get("id")
     
@@ -108,8 +137,10 @@ export async function DELETE(request: NextRequest) {
     
     const db = await getDatabase()
     
+    // Supprimer UNIQUEMENT si l'objectif appartient à l'utilisateur
     const result = await db.collection("objectives").deleteOne({
-      _id: objectiveId
+      _id: objectiveId,
+      userId: session.user.id
     })
     
     if (result.deletedCount === 0) {

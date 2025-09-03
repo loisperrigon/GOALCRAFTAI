@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getDatabase } from "@/lib/db-init"
+import { getDatabase } from "@/lib/server/db-init"
 import { auth } from "@/lib/auth"
 import { getUniqueIdentifier } from "@/lib/rate-limiter"
-import { decrypt } from "@/lib/encryption"
+import { decrypt } from "@/lib/server/encryption"
 
 // GET - Récupérer une conversation par ID ou toutes les conversations
 export async function GET(request: NextRequest) {

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback, memo } from "react"
-import AuthModal from "@/components/AuthModal"
 import PricingModal from "@/components/PricingModal"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -45,7 +44,6 @@ function AuthLayout({ children }: AuthLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const [showAuthModal, setShowAuthModal] = useState(false)
   const [showPricingModal, setShowPricingModal] = useState(false)
   const { user, isAuthenticated } = useUserStore()
   const { setActiveObjective, currentObjective } = useObjectiveStore()
@@ -63,10 +61,10 @@ function AuthLayout({ children }: AuthLayoutProps) {
       
       const response = await fetch('/api/conversations?all=true')
       
-      // Si non authentifié, afficher le modal
+      // Si non authentifié, rediriger vers /auth
       if (response.status === 401) {
-        console.log("[AuthLayout] Utilisateur non authentifié, affichage du modal")
-        setShowAuthModal(true)
+        console.log("[AuthLayout] Utilisateur non authentifié, redirection vers /auth")
+        router.push('/auth')
         return []
       }
       
@@ -283,7 +281,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                   className="h-7 px-2 hover:bg-purple-500/10"
                   onClick={async () => {
                     if (!isAuthenticated) {
-                      setShowAuthModal(true)
+                      router.push('/auth')
                     } else {
                       try {
                         // Créer une nouvelle conversation vide
@@ -476,7 +474,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                       className="h-7 px-2 hover:bg-purple-500/10"
                       onClick={async () => {
                         if (!isAuthenticated) {
-                          setShowAuthModal(true)
+                          router.push('/auth')
                           setIsMobileSidebarOpen(false)
                         } else {
                           try {
@@ -635,18 +633,6 @@ function AuthLayout({ children }: AuthLayoutProps) {
         {children}
       </main>
       
-      {/* Auth Modal */}
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => {
-          // Ne pas fermer le modal si l'utilisateur n'est pas connecté
-          // On le laisse ouvert pour forcer la connexion
-        }}
-        onSuccess={() => {
-          setShowAuthModal(false)
-          window.location.reload()
-        }}
-      />
       
       {/* Pricing Modal */}
       <PricingModal 

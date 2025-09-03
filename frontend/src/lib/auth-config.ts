@@ -2,7 +2,7 @@ import { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
-import clientPromise from "./mongodb"
+import clientPromise from "./server/mongodb"
 import bcrypt from "bcryptjs"
 
 // Validation des inputs

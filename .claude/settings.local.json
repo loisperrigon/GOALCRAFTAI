@@ -37,7 +37,8 @@
       "Bash(npm ls:*)",
       "Bash(npx next:*)",
       "Bash(del C:UsersLoisDocumentsProjetGoalCraftAIfrontendserver.js)",
-      "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\auth\\google\\route.ts\")"
+      "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\auth\\google\\route.ts\")",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

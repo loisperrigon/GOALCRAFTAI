@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
-import { getDatabase } from "@/lib/db-init"
+import { getDatabase } from "@/lib/server/db-init"
 import { z } from "zod"
 import { checkRateLimit, getUniqueIdentifier } from "@/lib/rate-limiter"
 import { storeWebhookContext } from "@/lib/webhook-cache"
-import { encrypt, decrypt } from "@/lib/encryption"
+import { encrypt, decrypt } from "@/lib/server/encryption"
 
 const chatSchema = z.object({
   message: z.string().min(1).max(10000), // Permet des descriptions détaillées
@@ -137,31 +137,50 @@ export async function POST(request: NextRequest) {
       }
     })
     
+    // Construire le corps de la requête
+    const webhookBody = {
+      messageId: messageId, // ID unique pour retrouver la réponse
+      userId: userId,
+      message, // Message en clair pour n8n
+      conversationId: conversation._id, // Déjà un string maintenant
+      objectiveType: objectiveType || "general",
+      messageCount: (conversation.messages?.length || 0) + 1,
+      callbackUrl: `${process.env.SERVER_URL || process.env.NEXT_PUBLIC_APP_URL}/api/ai/webhook`, // URL de callback pour n8n
+      context: {
+        userName: userName,
+        userEmail: userEmail,
+        previousMessages: decryptedPreviousMessages, // Messages déchiffrés pour le contexte
+        isFirstMessage: !conversation.messages || conversation.messages.length === 0
+      }
+    }
+    
+    console.log("[n8n] URL du webhook:", N8N_WEBHOOK_URL)
+    console.log("[n8n] Callback URL:", webhookBody.callbackUrl)
+    console.log("[n8n] Body complet:", JSON.stringify(webhookBody, null, 2))
+    
     // Envoyer à n8n sans attendre la réponse
     fetch(N8N_WEBHOOK_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          messageId: messageId, // ID unique pour retrouver la réponse
-          userId: userId,
-          message, // Message en clair pour n8n
-          conversationId: conversation._id, // Déjà un string maintenant
-          objectiveType: objectiveType || "general",
-          messageCount: (conversation.messages?.length || 0) + 1,
-          callbackUrl: `${process.env.SERVER_URL || process.env.NEXT_PUBLIC_APP_URL}/api/ai/webhook`, // URL de callback pour n8n
-          context: {
-            userName: userName,
-            userEmail: userEmail,
-            previousMessages: decryptedPreviousMessages, // Messages déchiffrés pour le contexte
-            isFirstMessage: !conversation.messages || conversation.messages.length === 0
-          }
-        })
-      }).then(response => {
+        body: JSON.stringify(webhookBody)
+      }).then(async response => {
         console.log("[n8n] Webhook envoyé, status:", response.status)
+        if (response.status === 404) {
+          console.error("[n8n] ERREUR 404 - L'URL du webhook n'existe pas ou n'est pas accessible")
+          console.error("[n8n] Vérifiez que l'URL est correcte:", N8N_WEBHOOK_URL)
+          const responseText = await response.text()
+          console.error("[n8n] Réponse du serveur:", responseText)
+        } else if (!response.ok) {
+          console.error("[n8n] Erreur HTTP:", response.status, response.statusText)
+          const responseText = await response.text()
+          console.error("[n8n] Réponse du serveur:", responseText)
+        }
       }).catch(error => {
         console.error("[n8n] Erreur envoi webhook:", error)
+        console.error("[n8n] Type d'erreur:", error.name)
+        console.error("[n8n] Message d'erreur:", error.message)
       })
     
     // Retourner immédiatement au frontend que le message est en cours de traitement

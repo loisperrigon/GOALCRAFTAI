@@ -2,7 +2,7 @@ import NextAuth from "next-auth"
 import Google from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
-import clientPromise from "./mongodb-client"
+import clientPromise from "./server/mongodb-client"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: MongoDBAdapter(clientPromise),
@@ -18,11 +18,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        // Pour l'instant, on simule la connexion
-        // À remplacer par une vraie vérification en base de données
         if (credentials?.email) {
           return {
-            id: "temp-" + Date.now(),
+            id: credentials.email,
             email: credentials.email,
             name: credentials.email.split("@")[0],
           }
@@ -32,9 +30,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async session({ session, token, user }) {
-      // Ajouter des données personnalisées à la session
-      if (session?.user) {
+    async session({ session, user }) {
+      // Avec strategy database, user vient directement de la DB
+      if (session?.user && user) {
         session.user.id = user.id
         // @ts-ignore
         session.user.level = user.level || 1
@@ -43,13 +41,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return session
     },
-    async signIn({ user, account, profile }) {
-      // Logique personnalisée lors de la connexion
-      // Par exemple, créer des données initiales pour l'utilisateur
-      return true
-    },
     async redirect({ url, baseUrl }) {
-      // Toujours rediriger vers /objectives après connexion
+      // Rediriger vers /objectives après connexion
+      if (url.includes("/auth")) {
+        return baseUrl + '/objectives'
+      }
       if (url.startsWith(baseUrl)) {
         return url
       }
@@ -61,8 +57,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/auth/error",
   },
   session: {
-    strategy: "database",
-    maxAge: 30 * 24 * 60 * 60, // 30 jours en secondes
-    updateAge: 24 * 60 * 60, // Mise à jour toutes les 24 heures
+    strategy: "database", // Utiliser database avec MongoDB Adapter
+    maxAge: 30 * 24 * 60 * 60, // 30 jours
+    updateAge: 24 * 60 * 60, // Mise à jour toutes les 24h
   },
 })

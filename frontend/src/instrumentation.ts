@@ -4,7 +4,7 @@ export async function register() {
   // Initialiser MongoDB une seule fois au démarrage (côté serveur uniquement)
   if (process.env.NEXT_RUNTIME === "nodejs") {
     // Import dynamique pour éviter les erreurs de build
-    const { initDatabase } = await import("@/lib/db-init")
+    const { initDatabase } = await import("@/lib/server/db-init")
     
     try {
       await initDatabase()

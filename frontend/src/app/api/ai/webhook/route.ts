@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getDatabase } from "@/lib/db-init"
+import { getDatabase } from "@/lib/server/db-init"
 import { z } from "zod"
 import { getLastWebhookContext } from "@/lib/webhook-cache"
-import { encrypt } from "@/lib/encryption"
+import { encrypt } from "@/lib/server/encryption"
+
+// Vérifier le token secret du webhook
+function verifyWebhookSecret(request: NextRequest): boolean {
+  const webhookSecret = request.headers.get("x-webhook-secret")
+  const expectedSecret = process.env.N8N_WEBHOOK_SECRET
+  
+  if (!expectedSecret) {
+    console.error("[Webhook] N8N_WEBHOOK_SECRET non configuré")
+    return false
+  }
+  
+  return webhookSecret === expectedSecret
+}
 
 // Schema pour valider la réponse de n8n (IDs optionnels maintenant)
 const webhookSchema = z.object({
@@ -51,6 +64,14 @@ const webhookSchema = z.object({
 // Route POST pour recevoir les réponses de n8n
 export async function POST(request: NextRequest) {
   try {
+    // Vérifier le token secret
+    if (!verifyWebhookSecret(request)) {
+      console.error("[Webhook] Token secret invalide")
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
     console.log("[Webhook] Réception d'une réponse n8n")
     
     const rawBody = await request.json()

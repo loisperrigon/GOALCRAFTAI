@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Chrome, Mail, Lock, User, X } from "lucide-react"
+import { Chrome, Mail, Lock, User } from "lucide-react"
 import { Spinner } from "@/components/ui/loader"
-import { signIn } from "next-auth/react"
 
 interface AuthModalProps {
   isOpen: boolean
@@ -57,18 +57,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess, redirectTo = "/o
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      // Empêcher la fermeture si l'utilisateur essaie de fermer le modal
-      // Seulement permettre la fermeture via onClose après connexion réussie
-      if (!open && onClose) {
-        onClose()
-      }
-    }}>
-      <DialogContent 
-        className="sm:max-w-md bg-card/95 backdrop-blur border-purple-500/20"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-      >
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur border-purple-500/20">
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-bold">
             {isLogin ? "Connexion requise" : "Créer un compte"}
@@ -99,7 +89,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, redirectTo = "/o
                   : "text-muted-foreground hover:text-foreground bg-muted/50"
               }`}
             >
-              S'inscrire
+              S&apos;inscrire
             </button>
           </div>
 
@@ -118,7 +108,6 @@ export default function AuthModal({ isOpen, onClose, onSuccess, redirectTo = "/o
               <Chrome className="mr-2 h-4 w-4" />
               Continuer avec Google
             </Button>
-            
           </div>
 
           {/* Separator */}

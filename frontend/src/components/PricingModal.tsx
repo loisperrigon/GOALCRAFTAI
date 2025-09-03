@@ -29,8 +29,8 @@ interface PricingModalProps {
 export default function PricingModal({ isOpen, onClose }: PricingModalProps) {
   const router = useRouter()
   const { isAuthenticated } = useUserStore()
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly')
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly')
   const [activeUsers, setActiveUsers] = useState(1427)
   
   const monthlyPrice = 9.99

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { signOut } from "next-auth/react"
 import AuthModal from "@/components/AuthModal"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -467,12 +468,24 @@ export default function ProfilePage() {
                 <Button 
                   variant="outline" 
                   className="w-full justify-start border-border hover:bg-destructive/10"
-                  onClick={() => {
-                    toast({
-                      title: "Déconnexion",
-                      description: "Vous avez été déconnecté avec succès"
-                    })
-                    router.push("/auth")
+                  onClick={async () => {
+                    try {
+                      await signOut({ 
+                        callbackUrl: "/auth",
+                        redirect: true 
+                      })
+                      toast({
+                        title: "Déconnexion",
+                        description: "Vous avez été déconnecté avec succès"
+                      })
+                    } catch (error) {
+                      console.error("Erreur déconnexion:", error)
+                      toast({
+                        title: "Erreur",
+                        description: "Impossible de se déconnecter",
+                        variant: "destructive"
+                      })
+                    }
                   }}
                 >
                   <LogOut className="h-4 w-4 mr-2" />

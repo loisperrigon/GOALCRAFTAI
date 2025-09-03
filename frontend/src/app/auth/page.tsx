@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,38 +14,80 @@ import Footer from "@/components/Footer"
 
 export default function AuthPage() {
   const router = useRouter()
+  const { data: session, status } = useSession()
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [name, setName] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  console.log("[Auth Page] Session status:", status)
+  console.log("[Auth Page] Session data:", session)
+  
+  // Rediriger vers /objectives si déjà connecté
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.push('/objectives')
+    }
+  }, [status, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
+    
+    console.log("[Auth Page] Tentative de connexion avec:", email)
+    console.log("[Auth Page] Mode:", isLogin ? "Connexion" : "Inscription")
     
     try {
+      // Pour l'inscription ET la connexion, on utilise credentials
+      // Le backend gère automatiquement la création si l'utilisateur n'existe pas
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       })
       
+      console.log("[Auth Page] Résultat signIn:", result)
+      
       if (result?.error) {
-        console.error("Erreur de connexion:", result.error)
-        setIsLoading(false)
-      } else {
+        // Afficher un message d'erreur approprié
+        if (result.error === "CredentialsSignin") {
+          setError(isLogin ? "Email ou mot de passe incorrect" : "Erreur lors de l'inscription")
+        } else {
+          setError("Une erreur est survenue. Veuillez réessayer.")
+        }
+        console.error("[Auth Page] Erreur auth:", result.error)
+      } else if (result?.ok) {
+        // Connexion réussie
+        console.log("[Auth Page] Connexion réussie, redirection vers /objectives")
         router.push("/objectives")
+      } else {
+        console.log("[Auth Page] Résultat inattendu:", result)
       }
     } catch (error) {
-      console.error("Erreur:", error)
+      console.error("[Auth Page] Erreur exception:", error)
+      setError("Une erreur inattendue est survenue")
+    } finally {
       setIsLoading(false)
     }
   }
 
   const handleSocialAuth = async (provider: string) => {
     setIsLoading(true)
-    await signIn(provider, { callbackUrl: "/objectives" })
+    setError(null)
+    
+    console.log("[Auth Page] Tentative de connexion avec:", provider)
+    
+    try {
+      const result = await signIn(provider, { callbackUrl: "/objectives" })
+      console.log("[Auth Page] Résultat social auth:", result)
+    } catch (error) {
+      console.error("[Auth Page] Erreur auth social:", error)
+      setError("Erreur lors de la connexion avec " + provider)
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -88,6 +130,13 @@ export default function AuthPage() {
               S'inscrire
             </button>
           </div>
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
 
           {/* Social Auth Buttons */}
           <div className="space-y-3 mb-6">
