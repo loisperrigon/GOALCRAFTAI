@@ -129,6 +129,28 @@ export default function ProfilePage() {
     setLanguage,
     toggleNotifications
   } = useSettingsStore()
+  
+  // Force re-render state
+  const [, forceUpdate] = useState({})
+  
+  // Fonction pour changer la couleur d'accent
+  const setAccentColor = (color: 'purple' | 'blue' | 'orange') => {
+    updateSettings({ accentColor: color })
+    document.documentElement.setAttribute('data-accent', color)
+    // Force un re-render pour mettre à jour les styles inline
+    forceUpdate({})
+  }
+  
+  // Fonction pour obtenir la couleur d'accent actuelle
+  const getAccentColor = () => {
+    const color = appSettings.accentColor || 'purple'
+    switch(color) {
+      case 'purple': return '#a855f7'
+      case 'blue': return '#3b82f6'
+      case 'orange': return '#fb923c'
+      default: return '#a855f7'
+    }
+  }
   const { setSoundEnabled, setVolume, soundEnabled, volume } = useSound()
   
   // State local pour les paramètres en cours d'édition
@@ -199,9 +221,12 @@ export default function ProfilePage() {
     }
   }, [appSettings.theme])
   
-  // Appliquer la couleur d'accent
+  // Appliquer la couleur d'accent - s'assurer que ça se met à jour à chaque changement
   useEffect(() => {
-    document.documentElement.setAttribute('data-accent', appSettings.accentColor || 'purple')
+    const accentColor = appSettings.accentColor || 'purple'
+    document.documentElement.setAttribute('data-accent', accentColor)
+    // Forcer un re-render si nécessaire
+    document.documentElement.style.setProperty('--current-accent', accentColor)
   }, [appSettings.accentColor])
   
   // Les paramètres sont automatiquement sauvegardés dans localStorage via Zustand
@@ -366,7 +391,10 @@ export default function ProfilePage() {
                 </p>
                 <Button 
                   onClick={() => setShowAuthModal(true)}
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                  className="hover:opacity-90 text-white transition-opacity"
+                  style={{
+                    background: `linear-gradient(to right, ${getAccentColor()}, #3b82f6)`
+                  }}
                 >
                   Se connecter
                 </Button>
@@ -484,7 +512,10 @@ export default function ProfilePage() {
                       </Button>
                       <Button 
                         onClick={handleSave}
-                        className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+                        className="hover:opacity-90 text-white transition-opacity"
+                  style={{
+                    background: `linear-gradient(to right, ${getAccentColor()}, #3b82f6)`
+                  }}
                       >
                         <Save className="h-4 w-4 mr-2" />
                         Sauvegarder
@@ -735,9 +766,10 @@ export default function ProfilePage() {
                         setLocalSettings({ ...localSettings, notifications: newValue })
                         toggleNotifications()
                       }}
-                      className={`w-12 h-6 rounded-full transition-colors ${
-                        localSettings.notifications ? "bg-purple-500" : "bg-gray-300"
-                      }`}
+                      className="w-12 h-6 rounded-full transition-colors"
+                      style={{
+                        backgroundColor: localSettings.notifications ? getAccentColor() : '#d1d5db'
+                      }}
                     >
                       <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
                         localSettings.notifications ? "translate-x-6" : "translate-x-0.5"
@@ -790,9 +822,10 @@ export default function ProfilePage() {
                         setSoundEnabled(newValue) // Hook useSound
                         setStoreSoundEnabled(newValue) // Store settings
                       }}
-                      className={`w-12 h-6 rounded-full transition-colors ${
-                        localSettings.soundEnabled ? "bg-purple-500" : "bg-gray-300"
-                      }`}
+                      className="w-12 h-6 rounded-full transition-colors"
+                      style={{
+                        backgroundColor: localSettings.soundEnabled ? getAccentColor() : '#d1d5db'
+                      }}
                     >
                       <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
                         localSettings.soundEnabled ? "translate-x-6" : "translate-x-0.5"
@@ -820,7 +853,10 @@ export default function ProfilePage() {
                         // Pas de sauvegarde à chaque changement de volume (trop de requêtes)
                       }}
                       disabled={!localSettings.soundEnabled}
-                      className="w-full accent-purple-500"
+                      className="w-full"
+                      style={{
+                        accentColor: getAccentColor()
+                      }}
                     />
                   </div>
                 </div>
@@ -844,9 +880,10 @@ export default function ProfilePage() {
                         setLocalSettings({ ...localSettings, darkMode: newValue })
                         setTheme(newValue ? 'dark' : 'light')
                       }}
-                      className={`w-12 h-6 rounded-full transition-colors ${
-                        localSettings.darkMode ? "bg-purple-500" : "bg-gray-300"
-                      }`}
+                      className="w-12 h-6 rounded-full transition-colors"
+                      style={{
+                        backgroundColor: localSettings.darkMode ? getAccentColor() : '#d1d5db'
+                      }}
                     >
                       <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
                         localSettings.darkMode ? "translate-x-6" : "translate-x-0.5"
@@ -862,19 +899,19 @@ export default function ProfilePage() {
                           key={color}
                           onClick={() => {
                             setLocalSettings({ ...localSettings, accentColor: color })
-                            updateSettings({ accentColor: color })
+                            setAccentColor(color)
                           }}
-                          className={`w-10 h-10 rounded-lg border-2 transition-all ${
+                          className={`w-10 h-10 rounded-lg border-2 transition-all duration-200 ${
                             localSettings.accentColor === color 
-                              ? 'border-foreground scale-110' 
-                              : 'border-border'
+                              ? 'border-white scale-110 shadow-lg ring-2 ring-offset-2 ring-offset-background' 
+                              : 'border-border/50 hover:scale-105 hover:border-border'
                           }`}
                           style={{
                             background: color === 'purple' 
-                              ? 'linear-gradient(to br, rgb(168 85 247), rgb(59 130 246))'
+                              ? 'linear-gradient(135deg, #a855f7, #9333ea)'
                               : color === 'blue'
-                              ? 'linear-gradient(to br, rgb(59 130 246), rgb(6 182 212))'
-                              : 'linear-gradient(to br, rgb(251 146 60), rgb(254 215 170))'
+                              ? 'linear-gradient(135deg, #3b82f6, #06b6d4)'
+                              : 'linear-gradient(135deg, #fb923c, #f97316)'
                           }}
                         />
                       ))}
@@ -952,9 +989,10 @@ export default function ProfilePage() {
                           experience: { ...appSettings.experience, autoSave: newValue }
                         })
                       }}
-                      className={`w-12 h-6 rounded-full transition-colors ${
-                        localSettings.autoSave ? "bg-purple-500" : "bg-gray-300"
-                      }`}
+                      className="w-12 h-6 rounded-full transition-colors"
+                      style={{
+                        backgroundColor: localSettings.autoSave ? getAccentColor() : '#d1d5db'
+                      }}
                     >
                       <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
                         localSettings.autoSave ? "translate-x-6" : "translate-x-0.5"

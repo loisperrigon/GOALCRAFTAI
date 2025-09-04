@@ -29,7 +29,10 @@ export default function SettingsInitializer() {
     }
     
     // Appliquer la couleur d'accent
-    document.documentElement.setAttribute('data-accent', settings.accentColor || 'purple')
+    const accentColor = settings.accentColor || 'purple'
+    document.documentElement.setAttribute('data-accent', accentColor)
+    // Forcer la mise à jour CSS si nécessaire
+    document.documentElement.style.setProperty('--current-accent', accentColor)
     
     applyTheme()
     

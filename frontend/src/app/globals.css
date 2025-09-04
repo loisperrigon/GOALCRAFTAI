@@ -79,19 +79,25 @@
   [data-accent="purple"] {
     --primary: 271 91% 65%;
     --ring: 271 91% 65%;
-    --neon-purple: 271 91% 65%;
+    --accent-color: 271 91% 65%;
+    --accent-light: 271 91% 75%;
+    --accent-dark: 271 91% 55%;
   }
   
   [data-accent="blue"] {
     --primary: 199 89% 48%;
     --ring: 199 89% 48%;
-    --neon-blue: 199 89% 48%;
+    --accent-color: 199 89% 48%;
+    --accent-light: 199 89% 58%;
+    --accent-dark: 199 89% 38%;
   }
   
   [data-accent="orange"] {
     --primary: 25 95% 53%;
     --ring: 25 95% 53%;
-    --neon-orange: 25 95% 53%;
+    --accent-color: 25 95% 53%;
+    --accent-light: 25 95% 63%;
+    --accent-dark: 25 95% 43%;
   }
 }
 
@@ -206,5 +212,56 @@
   /* Glow effect pour la flamme */
   .drop-shadow-glow {
     filter: drop-shadow(0 0 3px currentColor);
+  }
+  
+  /* Classes utilitaires pour les couleurs d'accent dynamiques */
+  .bg-accent {
+    background-color: hsl(var(--accent-color));
+  }
+  
+  .bg-accent-light {
+    background-color: hsl(var(--accent-light));
+  }
+  
+  .bg-accent-dark {
+    background-color: hsl(var(--accent-dark));
+  }
+  
+  .text-accent {
+    color: hsl(var(--accent-color));
+  }
+  
+  .border-accent {
+    border-color: hsl(var(--accent-color));
+  }
+  
+  .bg-gradient-accent {
+    background: linear-gradient(to right, hsl(var(--accent-color)), hsl(var(--secondary)));
+  }
+  
+  .hover\:bg-accent:hover {
+    background-color: hsl(var(--accent-color));
+  }
+  
+  .bg-accent\/20 {
+    background-color: hsl(var(--accent-color) / 0.2);
+  }
+  
+  .border-accent\/30 {
+    border-color: hsl(var(--accent-color) / 0.3);
+  }
+  
+  /* Style pour les input range avec couleur d'accent */
+  input[type="range"].accent-accent {
+    accent-color: hsl(var(--accent-color));
+  }
+  
+  /* Classes pour les badges et bordures avec accent */
+  .border-accent\/50 {
+    border-color: hsl(var(--accent-color) / 0.5);
+  }
+  
+  .hover\:bg-accent\/10:hover {
+    background-color: hsl(var(--accent-color) / 0.1);
   }
 }
