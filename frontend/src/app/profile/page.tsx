@@ -17,6 +17,8 @@ import { useRouter } from "next/navigation"
 import { useUserStore } from "@/stores/user-store"
 import { useObjectiveStore } from "@/stores/objective-store"
 import { useStreakStore } from "@/stores/streak-store"
+import { useSettingsStore } from "@/stores/settings-store"
+import { useSound } from "@/hooks/useSound"
 import { mockObjectives } from "@/data/mockObjectives"
 import { 
   User,
@@ -28,6 +30,7 @@ import {
   Settings,
   Camera,
   Save,
+  Download,
   Crown,
   Shield,
   Bell,
@@ -116,11 +119,20 @@ export default function ProfilePage() {
     avatar: user?.avatar || ""
   })
 
-  const [settings, setSettings] = useState({
-    notifications: true,
-    darkMode: true,
-    language: "fr",
-    privacy: "public"
+  // Récupérer les paramètres depuis le store
+  const { settings: appSettings, updateSettings, exportSettings } = useSettingsStore()
+  const { setSoundEnabled, setVolume, soundEnabled, volume } = useSound()
+  
+  // State local pour les paramètres en cours d'édition
+  const [localSettings, setLocalSettings] = useState({
+    notifications: appSettings.notifications.enabled,
+    reminderTime: appSettings.notifications.reminderTime,
+    darkMode: appSettings.theme === 'dark',
+    language: appSettings.locale.language,
+    accentColor: appSettings.accentColor,
+    soundEnabled: appSettings.sound.effectsEnabled,
+    soundVolume: appSettings.sound.effectsVolume,
+    autoSave: appSettings.experience.autoSave
   })
 
   // Calculer les stats réelles depuis les données BDD
@@ -646,15 +658,101 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">Recevoir des rappels pour vos objectifs</p>
                     </div>
                     <button
-                      onClick={() => setSettings({ ...settings, notifications: !settings.notifications })}
+                      onClick={() => {
+                        const newValue = !localSettings.notifications
+                        setLocalSettings({ ...localSettings, notifications: newValue })
+                        updateSettings({
+                          notifications: { ...appSettings.notifications, enabled: newValue }
+                        })
+                      }}
                       className={`w-12 h-6 rounded-full transition-colors ${
-                        settings.notifications ? "bg-purple-500" : "bg-gray-300"
+                        localSettings.notifications ? "bg-purple-500" : "bg-gray-300"
                       }`}
                     >
                       <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
-                        settings.notifications ? "translate-x-6" : "translate-x-0.5"
+                        localSettings.notifications ? "translate-x-6" : "translate-x-0.5"
                       }`} />
                     </button>
+                  </div>
+                  {/* Rappel quotidien */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Rappel quotidien</p>
+                      <p className="text-sm text-muted-foreground">Recevoir un rappel à heure fixe</p>
+                    </div>
+                    <select
+                      value={localSettings.reminderTime}
+                      onChange={(e) => {
+                        const newTime = e.target.value
+                        setLocalSettings({ ...localSettings, reminderTime: newTime })
+                        updateSettings({
+                          notifications: { ...appSettings.notifications, reminderTime: newTime }
+                        })
+                      }}
+                      className="px-3 py-1 bg-background border border-border rounded-lg text-sm"
+                      disabled={!localSettings.notifications}
+                    >
+                      <option value="09:00">9h00</option>
+                      <option value="12:00">12h00</option>
+                      <option value="18:00">18h00</option>
+                      <option value="21:00">21h00</option>
+                    </select>
+                  </div>
+                </div>
+              </Card>
+              
+              {/* Sons */}
+              <Card className="p-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Sons
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Effets sonores</p>
+                      <p className="text-sm text-muted-foreground">Sons de validation et notifications</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const newValue = !localSettings.soundEnabled
+                        setLocalSettings({ ...localSettings, soundEnabled: newValue })
+                        setSoundEnabled(newValue)
+                        updateSettings({
+                          sound: { ...appSettings.sound, effectsEnabled: newValue }
+                        })
+                      }}
+                      className={`w-12 h-6 rounded-full transition-colors ${
+                        localSettings.soundEnabled ? "bg-purple-500" : "bg-gray-300"
+                      }`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                        localSettings.soundEnabled ? "translate-x-6" : "translate-x-0.5"
+                      }`} />
+                    </button>
+                  </div>
+                  {/* Volume */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium text-sm">Volume</p>
+                      <span className="text-sm text-muted-foreground">{Math.round(localSettings.soundVolume * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={localSettings.soundVolume * 100}
+                      onChange={(e) => {
+                        const newVolume = parseInt(e.target.value) / 100
+                        setLocalSettings({ ...localSettings, soundVolume: newVolume })
+                        setVolume(newVolume)
+                        updateSettings({
+                          sound: { ...appSettings.sound, effectsVolume: newVolume }
+                        })
+                      }}
+                      disabled={!localSettings.soundEnabled}
+                      className="w-full accent-purple-500"
+                    />
                   </div>
                 </div>
               </Card>
@@ -672,15 +770,48 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground">Utiliser le thème sombre</p>
                     </div>
                     <button
-                      onClick={() => setSettings({ ...settings, darkMode: !settings.darkMode })}
+                      onClick={() => {
+                        const newValue = !localSettings.darkMode
+                        setLocalSettings({ ...localSettings, darkMode: newValue })
+                        updateSettings({
+                          theme: newValue ? 'dark' : 'light'
+                        })
+                      }}
                       className={`w-12 h-6 rounded-full transition-colors ${
-                        settings.darkMode ? "bg-purple-500" : "bg-gray-300"
+                        localSettings.darkMode ? "bg-purple-500" : "bg-gray-300"
                       }`}
                     >
                       <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
-                        settings.darkMode ? "translate-x-6" : "translate-x-0.5"
+                        localSettings.darkMode ? "translate-x-6" : "translate-x-0.5"
                       }`} />
                     </button>
+                  </div>
+                  {/* Couleur d'accent */}
+                  <div>
+                    <p className="font-medium mb-2">Couleur d'accent</p>
+                    <div className="flex gap-2">
+                      {(['purple', 'blue', 'orange'] as const).map(color => (
+                        <button
+                          key={color}
+                          onClick={() => {
+                            setLocalSettings({ ...localSettings, accentColor: color })
+                            updateSettings({ accentColor: color })
+                          }}
+                          className={`w-10 h-10 rounded-lg border-2 transition-all ${
+                            localSettings.accentColor === color 
+                              ? 'border-foreground scale-110' 
+                              : 'border-border'
+                          }`}
+                          style={{
+                            background: color === 'purple' 
+                              ? 'linear-gradient(to br, rgb(168 85 247), rgb(59 130 246))'
+                              : color === 'blue'
+                              ? 'linear-gradient(to br, rgb(59 130 246), rgb(6 182 212))'
+                              : 'linear-gradient(to br, rgb(251 146 60), rgb(254 215 170))'
+                          }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -720,14 +851,72 @@ export default function ProfilePage() {
                   Langue
                 </h3>
                 <select
-                  value={settings.language}
-                  onChange={(e) => setSettings({ ...settings, language: e.target.value })}
+                  value={localSettings.language}
+                  onChange={(e) => {
+                    const newLang = e.target.value as 'fr' | 'en' | 'es'
+                    setLocalSettings({ ...localSettings, language: newLang })
+                    updateSettings({
+                      locale: { ...appSettings.locale, language: newLang }
+                    })
+                  }}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg"
                 >
                   <option value="fr">Français</option>
                   <option value="en">English</option>
                   <option value="es">Español</option>
                 </select>
+              </Card>
+              
+              {/* Export des données */}
+              <Card className="p-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <Save className="h-5 w-5" />
+                  Sauvegarde
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <p className="font-medium text-sm">Sauvegarde auto</p>
+                      <p className="text-xs text-muted-foreground">Enregistrer automatiquement</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const newValue = !localSettings.autoSave
+                        setLocalSettings({ ...localSettings, autoSave: newValue })
+                        updateSettings({
+                          experience: { ...appSettings.experience, autoSave: newValue }
+                        })
+                      }}
+                      className={`w-12 h-6 rounded-full transition-colors ${
+                        localSettings.autoSave ? "bg-purple-500" : "bg-gray-300"
+                      }`}
+                    >
+                      <div className={`w-5 h-5 bg-white rounded-full transition-transform ${
+                        localSettings.autoSave ? "translate-x-6" : "translate-x-0.5"
+                      }`} />
+                    </button>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => {
+                      const dataStr = exportSettings()
+                      const dataBlob = new Blob([dataStr], { type: 'application/json' })
+                      const url = URL.createObjectURL(dataBlob)
+                      const link = document.createElement('a')
+                      link.href = url
+                      link.download = `goalcraft-settings-${new Date().toISOString().split('T')[0]}.json`
+                      link.click()
+                      toast({
+                        title: "Export réussi",
+                        description: "Vos paramètres ont été exportés"
+                      })
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Exporter mes données
+                  </Button>
+                </div>
               </Card>
             </div>
           </div>

@@ -687,8 +687,16 @@ function AuthLayout({ children }: AuthLayoutProps) {
         )}
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden h-screen">
-        {children}
+      <main className="flex-1 flex flex-col h-screen">
+        <div 
+          className="flex-1 overflow-y-auto"
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgb(168 85 247 / 0.3) transparent'
+          }}
+        >
+          {children}
+        </div>
       </main>
       
       
