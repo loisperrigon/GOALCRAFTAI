@@ -316,9 +316,13 @@ export default function ObjectivesPage() {
                     <div className={`max-w-[85%] md:max-w-[70%] ${
                       message.role === "user" 
                         ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl rounded-tr-sm" 
-                        : "bg-card border border-border rounded-2xl rounded-tl-sm"
+                        : message.isError 
+                          ? "bg-red-500/10 border border-red-500/30 rounded-2xl rounded-tl-sm" 
+                          : "bg-card border border-border rounded-2xl rounded-tl-sm"
                     } p-4`}>
-                      <p className="text-sm md:text-base">{message.content}</p>
+                      <p className={`text-sm md:text-base ${message.isError ? "text-red-400" : ""}`}>
+                        {message.content}
+                      </p>
                       {message.timestamp && (
                         <p className={`text-xs mt-2 ${
                           message.role === "user" ? "text-white/70" : "text-muted-foreground"

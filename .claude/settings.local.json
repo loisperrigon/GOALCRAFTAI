@@ -66,7 +66,15 @@
       "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api/**)",
       "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\conversations/**)",
       "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend/**)",
-      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend/**)"
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\hooks/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\hooks/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\hooks/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\objectives/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\lib/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\hooks/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\hooks/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\ai\\chat/**)"
     ],
     "deny": [],
     "ask": []

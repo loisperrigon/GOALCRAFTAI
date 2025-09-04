@@ -57,15 +57,33 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
         if (data.type === "connected") {
           console.log("[useAIChatWS] Connexion confirmée")
         } else if (data.type === "message") {
-          // Mettre à jour le dernier message
+          // Mettre à jour le dernier message ou ajouter un nouveau message
           setMessages(prev => {
             const newMessages = [...prev]
             const lastMessage = newMessages[newMessages.length - 1]
-            if (lastMessage && lastMessage.role === "assistant") {
+            
+            // Si c'est un message d'erreur ou si le dernier message n'est pas de l'assistant
+            if (data.isError || !lastMessage || lastMessage.role !== "assistant") {
+              // Ajouter un nouveau message
+              return [...newMessages, {
+                id: `msg-${Date.now()}`,
+                role: "assistant" as const,
+                content: data.content,
+                timestamp: new Date(),
+                isError: data.isError || false
+              }]
+            } else {
+              // Mettre à jour le dernier message assistant
               lastMessage.content = data.content
+              lastMessage.isError = data.isError || false
             }
             return newMessages
           })
+          
+          // Si c'est un message final ou d'erreur, arrêter le loading
+          if (data.isFinal || data.isError) {
+            setIsLoading(false)
+          }
         } else if (data.type === "objective_started" && data.objectiveMetadata) {
           // Vérifier que c'est bien pour la conversation active
           if (data.conversationId && data.conversationId !== conversationId) {
@@ -441,13 +459,9 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
       console.error("Erreur chat IA:", err)
       setError(err instanceof Error ? err.message : "Une erreur est survenue")
       
-      // Ajouter un message d'erreur fallback
-      const fallbackMessage: ChatMessage = {
-        role: "assistant",
-        content: "Je comprends votre demande. Pour le moment, laissez-moi vous proposer un parcours type qui pourra vous aider à démarrer. Notre système d'IA personnalisée sera bientôt disponible !",
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, fallbackMessage])
+      // Ne pas ajouter de message fallback ici
+      // Les messages d'erreur arrivent maintenant via WebSocket depuis l'API
+      // qui gère proprement les différents cas d'erreur
     } finally {
       setIsLoading(false)
       setStreamingContent("")
