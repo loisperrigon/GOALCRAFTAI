@@ -100,7 +100,7 @@ interface ObjectiveState {
   // Actions
   setActiveObjective: (objective: Objective) => void
   updateProgress: (progress: number) => void
-  completeNode: (nodeId: string) => void
+  completeNode: (nodeId: string) => Promise<void>
   toggleNodeMilestone: (nodeId: string, milestoneIndex: number) => void
   completeMilestone: (milestoneId: string) => void
   clearObjective: () => void
@@ -127,7 +127,7 @@ interface ObjectiveState {
   fetchObjective: (id: string) => Promise<void>
 }
 
-export const useObjectiveStore = create<ObjectiveState>((set) => ({
+export const useObjectiveStore = create<ObjectiveState>((set, get) => ({
   currentObjective: null,
   isLoading: false,
 
@@ -143,7 +143,35 @@ export const useObjectiveStore = create<ObjectiveState>((set) => ({
     }))
   },
 
-  completeNode: (nodeId) => {
+  completeNode: async (nodeId) => {
+    const state = get()
+    if (!state.currentObjective?.skillTree) return
+
+    try {
+      // Appeler l'API pour sauvegarder en base
+      const response = await fetch('/api/objectives/complete-step', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          objectiveId: state.currentObjective.id,
+          stepId: nodeId,
+          completed: true
+        })
+      })
+
+      if (!response.ok) {
+        console.error('Erreur lors de la sauvegarde de la complétion')
+        // On continue quand même pour mettre à jour l'UI
+      }
+
+      const data = await response.json()
+      console.log('[ObjectiveStore] Étape complétée:', data)
+    } catch (error) {
+      console.error('[ObjectiveStore] Erreur API complete-step:', error)
+      // On continue quand même pour mettre à jour l'UI
+    }
+
+    // Mise à jour locale de l'état
     set(state => {
       if (!state.currentObjective?.skillTree) return state
 
