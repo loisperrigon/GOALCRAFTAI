@@ -1,23 +1,23 @@
 "use client"
 
-import { useCallback, useEffect, useState } from 'react'
-import { getRealSoundManager } from '@/lib/real-sounds'
+import { useCallback, useEffect, useState, useMemo } from 'react'
+import { getLazySoundManager } from '@/lib/real-sounds-lazy'
 
 export function useSound() {
   const [soundEnabled, setSoundEnabledState] = useState(true)
   const [musicEnabled, setMusicEnabledState] = useState(false)
   const [volume, setVolumeState] = useState(0.7)
+  
+  // Créer soundManager une seule fois (version lazy)
+  const soundManager = useMemo(() => getLazySoundManager(), [])
 
   useEffect(() => {
-    const soundManager = getRealSoundManager()
     setSoundEnabledState(soundManager.isEnabled())
     setMusicEnabledState(soundManager.isMusicEnabled())
     setVolumeState(soundManager.getVolume())
-  }, [])
+  }, [soundManager])
 
   const playSound = useCallback((soundName: string) => {
-    // Pour compatibilité, mais on utilise les méthodes directes
-    const soundManager = getRealSoundManager()
     switch(soundName) {
       case 'click': soundManager.playClick(); break
       case 'complete': soundManager.playComplete(); break
@@ -27,60 +27,50 @@ export function useSound() {
       case 'notification': soundManager.playNotification(); break
       case 'whoosh': soundManager.playWhoosh(); break
     }
-  }, [])
+  }, [soundManager])
 
   const playClick = useCallback(() => {
-    const soundManager = getRealSoundManager()
     soundManager.playClick()
-  }, [])
+  }, [soundManager])
 
   const playComplete = useCallback(() => {
-    const soundManager = getRealSoundManager()
     soundManager.playComplete()
-  }, [])
+  }, [soundManager])
 
   const playLevelUp = useCallback(() => {
-    const soundManager = getRealSoundManager()
     soundManager.playLevelUp()
-  }, [])
+  }, [soundManager])
 
   const playXpGain = useCallback(() => {
-    const soundManager = getRealSoundManager()
     soundManager.playXpGain()
-  }, [])
+  }, [soundManager])
 
   const playUnlock = useCallback(() => {
-    const soundManager = getRealSoundManager()
     soundManager.playUnlock()
-  }, [])
+  }, [soundManager])
 
   const playNotification = useCallback(() => {
-    const soundManager = getRealSoundManager()
     soundManager.playNotification()
-  }, [])
+  }, [soundManager])
 
   const playWhoosh = useCallback(() => {
-    const soundManager = getRealSoundManager()
     soundManager.playWhoosh()
-  }, [])
+  }, [soundManager])
 
   const setSoundEnabled = useCallback((enabled: boolean) => {
-    const soundManager = getRealSoundManager()
     soundManager.setEnabled(enabled)
     setSoundEnabledState(enabled)
-  }, [])
+  }, [soundManager])
 
   const setMusicEnabled = useCallback((enabled: boolean) => {
-    const soundManager = getRealSoundManager()
     soundManager.setMusicEnabled(enabled)
     setMusicEnabledState(enabled)
-  }, [])
+  }, [soundManager])
 
   const setVolume = useCallback((newVolume: number) => {
-    const soundManager = getRealSoundManager()
     soundManager.setVolume(newVolume)
     setVolumeState(newVolume)
-  }, [])
+  }, [soundManager])
 
   return {
     // Play functions

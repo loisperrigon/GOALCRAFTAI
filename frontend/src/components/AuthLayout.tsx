@@ -97,7 +97,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
     } finally {
       setLoadingConversations(false)
     }
-  }, [conversations.length])
+  }, [router]) // Dépendance stable au lieu de conversations.length
   
   // Charger les conversations depuis MongoDB au montage
   useEffect(() => {

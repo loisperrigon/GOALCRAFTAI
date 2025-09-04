@@ -441,6 +441,16 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
       console.log(`[useAIChatWS] Établissement connexion WebSocket pour conversationId: ${conversationId}`)
       connectWebSocket(conversationId)
     }
+    
+    // Cleanup function pour fermer la connexion
+    return () => {
+      if (wsRef.current) {
+        console.log("[useAIChatWS] Cleanup: fermeture de la connexion WebSocket")
+        wsRef.current.close()
+        wsRef.current = null
+        setIsConnected(false)
+      }
+    }
   }, [conversationId, connectWebSocket])
 
   const sendMessage = useCallback(async (content: string) => {

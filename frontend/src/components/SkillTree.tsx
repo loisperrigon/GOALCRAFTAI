@@ -17,7 +17,7 @@ import ReactFlow, {
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import '@/styles/skill-tree.css'
-import dagre from 'dagre'
+import { getLayoutedElements as getLayoutedElementsAsync } from '@/lib/dagre-lazy'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useObjectiveStore } from '@/stores/objective-store'
 import { useUserStore } from '@/stores/user-store'
@@ -30,55 +30,7 @@ import Confetti from '@/components/Confetti'
 import { useSound } from '@/hooks/useSound'
 import { SimpleStreakNotification } from '@/components/SimpleStreakNotification'
 
-// Layout automatique avec dagre
-
-const nodeWidth = 200
-const nodeHeight = 120
-
-const getLayoutedElements = (nodes: Node[], edges: Edge[], direction = 'TB') => {
-  const isHorizontal = direction === 'LR'
-  
-  // Créer une nouvelle instance de dagre pour chaque calcul (évite les problèmes de cache)
-  const dagreGraph = new dagre.graphlib.Graph()
-  dagreGraph.setDefaultEdgeLabel(() => ({}))
-  
-  dagreGraph.setGraph({ 
-    rankdir: direction, 
-    ranksep: 100,     // Espacement vertical entre les niveaux
-    nodesep: 80,      // Espacement horizontal entre les nodes
-    align: 'DR',      // Alignement centré pour les nodes isolés
-    marginx: 20,      // Petite marge horizontale
-    marginy: 20       // Petite marge verticale
-  })
-
-  // Sauvegarder les positions d'origine si elles existent
-  const originalPositions = new Map()
-  nodes.forEach((node) => {
-    if (node.position) {
-      originalPositions.set(node.id, { ...node.position })
-    }
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight })
-  })
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target)
-  })
-
-  dagre.layout(dagreGraph)
-
-  nodes.forEach((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id)
-    node.targetPosition = isHorizontal ? Position.Left : Position.Top
-    node.sourcePosition = isHorizontal ? Position.Right : Position.Bottom
-
-    node.position = {
-      x: nodeWithPosition.x - nodeWidth / 2,
-      y: nodeWithPosition.y - nodeHeight / 2,
-    }
-  })
-
-  return { nodes, edges }
-}
+// Layout sera fait de manière asynchrone maintenant
 
 // Custom Node Component
 const SkillNode = ({ data, selected }: NodeProps) => {
@@ -339,8 +291,8 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
 
   // Fonction pour appliquer le layout automatique
   const onLayout = useCallback(
-    (direction: string) => {
-      const layouted = getLayoutedElements(flowNodes, edges, direction)
+    async (direction: string) => {
+      const layouted = await getLayoutedElementsAsync(flowNodes, edges, direction)
       setFlowNodes([...layouted.nodes])
       setEdges([...layouted.edges])
       // Layout appliqué
@@ -441,38 +393,37 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
 
     // Appliquer le layout automatique si les nodes n'ont pas de position
     if (nodes.length > 0) {
-      let finalNodes = rfNodes
-      let finalEdges = rfEdges
-      
       // Utiliser dagre pour calculer automatiquement les positions des nodes pour un layout propre
       // Directions disponibles : 'TB' (Top-Bottom), 'BT' (Bottom-Top), 'LR' (Left-Right), 'RL' (Right-Left)
-      const layouted = getLayoutedElements(rfNodes, rfEdges, 'TB') // TB pour un layout vertical de haut en bas
-      finalNodes = layouted.nodes
-      finalEdges = layouted.edges
-      layoutedNodesRef.current = layouted.nodes
-      
-      setFlowNodes(() => finalNodes)
-      setEdges(() => finalEdges)
-      
-      // Sauvegarder les nodes pour la prochaine fois
-      previousNodesRef.current = finalNodes
-      
-      // Mettre à jour la ref de l'objectif
-      if (isObjectiveChange) {
-        previousObjectiveIdRef.current = currentObjective?.id
+      // Appliquer le layout de manière asynchrone
+      getLayoutedElementsAsync(rfNodes, rfEdges, 'TB').then(layouted => {
+        const finalNodes = layouted.nodes
+        const finalEdges = layouted.edges
+        layoutedNodesRef.current = layouted.nodes
         
-        // Marquer qu'on doit recentrer (sans reset manuel du viewport)
-        setShouldCenter(true)
-      }
-      
-      // Marquer qu'on doit centrer sur le nœud
-      if (isFirstLoad || isObjectiveChange) {
-        // Si React Flow est déjà initialisé, on peut centrer tout de suite
-        if (reactFlowInstance) {
+        setFlowNodes(() => finalNodes)
+        setEdges(() => finalEdges)
+        
+        // Sauvegarder les nodes pour la prochaine fois
+        previousNodesRef.current = finalNodes
+        
+        // Mettre à jour la ref de l'objectif
+        if (isObjectiveChange) {
+          previousObjectiveIdRef.current = currentObjective?.id
+          
+          // Marquer qu'on doit recentrer (sans reset manuel du viewport)
           setShouldCenter(true)
         }
-        // Sinon, onInit le fera quand React Flow sera prêt
-      }
+        
+        // Marquer qu'on doit centrer sur le nœud
+        if (isFirstLoad || isObjectiveChange) {
+          // Si React Flow est déjà initialisé, on peut centrer tout de suite
+          if (reactFlowInstance) {
+            setShouldCenter(true)
+          }
+          // Sinon, onInit le fera quand React Flow sera prêt
+        }
+      })
       
       // Ne pas toucher au viewport si on garde les positions
       if (!shouldKeepPositions && reactFlowInstance && currentViewport) {
