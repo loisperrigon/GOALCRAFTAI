@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { signOut } from "next-auth/react"
 import AuthModal from "@/components/AuthModal"
 import { Card } from "@/components/ui/card"
@@ -119,8 +119,16 @@ export default function ProfilePage() {
     avatar: user?.avatar || ""
   })
 
-  // Récupérer les paramètres depuis le store
-  const { settings: appSettings, updateSettings, exportSettings } = useSettingsStore()
+  // Récupérer les paramètres et les méthodes depuis le store
+  const { 
+    settings: appSettings, 
+    updateSettings, 
+    exportSettings,
+    setTheme,
+    setSoundEnabled: setStoreSoundEnabled,
+    setLanguage,
+    toggleNotifications
+  } = useSettingsStore()
   const { setSoundEnabled, setVolume, soundEnabled, volume } = useSound()
   
   // State local pour les paramètres en cours d'édition
@@ -134,6 +142,70 @@ export default function ProfilePage() {
     soundVolume: appSettings.sound.effectsVolume,
     autoSave: appSettings.experience.autoSave
   })
+  
+  // Synchroniser les paramètres quand ils changent dans le store
+  useEffect(() => {
+    setLocalSettings({
+      notifications: appSettings.notifications.enabled,
+      reminderTime: appSettings.notifications.reminderTime,
+      darkMode: appSettings.theme === 'dark',
+      language: appSettings.locale.language,
+      accentColor: appSettings.accentColor,
+      soundEnabled: appSettings.sound.effectsEnabled,
+      soundVolume: appSettings.sound.effectsVolume,
+      autoSave: appSettings.experience.autoSave
+    })
+  }, [appSettings])
+  
+  // Synchroniser avec les valeurs réelles du hook useSound
+  useEffect(() => {
+    setLocalSettings(prev => ({
+      ...prev,
+      soundEnabled: soundEnabled,
+      soundVolume: volume
+    }))
+  }, [soundEnabled, volume])
+  
+  // Appliquer le thème et les couleurs sur le document
+  useEffect(() => {
+    const applyTheme = () => {
+      if (appSettings.theme === 'dark') {
+        document.documentElement.classList.add('dark')
+        document.documentElement.classList.remove('light')
+      } else if (appSettings.theme === 'light') {
+        document.documentElement.classList.remove('dark')
+        document.documentElement.classList.add('light')
+      } else {
+        // Mode système
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (prefersDark) {
+          document.documentElement.classList.add('dark')
+          document.documentElement.classList.remove('light')
+        } else {
+          document.documentElement.classList.remove('dark')
+          document.documentElement.classList.add('light')
+        }
+      }
+    }
+    
+    applyTheme()
+    
+    // Écouter les changements de préférence système
+    if (appSettings.theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      const handleChange = () => applyTheme()
+      mediaQuery.addEventListener('change', handleChange)
+      return () => mediaQuery.removeEventListener('change', handleChange)
+    }
+  }, [appSettings.theme])
+  
+  // Appliquer la couleur d'accent
+  useEffect(() => {
+    document.documentElement.setAttribute('data-accent', appSettings.accentColor || 'purple')
+  }, [appSettings.accentColor])
+  
+  // Les paramètres sont automatiquement sauvegardés dans localStorage via Zustand
+  // Pas besoin de sauvegarde BDD pour les préférences visuelles
 
   // Calculer les stats réelles depuis les données BDD
   const stats = {
@@ -661,9 +733,7 @@ export default function ProfilePage() {
                       onClick={() => {
                         const newValue = !localSettings.notifications
                         setLocalSettings({ ...localSettings, notifications: newValue })
-                        updateSettings({
-                          notifications: { ...appSettings.notifications, enabled: newValue }
-                        })
+                        toggleNotifications()
                       }}
                       className={`w-12 h-6 rounded-full transition-colors ${
                         localSettings.notifications ? "bg-purple-500" : "bg-gray-300"
@@ -717,10 +787,8 @@ export default function ProfilePage() {
                       onClick={() => {
                         const newValue = !localSettings.soundEnabled
                         setLocalSettings({ ...localSettings, soundEnabled: newValue })
-                        setSoundEnabled(newValue)
-                        updateSettings({
-                          sound: { ...appSettings.sound, effectsEnabled: newValue }
-                        })
+                        setSoundEnabled(newValue) // Hook useSound
+                        setStoreSoundEnabled(newValue) // Store settings
                       }}
                       className={`w-12 h-6 rounded-full transition-colors ${
                         localSettings.soundEnabled ? "bg-purple-500" : "bg-gray-300"
@@ -749,6 +817,7 @@ export default function ProfilePage() {
                         updateSettings({
                           sound: { ...appSettings.sound, effectsVolume: newVolume }
                         })
+                        // Pas de sauvegarde à chaque changement de volume (trop de requêtes)
                       }}
                       disabled={!localSettings.soundEnabled}
                       className="w-full accent-purple-500"
@@ -773,9 +842,7 @@ export default function ProfilePage() {
                       onClick={() => {
                         const newValue = !localSettings.darkMode
                         setLocalSettings({ ...localSettings, darkMode: newValue })
-                        updateSettings({
-                          theme: newValue ? 'dark' : 'light'
-                        })
+                        setTheme(newValue ? 'dark' : 'light')
                       }}
                       className={`w-12 h-6 rounded-full transition-colors ${
                         localSettings.darkMode ? "bg-purple-500" : "bg-gray-300"
@@ -855,9 +922,7 @@ export default function ProfilePage() {
                   onChange={(e) => {
                     const newLang = e.target.value as 'fr' | 'en' | 'es'
                     setLocalSettings({ ...localSettings, language: newLang })
-                    updateSettings({
-                      locale: { ...appSettings.locale, language: newLang }
-                    })
+                    setLanguage(newLang)
                   }}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg"
                 >
