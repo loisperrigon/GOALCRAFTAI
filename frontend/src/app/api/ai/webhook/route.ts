@@ -334,18 +334,29 @@ export async function POST(request: NextRequest) {
         generationProgress: generationProgress || 50
       })
     } else if (type === "objective_complete") {
+      console.log("[Webhook] Type objective_complete reçu")
+      console.log("[Webhook] Conversation:", conversation._id)
+      console.log("[Webhook] CurrentObjectiveId:", conversation.currentObjectiveId)
+      
       const objectiveId = conversation.currentObjectiveId
       if (objectiveId) {
         // Récupérer l'objectif complet pour l'envoyer
         const completeObjective = await db.collection("objectives").findOne({ _id: objectiveId })
-        console.log(`[Webhook] Notification WebSocket pour objective_completed`)
-        await notifyWebSocket({
+        console.log("[Webhook] Objectif trouvé:", completeObjective?.title)
+        console.log("[Webhook] Notification WebSocket pour objective_completed")
+        
+        const notificationData = {
           type: "objective_completed",
           conversationId: conversationId,
           objective: completeObjective,
           message: `Parcours créé avec succès !`,
           generationProgress: 100
-        })
+        }
+        console.log("[Webhook] Données de notification:", JSON.stringify(notificationData, null, 2))
+        
+        await notifyWebSocket(notificationData)
+      } else {
+        console.error("[Webhook] Pas de currentObjectiveId trouvé dans la conversation!")
       }
     } else if (type === "message") {
       await notifyWebSocket({
