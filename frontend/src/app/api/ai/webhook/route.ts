@@ -46,7 +46,7 @@ const webhookSchema = z.object({
   }).optional(),
   step: z.object({ // Une étape individuelle (si type = "objective_step")
     id: z.string(),
-    title: z.string(),
+    title: z.string().optional(), // Optionnel pour permettre node_delete
     description: z.string().optional(),
     xpReward: z.number().optional(),
     requiredLevel: z.number().optional(),
@@ -67,6 +67,7 @@ const webhookSchema = z.object({
       milestones: z.array(z.any())
     }).optional()
   }).optional(),
+  nodeId: z.string().optional(), // ID du node pour node_update ou node_delete
   isLastStep: z.boolean().optional().default(false), // Indique si c'est la dernière étape
   generationProgress: z.number().optional(), // Pourcentage de progression (0-100)
   metadata: z.any().optional()
@@ -112,6 +113,7 @@ export async function POST(request: NextRequest) {
       content,
       objectiveMetadata,
       step,
+      nodeId,
       isLastStep,
       generationProgress,
       isFinal,
@@ -419,9 +421,10 @@ export async function POST(request: NextRequest) {
           )
         }
       }
-    } else if (type === "node_delete" && step) {
-      // Suppression d'un node
-      console.log("[Webhook] Suppression du node:", step.id)
+    } else if (type === "node_delete" && (nodeId || step?.id)) {
+      // Suppression d'un node - accepter nodeId ou step.id
+      const nodeToDelete = nodeId || step?.id
+      console.log("[Webhook] Suppression du node:", nodeToDelete)
       
       const objectiveId = conversation.currentObjectiveId || conversation.objectiveId
       if (objectiveId) {
@@ -435,20 +438,20 @@ export async function POST(request: NextRequest) {
         if (objective && objective.skillTree) {
           // Supprimer le node
           const updatedNodes = objective.skillTree.nodes.filter(
-            node => node.id !== step.id
+            node => node.id !== nodeToDelete
           )
           
           // Supprimer les edges liés
           const updatedEdges = (objective.skillTree.edges || []).filter(
-            edge => edge.source !== step.id && edge.target !== step.id
+            edge => edge.source !== nodeToDelete && edge.target !== nodeToDelete
           )
           
           // Mettre à jour les dépendances des autres nodes
           const finalNodes = updatedNodes.map(node => {
-            if (node.dependencies && node.dependencies.includes(step.id)) {
+            if (node.dependencies && node.dependencies.includes(nodeToDelete)) {
               return {
                 ...node,
-                dependencies: node.dependencies.filter(dep => dep !== step.id)
+                dependencies: node.dependencies.filter(dep => dep !== nodeToDelete)
               }
             }
             return node
@@ -601,12 +604,13 @@ export async function POST(request: NextRequest) {
         updates: step,
         message: `Étape modifiée: ${step.title || step.id}`
       })
-    } else if (type === "node_delete" && step) {
-      console.log(`[Webhook] Notification WebSocket pour node_delete: ${step.id}`)
+    } else if (type === "node_delete" && (nodeId || step?.id)) {
+      const nodeToDelete = nodeId || step?.id
+      console.log(`[Webhook] Notification WebSocket pour node_delete: ${nodeToDelete}`)
       await notifyWebSocket({
         type: "node_deleted",
         conversationId: conversationId,
-        nodeId: step.id,
+        nodeId: nodeToDelete,
         message: `Étape supprimée`
       })
     } else if (type === "objective_update_complete") {

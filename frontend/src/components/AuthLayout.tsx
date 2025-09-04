@@ -52,6 +52,19 @@ function AuthLayout({ children }: AuthLayoutProps) {
   const [conversations, setConversations] = useState<any[]>([])
   const [loadingConversations, setLoadingConversations] = useState(true)
   
+  // Event listener pour le toggle de sidebar depuis l'extérieur
+  useEffect(() => {
+    const handleToggleSidebar = () => {
+      setIsMobileSidebarOpen(prev => !prev)
+    }
+    
+    window.addEventListener('toggle-sidebar', handleToggleSidebar)
+    
+    return () => {
+      window.removeEventListener('toggle-sidebar', handleToggleSidebar)
+    }
+  }, [])
+  
   const loadConversations = useCallback(async () => {
     try {
       // Ne montrer le loader que si on n'a pas encore de conversations
@@ -406,14 +419,6 @@ function AuthLayout({ children }: AuthLayoutProps) {
             </div>
           )}
       </div>
-
-        {/* Mobile Sidebar Button */}
-        <button
-          className="md:hidden fixed bottom-4 right-4 z-20 p-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full text-white shadow-lg"
-          onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-        >
-          <Menu className="h-6 w-6" />
-        </button>
 
         {/* Mobile Sidebar */}
         {isMobileSidebarOpen && (

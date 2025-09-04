@@ -23,13 +23,27 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
   
   // Fonction pour se connecter au WebSocket
   const connectWebSocket = useCallback((convId: string) => {
-    // Si déjà connecté, ne rien faire
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      console.log("[useAIChatWS] WebSocket déjà connecté")
-      return
+    // Vérifier si une connexion est déjà active ou en cours
+    if (wsRef.current) {
+      const state = wsRef.current.readyState
+      const url = wsRef.current.url
+      
+      // Si connexion en cours ou ouverte pour la même conversation, ne rien faire
+      if ((state === WebSocket.CONNECTING || state === WebSocket.OPEN) && 
+          url && url.includes(convId)) {
+        console.log(`[useAIChatWS] WebSocket déjà connecté/en cours pour ${convId}`)
+        return
+      }
+      
+      // Fermer l'ancienne connexion si elle existe
+      if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) {
+        console.log("[useAIChatWS] Fermeture de l'ancienne connexion WebSocket")
+        wsRef.current.close()
+        wsRef.current = null
+      }
     }
     
-    console.log(`[useAIChatWS] Connexion WebSocket pour conversation: ${convId}`)
+    console.log(`[useAIChatWS] Nouvelle connexion WebSocket pour conversation: ${convId}`)
     
     const ws = new WebSocket(`ws://localhost:3002?conversationId=${convId}`)
     
@@ -239,14 +253,15 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
             updateObjectiveMetadata(data.metadata)
           }
           
-          setMessages(prev => {
-            const newMessages = [...prev]
-            const lastMessage = newMessages[newMessages.length - 1]
-            if (lastMessage && lastMessage.role === "assistant") {
-              lastMessage.content = data.message || "Mise à jour de votre parcours..."
+          // Ajouter un nouveau message au lieu de remplacer
+          setMessages(prev => [
+            ...prev,
+            {
+              role: "assistant" as const,
+              content: data.message || "🔄 Mise à jour de votre parcours en cours...",
+              timestamp: new Date().toISOString()
             }
-            return newMessages
-          })
+          ])
         } else if (data.type === "node_added" && data.node) {
           // Ajout d'un nouveau node
           if (data.conversationId && data.conversationId !== conversationId) {
@@ -254,7 +269,13 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
           }
           
           console.log("[WS] Nouveau node ajouté:", data.node.title)
-          const { addNodeToObjective, addEdgeToObjective } = useObjectiveStore.getState()
+          const { addNodeToObjective, addEdgeToObjective, startObjectiveUpdate } = useObjectiveStore.getState()
+          
+          // Déclencher le mode update si pas déjà fait
+          const currentObj = useObjectiveStore.getState().currentObjective
+          if (currentObj && !currentObj.isGenerating) {
+            startObjectiveUpdate()
+          }
           
           addNodeToObjective(data.node)
           
@@ -268,14 +289,15 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
             })
           }
           
-          setMessages(prev => {
-            const newMessages = [...prev]
-            const lastMessage = newMessages[newMessages.length - 1]
-            if (lastMessage && lastMessage.role === "assistant") {
-              lastMessage.content = data.message || `Nouvelle étape ajoutée: ${data.node.title}`
+          // Ajouter un nouveau message au lieu de remplacer
+          setMessages(prev => [
+            ...prev,
+            {
+              role: "assistant" as const,
+              content: data.message || `✅ Nouvelle étape ajoutée: "${data.node.title}"`,
+              timestamp: new Date().toISOString()
             }
-            return newMessages
-          })
+          ])
         } else if (data.type === "node_updated" && data.nodeId) {
           // Mise à jour d'un node existant
           if (data.conversationId && data.conversationId !== conversationId) {
@@ -283,20 +305,27 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
           }
           
           console.log("[WS] Node mis à jour:", data.nodeId)
-          const { updateNodeInObjective } = useObjectiveStore.getState()
+          const { updateNodeInObjective, startObjectiveUpdate } = useObjectiveStore.getState()
+          
+          // Déclencher le mode update si pas déjà fait
+          const currentObj = useObjectiveStore.getState().currentObjective
+          if (currentObj && !currentObj.isGenerating) {
+            startObjectiveUpdate()
+          }
           
           if (data.updates) {
             updateNodeInObjective(data.nodeId, data.updates)
           }
           
-          setMessages(prev => {
-            const newMessages = [...prev]
-            const lastMessage = newMessages[newMessages.length - 1]
-            if (lastMessage && lastMessage.role === "assistant") {
-              lastMessage.content = data.message || `Étape modifiée`
+          // Ajouter un nouveau message au lieu de remplacer
+          setMessages(prev => [
+            ...prev,
+            {
+              role: "assistant" as const,
+              content: data.message || `📝 Étape modifiée`,
+              timestamp: new Date().toISOString()
             }
-            return newMessages
-          })
+          ])
         } else if (data.type === "node_deleted" && data.nodeId) {
           // Suppression d'un node
           if (data.conversationId && data.conversationId !== conversationId) {
@@ -304,18 +333,25 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
           }
           
           console.log("[WS] Node supprimé:", data.nodeId)
-          const { deleteNodeFromObjective } = useObjectiveStore.getState()
+          const { deleteNodeFromObjective, startObjectiveUpdate } = useObjectiveStore.getState()
+          
+          // Déclencher le mode update si pas déjà fait
+          const currentObj = useObjectiveStore.getState().currentObjective
+          if (currentObj && !currentObj.isGenerating) {
+            startObjectiveUpdate()
+          }
           
           deleteNodeFromObjective(data.nodeId)
           
-          setMessages(prev => {
-            const newMessages = [...prev]
-            const lastMessage = newMessages[newMessages.length - 1]
-            if (lastMessage && lastMessage.role === "assistant") {
-              lastMessage.content = data.message || `Étape supprimée`
+          // Ajouter un nouveau message au lieu de remplacer
+          setMessages(prev => [
+            ...prev,
+            {
+              role: "assistant" as const,
+              content: data.message || `🗑️ Étape supprimée`,
+              timestamp: new Date().toISOString()
             }
-            return newMessages
-          })
+          ])
         } else if (data.type === "objective_update_completed") {
           // Fin de mise à jour de l'objectif
           if (data.conversationId && data.conversationId !== conversationId) {
@@ -326,14 +362,15 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
           const { completeObjectiveUpdate } = useObjectiveStore.getState()
           completeObjectiveUpdate()
           
-          setMessages(prev => {
-            const newMessages = [...prev]
-            const lastMessage = newMessages[newMessages.length - 1]
-            if (lastMessage && lastMessage.role === "assistant") {
-              lastMessage.content = data.message || "Modifications terminées !"
+          // Ajouter un nouveau message au lieu de remplacer
+          setMessages(prev => [
+            ...prev,
+            {
+              role: "assistant" as const,
+              content: data.message || "✨ Modifications terminées avec succès !",
+              timestamp: new Date().toISOString()
             }
-            return newMessages
-          })
+          ])
           
           setIsLoading(false)
         }
@@ -376,37 +413,33 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
     }))
     setMessages(messagesWithDates)
     
-    // Si on a un conversationId et qu'il est différent, établir la connexion WebSocket
+    // Si on a un conversationId et qu'il est différent, mettre à jour
     if (existingConversationId && existingConversationId !== conversationId) {
-      // Fermer l'ancienne connexion si elle existe
+      // Mettre à jour le conversationId (la connexion WebSocket sera gérée par useEffect)
+      setConversationId(existingConversationId)
+    }
+  }, [conversationId])
+  
+  // Établir la connexion WebSocket quand conversationId est défini ou change
+  useEffect(() => {
+    if (!conversationId) {
+      // Pas de conversationId, fermer toute connexion existante
       if (wsRef.current) {
         wsRef.current.close()
         wsRef.current = null
       }
-      
-      // Mettre à jour le conversationId
-      setConversationId(existingConversationId)
-      
-      // Établir une nouvelle connexion WebSocket
-      connectWebSocket(existingConversationId)
+      return
     }
-  }, [conversationId, connectWebSocket])
-  
-  // Établir la connexion WebSocket quand conversationId est défini ou change
-  useEffect(() => {
-    if (conversationId) {
-      // Si on a déjà une connexion pour un autre conversationId, la fermer
-      if (wsRef.current && wsRef.current.url && !wsRef.current.url.includes(conversationId)) {
-        console.log(`[useAIChatWS] Fermeture de l'ancienne connexion WebSocket`)
-        wsRef.current.close()
-        wsRef.current = null
-      }
-      
-      // Établir une nouvelle connexion si nécessaire
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        console.log(`[useAIChatWS] Établissement connexion WebSocket pour conversationId: ${conversationId}`)
-        connectWebSocket(conversationId)
-      }
+    
+    // Vérifier si on a besoin de reconnecter
+    const needsNewConnection = !wsRef.current || 
+      wsRef.current.readyState === WebSocket.CLOSED ||
+      wsRef.current.readyState === WebSocket.CLOSING ||
+      (wsRef.current.url && !wsRef.current.url.includes(conversationId))
+    
+    if (needsNewConnection) {
+      console.log(`[useAIChatWS] Établissement connexion WebSocket pour conversationId: ${conversationId}`)
+      connectWebSocket(conversationId)
     }
   }, [conversationId, connectWebSocket])
 
@@ -514,9 +547,13 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
   // Fonction pour fermer proprement la connexion WebSocket
   const disconnectWebSocket = useCallback(() => {
     if (wsRef.current) {
-      console.log("[useAIChatWS] Fermeture de la connexion WebSocket")
-      wsRef.current.close()
+      const state = wsRef.current.readyState
+      if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) {
+        console.log("[useAIChatWS] Fermeture de la connexion WebSocket")
+        wsRef.current.close()
+      }
       wsRef.current = null
+      setIsConnected(false)
     }
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)

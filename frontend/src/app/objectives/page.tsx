@@ -129,13 +129,30 @@ export default function ObjectivesPage() {
   }, [currentObjective?.id, currentObjective?.isTemporary]) // eslint-disable-line react-hooks/exhaustive-deps
   
   // Détecter les modifications d'objectif pour changer de vue
+  const [hasStartedUpdate, setHasStartedUpdate] = useState(false)
+  
   useEffect(() => {
-    if (currentObjective?.isGenerating && currentObjective?.status === 'generating') {
-      // Si l'objectif est en cours de génération/modification, passer à la vue arbre
+    // Détecter le début d'une mise à jour
+    if (currentObjective?.isGenerating || currentObjective?.status === 'generating') {
       console.log("[ObjectivesPage] Objectif en cours de modification - passage à la vue arbre")
-      setTimeout(() => setActiveView("tree"), 300)
+      console.log("[ObjectivesPage] isGenerating:", currentObjective?.isGenerating, "status:", currentObjective?.status)
+      
+      // Marquer qu'une mise à jour a commencé
+      setHasStartedUpdate(true)
+      
+      // Passer à la vue arbre uniquement si on a déjà des nodes (mise à jour) ou si on génère
+      if (currentObjective?.skillTree?.nodes?.length > 0 || currentObjective?.status === 'generating') {
+        setTimeout(() => setActiveView("tree"), 300)
+      }
     }
-  }, [currentObjective?.isGenerating, currentObjective?.status])
+    
+    // Rester sur la vue arbre après la mise à jour si on était en train de mettre à jour
+    if (hasStartedUpdate && !currentObjective?.isGenerating && currentObjective?.status === 'active') {
+      console.log("[ObjectivesPage] Mise à jour terminée - maintien de la vue arbre")
+      setActiveView("tree")
+      setHasStartedUpdate(false)
+    }
+  }, [currentObjective?.isGenerating, currentObjective?.status, hasStartedUpdate])
   
   const loadConversationMessages = async (conversationId: string) => {
     try {
@@ -224,7 +241,27 @@ export default function ObjectivesPage() {
         {/* Navigation Tabs - Only show if we have an objective */}
         {currentObjective && (
           <div className="flex items-center justify-between p-4 border-b border-border bg-card/50 backdrop-blur flex-shrink-0">
-            <div className="flex gap-1 bg-background/50 p-1 rounded-lg">
+            <div className="flex items-center gap-2">
+              {/* Bouton Menu Mobile */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  // Déclencher l'ouverture de la sidebar
+                  const event = new CustomEvent('toggle-sidebar')
+                  window.dispatchEvent(event)
+                }}
+                className="md:hidden hover:bg-purple-500/10"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </Button>
+              
+              {/* Boutons de navigation */}
+              <div className="flex gap-1 bg-background/50 p-1 rounded-lg">
                 <Button
                   variant={activeView === "chat" ? "default" : "ghost"}
                   size="sm"
@@ -235,7 +272,7 @@ export default function ObjectivesPage() {
                   }
                 >
                   <Brain className="h-4 w-4" />
-                  <span className="ml-2">Chat IA</span>
+                  <span className="ml-2 hidden sm:inline">Chat IA</span>
                 </Button>
                 <Button
                   variant={activeView === "tree" ? "default" : "ghost"}
@@ -247,9 +284,10 @@ export default function ObjectivesPage() {
                   }
                 >
                   <Target className="h-4 w-4" />
-                  <span className="ml-2">Arbre de progression</span>
+                  <span className="ml-2 hidden sm:inline">Arbre de progression</span>
                 </Button>
               </div>
+            </div>
           </div>
         )}
 
@@ -327,7 +365,7 @@ export default function ObjectivesPage() {
                         <p className={`text-xs mt-2 ${
                           message.role === "user" ? "text-white/70" : "text-muted-foreground"
                         }`}>
-                          {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       )}
                     </div>
