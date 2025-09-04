@@ -1,18 +1,28 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export type PremiumType = 'free' | 'starter' | 'pro';
+
 export interface User {
   id: string;
   email: string;
   name: string;
   avatar?: string;
+  bio?: string;
   level: number;
   xp: number;
   xpToNextLevel: number;
   badges: Badge[];
+  achievements?: Achievement[];
   createdAt: Date;
-  isPremium: boolean;
+  premiumType: PremiumType;
+  premiumExpiresAt?: Date;
   settings: UserSettings;
+  // Stats depuis la BDD
+  totalObjectives?: number;
+  completedObjectives?: number;
+  currentStreak?: number;
+  longestStreak?: number;
 }
 
 export interface Badge {
@@ -22,6 +32,16 @@ export interface Badge {
   icon: string;
   unlockedAt?: Date;
   rarity: "common" | "rare" | "epic" | "legendary";
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  unlockedAt?: Date;
+  progress?: number;
+  maxProgress?: number;
 }
 
 export interface UserSettings {
@@ -47,7 +67,8 @@ interface UserState {
   updateSettings: (settings: Partial<UserSettings>) => void;
   addXP: (amount: number) => void;
   unlockBadge: (badge: Badge) => void;
-  setPremium: (isPremium: boolean) => void;
+  setPremiumType: (type: PremiumType, expiresAt?: Date) => void;
+  getPremiumLimits: () => { maxObjectives: number; maxStepsPerObjective: number; features: string[] };
 
   // Helpers
   calculateLevel: (xp: number) => number;
@@ -80,7 +101,7 @@ export const useUserStore = create<UserState>()(
           xpToNextLevel: 100,
           badges: [],
           createdAt: new Date(),
-          isPremium: false,
+          premiumType: 'free' as PremiumType,
           settings: {
             notifications: true,
             darkMode: true,
@@ -129,7 +150,7 @@ export const useUserStore = create<UserState>()(
             },
           ],
           createdAt: new Date(),
-          isPremium: false,
+          premiumType: 'free' as PremiumType,
           settings: {
             notifications: true,
             darkMode: true,
@@ -254,24 +275,69 @@ export const useUserStore = create<UserState>()(
         });
       },
 
-      setPremium: (isPremium) => {
-        const { user } = get();
+      setPremiumType: (type, expiresAt) => {
+        const { user, unlockBadge } = get();
         if (!user) return;
 
         set({
-          user: { ...user, isPremium },
+          user: { 
+            ...user, 
+            premiumType: type,
+            premiumExpiresAt: expiresAt
+          },
         });
 
-        // Débloquer un badge premium
-        if (isPremium) {
-          get().unlockBadge({
-            id: "premium",
-            name: "Membre Premium",
-            description: "Supporter de GoalCraftAI",
-            icon: "👑",
+        // Si passage en premium, débloquer le badge correspondant
+        if (type === 'starter') {
+          unlockBadge({
+            id: "premium_starter",
+            name: "Membre Starter",
+            description: "Devenir membre Starter",
+            icon: "⭐",
+            rarity: "rare",
             unlockedAt: new Date(),
-            rarity: "legendary",
           });
+        } else if (type === 'pro') {
+          unlockBadge({
+            id: "premium_pro",
+            name: "Membre Pro",
+            description: "Devenir membre Pro",
+            icon: "👑",
+            rarity: "legendary",
+            unlockedAt: new Date(),
+          });
+        }
+      },
+
+      getPremiumLimits: () => {
+        const { user } = get();
+        const type = user?.premiumType || 'free';
+        
+        switch(type) {
+          case 'free':
+            return {
+              maxObjectives: 3,
+              maxStepsPerObjective: 10,
+              features: ['Objectifs basiques', 'Chat IA limité']
+            };
+          case 'starter':
+            return {
+              maxObjectives: 10,
+              maxStepsPerObjective: -1, // Illimité
+              features: ['Objectifs illimités par objectif', 'Chat IA standard', 'Support prioritaire']
+            };
+          case 'pro':
+            return {
+              maxObjectives: -1, // Illimité
+              maxStepsPerObjective: -1,
+              features: ['Tout illimité', 'IA avancée', 'Coaching personnalisé', 'Analytics avancés']
+            };
+          default:
+            return {
+              maxObjectives: 3,
+              maxStepsPerObjective: 10,
+              features: []
+            };
         }
       },
 

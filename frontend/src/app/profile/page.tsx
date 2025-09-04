@@ -49,18 +49,44 @@ export default function ProfilePage() {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   
   // Récupérer les données des stores
   const { user, updateProfile, isAuthenticated } = useUserStore()
   const { currentObjective } = useObjectiveStore()
   const { currentStreak } = useStreakStore()
   
-  // Vérifier si l'utilisateur est connecté
+  // Charger les vraies données depuis la BDD
   useEffect(() => {
-    if (!isAuthenticated) {
-      setShowAuthModal(true)
+    const loadProfileData = async () => {
+      if (!isAuthenticated) {
+        setShowAuthModal(true)
+        setIsLoadingProfile(false)
+        return
+      }
+      
+      try {
+        const response = await fetch('/api/user/profile')
+        const data = await response.json()
+        
+        if (data.success && data.user) {
+          // Mettre à jour le store avec les vraies données
+          updateProfile(data.user)
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement du profil:", error)
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les données du profil",
+          variant: "destructive"
+        })
+      } finally {
+        setIsLoadingProfile(false)
+      }
     }
-  }, [isAuthenticated])
+    
+    loadProfileData()
+  }, [isAuthenticated, updateProfile, toast])
   
   // Les objectifs avec currentObjective mis à jour
   const objectives = mockObjectives.map(obj => {
@@ -97,13 +123,13 @@ export default function ProfilePage() {
     privacy: "public"
   })
 
-  // Calculer les stats réelles
+  // Calculer les stats réelles depuis les données BDD
   const stats = {
     totalXP: user?.xp || 0,
     level: user?.level || 1,
-    objectivesCompleted: objectives.filter(obj => obj.status === "completed").length,
-    totalObjectives: objectives.length,
-    streak: currentStreak,
+    objectivesCompleted: user?.completedObjectives || objectives.filter(obj => obj.status === "completed").length,
+    totalObjectives: user?.totalObjectives || objectives.length,
+    streak: user?.currentStreak || currentStreak || 0,
     badges: user?.badges?.length || 0,
     achievements: user?.achievements?.length || 0
   }
@@ -176,21 +202,70 @@ export default function ProfilePage() {
     }
   ]
 
-  const handleSave = () => {
-    // Mettre à jour le store user
-    updateProfile({
-      name: profileEdit.name,
-      email: profileEdit.email,
-      bio: profileEdit.bio,
-      avatar: profileEdit.avatar
-    })
-    setIsEditing(false)
-    toast.success("Profil mis à jour", "Vos modifications ont été enregistrées")
+  const handleSave = async () => {
+    try {
+      // Sauvegarder dans la BDD
+      const response = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: profileEdit.name,
+          bio: profileEdit.bio,
+          avatar: profileEdit.avatar
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        // Mettre à jour le store local
+        updateProfile({
+          name: profileEdit.name,
+          email: profileEdit.email,
+          bio: profileEdit.bio,
+          avatar: profileEdit.avatar
+        })
+        setIsEditing(false)
+        toast({
+          title: "Profil mis à jour",
+          description: "Vos modifications ont été enregistrées"
+        })
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder les modifications",
+        variant: "destructive"
+      })
+    }
   }
 
   // Calculer la progression vers le prochain niveau
   const currentLevelXP = stats.totalXP % 1000
   const xpToNextLevel = 1000 - currentLevelXP
+  
+  // Si le profil est en cours de chargement
+  if (isLoadingProfile) {
+    return (
+      <AuthLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <div className="animate-pulse">
+                <User className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                <div className="h-8 w-48 bg-muted rounded mx-auto mb-2" />
+                <div className="h-4 w-64 bg-muted rounded mx-auto" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </AuthLayout>
+    )
+  }
 
   // Si non connecté, afficher la modal d'authentification
   if (!isAuthenticated) {
@@ -242,7 +317,7 @@ export default function ProfilePage() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-bold">Mon Profil</h1>
-            <PremiumBadge isPremium={user?.isPremium || false} />
+            <PremiumBadge premiumType={user?.premiumType || 'free'} />
           </div>
 
           {/* Tabs */}
@@ -412,14 +487,26 @@ export default function ProfilePage() {
               <Card className="p-6">
                 <h3 className="font-semibold mb-4">Aperçu rapide</h3>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-purple-500/10 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Crown className="h-4 w-4 text-purple-400" />
-                      <span className="text-sm">Statut</span>
+                  <div className="p-3 bg-purple-500/10 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Crown className="h-4 w-4 text-purple-400" />
+                        <span className="text-sm">Statut</span>
+                      </div>
+                      <PremiumBadge premiumType={user?.premiumType || 'free'} />
                     </div>
-                    <Badge className={user?.isPremium ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white" : "bg-gray-500/20"}>
-                      {user?.isPremium ? "Premium" : "Gratuit"}
-                    </Badge>
+                    <div className="mt-2 pt-2 border-t border-purple-500/20">
+                      <p className="text-xs text-muted-foreground">
+                        {user?.premiumType === 'free' && "3 objectifs max • 10 étapes par objectif"}
+                        {user?.premiumType === 'starter' && "10 objectifs • Étapes illimitées • Support prioritaire"}
+                        {user?.premiumType === 'pro' && "Tout illimité • IA avancée • Coaching personnalisé"}
+                      </p>
+                      {user?.premiumExpiresAt && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Expire le {new Date(user.premiumExpiresAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -444,7 +531,7 @@ export default function ProfilePage() {
               </Card>
 
 
-              {!user?.isPremium && (
+              {user?.premiumType === 'free' && (
                 <Card className="p-6 border-purple-500/30 bg-purple-500/5">
                   <div className="flex items-center gap-2 mb-3">
                     <Crown className="h-5 w-5 text-yellow-400" />
@@ -453,6 +540,16 @@ export default function ProfilePage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Débloquez l'IA illimitée et des fonctionnalités exclusives
                   </p>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-xs">
+                      <Star className="h-3 w-3 text-blue-400" />
+                      <span>Starter: 9.99€/mois - 10 objectifs</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <Crown className="h-3 w-3 text-yellow-400" />
+                      <span>Pro: 19.99€/mois - Tout illimité</span>
+                    </div>
+                  </div>
                   <Button 
                     className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
                     onClick={() => router.push("/pricing")}
@@ -460,6 +557,41 @@ export default function ProfilePage() {
                     Voir les offres
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
+                </Card>
+              )}
+              
+              {user?.premiumType === 'starter' && (
+                <Card className="p-6 border-blue-500/30 bg-blue-500/5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Star className="h-5 w-5 text-blue-400" />
+                    <h3 className="font-semibold">Plan Starter</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Vous bénéficiez de 10 objectifs et d'étapes illimitées
+                  </p>
+                  <Button 
+                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                    onClick={() => router.push("/pricing")}
+                  >
+                    Passer à Pro
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Card>
+              )}
+              
+              {user?.premiumType === 'pro' && (
+                <Card className="p-6 border-yellow-500/30 bg-yellow-500/5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Crown className="h-5 w-5 text-yellow-400" />
+                    <h3 className="font-semibold">Plan Pro</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Vous avez accès à toutes les fonctionnalités premium
+                  </p>
+                  <Badge className="w-full justify-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+                    <Zap className="h-3 w-3 mr-1" />
+                    Accès illimité
+                  </Badge>
                 </Card>
               )}
               

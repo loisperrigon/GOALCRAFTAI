@@ -530,7 +530,7 @@ export default function SkillTree({ isFullscreen = false }: SkillTreeProps) {
   }
 
   // Simuler le statut Free/Premium (à remplacer par vraie logique)
-  const isPremium = false // À connecter avec votre système d'auth
+  const isPremium = user?.premiumType !== 'free' // Check si l'utilisateur est premium
   const maxStepsInFree = 10
   const currentSteps = nodes.filter(n => n.category === 'main').length
   

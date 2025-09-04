@@ -443,7 +443,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
           </div>
 
           {/* Premium CTA Footer - Always visible */}
-          {!user?.isPremium && (
+          {user?.premiumType === 'free' && (
             <div className="p-4 border-t border-border flex-shrink-0">
               <Card className="p-3 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30">
                 <div className="flex items-center gap-2 mb-2">
@@ -629,7 +629,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                 </div>
 
                 {/* Mobile Premium CTA */}
-                {!user?.isPremium && (
+                {user?.premiumType === 'free' && (
                   <Card className="p-3 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30 mb-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Crown className="h-4 w-4 text-yellow-400" />

@@ -187,7 +187,7 @@ export const authOptions: NextAuthOptions = {
                 createdAt: new Date(),
                 level: 1,
                 xp: 0,
-                isPremium: false,
+                premiumType: 'free',
                 badges: [],
                 achievements: []
               }
