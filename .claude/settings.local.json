@@ -38,7 +38,11 @@
       "Bash(npx next:*)",
       "Bash(del C:UsersLoisDocumentsProjetGoalCraftAIfrontendserver.js)",
       "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\auth\\google\\route.ts\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\ai\\chat/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\hooks/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\objectives/**)"
     ],
     "deny": [],
     "ask": []

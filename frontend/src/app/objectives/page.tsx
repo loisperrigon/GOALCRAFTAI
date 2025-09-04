@@ -323,25 +323,30 @@ export default function ObjectivesPage() {
                   </motion.div>
                 ))}
                 
-                {/* Indicateur de réflexion de l'IA */}
+                {/* Loader avec logo animé */}
                 {isLoading && (
                   <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
                     className="flex justify-start"
                   >
-                    <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4 max-w-[85%] md:max-w-[70%]">
-                      <div className="flex items-center gap-2">
-                        <Spinner size="sm" />
-                        <span className="text-sm text-muted-foreground animate-pulse">
-                          L'IA réfléchit à votre demande...
-                        </span>
-                      </div>
-                      <div className="flex gap-1 mt-2">
-                        <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                        <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                        <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <div className="bg-card border border-border rounded-2xl rounded-tl-sm p-4">
+                      <div className="flex items-center gap-3">
+                        {/* Logo ou icône de votre app */}
+                        <div className="relative w-8 h-8">
+                          <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg opacity-20 animate-pulse" />
+                          <div className="relative flex items-center justify-center w-full h-full">
+                            <Target className="w-5 h-5 text-purple-500" />
+                          </div>
+                        </div>
+                        
+                        {/* Points animés */}
+                        <div className="flex gap-1.5">
+                          <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: "200ms" }} />
+                          <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "400ms" }} />
+                        </div>
                       </div>
                     </div>
                   </motion.div>
@@ -357,7 +362,7 @@ export default function ObjectivesPage() {
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                    placeholder={isLoading ? "L'IA réfléchit..." : "Décrivez votre objectif... Ex: 'Je veux apprendre la guitare' ou 'Perdre 10kg en 3 mois'"}
+                    placeholder={isLoading ? "En attente de la réponse..." : "Décrivez votre objectif... Ex: 'Je veux apprendre la guitare' ou 'Perdre 10kg en 3 mois'"}
                     className="flex-1 bg-background/50 h-12 md:h-14 text-sm md:text-base px-4 md:px-6"
                     disabled={isLoading}
                   />

@@ -323,15 +323,8 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
           connectWebSocket(response.conversationId)
         }
         
-        // Afficher un message temporaire pendant le traitement
-        const tempMessage: ChatMessage = {
-          role: "assistant",
-          content: "Je réfléchis à votre demande...",
-          timestamp: new Date()
-        }
-        setMessages(prev => [...prev, tempMessage])
-        
-        // Les messages arriveront via la connexion WebSocket
+        // Pas de message temporaire - on laisse juste le loader
+        // Les vrais messages arriveront via WebSocket
         return response
       }
     } catch (err) {

@@ -183,12 +183,10 @@ export async function POST(request: NextRequest) {
         console.error("[n8n] Message d'erreur:", error.message)
       })
     
-    // Retourner immédiatement au frontend que le message est en cours de traitement
+    // Retourner juste le strict minimum - le reste arrive par WebSocket
     return NextResponse.json({
-      conversationId: conversation._id, // Déjà un string
-      messageId: messageId,
-      status: "processing",
-      message: "Votre message a été envoyé à l'IA. Je réfléchis..."
+      success: true,
+      conversationId: conversation._id
     })
 
   } catch (error) {
