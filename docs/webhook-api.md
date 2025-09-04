@@ -25,6 +25,35 @@ NEXT_PUBLIC_WS_URL=ws://localhost:3002
 **Headers requis**:
 - `x-webhook-secret`: Secret partagé avec n8n pour la sécurité
 
+## Routage Intelligent
+
+Le système route automatiquement vers différents agents n8n selon le contexte :
+
+### Pas d'objectif existant → Agent Création
+- **Webhook** : Configuré via `N8N_CREATION_WEBHOOK_URL`
+- **Reçoit** : Message utilisateur + contexte de base
+- **Mission** : Générer un nouvel objectif complet de A à Z
+
+### Objectif existant → Agent Modification/Décision
+- **Webhook** : Configuré via `N8N_MODIFICATION_WEBHOOK_URL`
+- **Reçoit** : Message utilisateur + objectif complet actuel
+- **Mission** : L'IA décide si elle doit :
+  - Modifier l'objectif existant (node_add, node_update, node_delete)
+  - Remplacer complètement l'objectif (objective_start)
+  - Simplement discuter (message)
+
+### Configuration des webhooks
+```env
+# Agent de création (pas d'objectif existant)
+N8N_CREATION_WEBHOOK_URL=https://n8n.larefonte.store/webhook/creation-xxx
+
+# Agent de modification/décision (objectif existant)
+N8N_MODIFICATION_WEBHOOK_URL=https://n8n.larefonte.store/webhook/modification-xxx
+
+# Fallback si les autres ne sont pas définis
+N8N_WEBHOOK_URL=https://n8n.larefonte.store/webhook/default
+```
+
 ## Types de Webhook
 
 ### 1. Messages de Chat
@@ -335,7 +364,85 @@ const decryptedContent = decrypt(encryptedMessage)
 }
 ```
 
+## Données envoyées à n8n
+
+### Structure du webhook body enrichi
+
+```javascript
+{
+  // Identifiants de base
+  "messageId": "msg-xxx",
+  "userId": "user-123",
+  "conversationId": "conv-abc",
+  
+  // Message et contexte
+  "message": "Je veux modifier mon objectif",
+  "objectiveType": "fitness",
+  "messageCount": 5,
+  
+  // NOUVEAU : Informations sur l'objectif existant
+  "hasExistingObjective": true,  // false si nouveau
+  "existingObjectiveId": "obj-123", // null si nouveau
+  "currentObjective": {  // null si nouveau
+    "title": "Perdre 10kg",
+    "skillTree": {
+      "nodes": [...],
+      "edges": [...]
+    },
+    // ... tout l'objectif complet
+  },
+  
+  // Contexte enrichi
+  "context": {
+    "userName": "John",
+    "userEmail": "john@example.com",
+    "previousMessages": [...],
+    "isFirstMessage": false,
+    "agentType": "modification"  // ou "creation"
+  },
+  
+  "callbackUrl": "https://app.com/api/ai/webhook"
+}
+```
+
 ## Exemples d'Utilisation
+
+### Exemple 1 : Première conversation (Agent Création)
+
+```javascript
+// L'app détecte : pas d'objectif → Route vers Agent Création
+// POST vers N8N_CREATION_WEBHOOK_URL
+{
+  "message": "Je veux apprendre la guitare",
+  "hasExistingObjective": false,
+  "currentObjective": null,
+  "context": {
+    "agentType": "creation"
+  }
+}
+
+// L'agent création génère un nouvel objectif complet
+```
+
+### Exemple 2 : Modification d'objectif (Agent Décision)
+
+```javascript
+// L'app détecte : objectif existe → Route vers Agent Modification
+// POST vers N8N_MODIFICATION_WEBHOOK_URL
+{
+  "message": "Ajoute une étape pour les accords barrés",
+  "hasExistingObjective": true,
+  "currentObjective": {
+    "title": "Apprendre la guitare",
+    "skillTree": { /* ... */ }
+  },
+  "context": {
+    "agentType": "modification"
+  }
+}
+
+// L'agent décision analyse et décide : node_add
+```
 
 ### Exemple complet de génération d'objectif
 

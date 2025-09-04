@@ -13,7 +13,9 @@ const chatSchema = z.object({
   action: z.enum(["chat", "generate_objective"]).optional().default("chat")
 })
 
-const N8N_WEBHOOK_URL = process.env.N8N_WEBHOOK_URL || "https://n8n.larefonte.store/webhook/333e2809-84c9-4bf7-bc9b-3c5c7aaceb49"
+// Webhooks n8n pour les différents agents
+const N8N_CREATION_WEBHOOK = process.env.N8N_CREATION_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL || "https://n8n.larefonte.store/webhook/333e2809-84c9-4bf7-bc9b-3c5c7aaceb49"
+const N8N_MODIFICATION_WEBHOOK = process.env.N8N_MODIFICATION_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL || "https://n8n.larefonte.store/webhook/333e2809-84c9-4bf7-bc9b-3c5c7aaceb49"
 
 export async function POST(request: NextRequest) {
   try {
@@ -87,6 +89,25 @@ export async function POST(request: NextRequest) {
       conversation = { _id: newConversationId, messages: [] }
     }
 
+    // Vérifier si un objectif existe déjà dans la conversation
+    const hasExistingObjective = !!(conversation.objectiveId || conversation.currentObjectiveId)
+    let currentObjective = null
+
+    if (hasExistingObjective) {
+      const objectiveId = conversation.objectiveId || conversation.currentObjectiveId
+      const { ObjectId } = await import("mongodb")
+      
+      // Récupérer l'objectif complet depuis MongoDB
+      try {
+        currentObjective = await db.collection("objectives").findOne({
+          _id: new ObjectId(objectiveId)
+        })
+        console.log("[Chat API] Objectif existant trouvé:", objectiveId)
+      } catch (error) {
+        console.error("[Chat API] Erreur récupération objectif:", error)
+      }
+    }
+
     // Ajouter le message utilisateur (CHIFFRÉ)
     await db.collection("conversations").updateOne(
       { _id: conversation._id },
@@ -120,7 +141,8 @@ export async function POST(request: NextRequest) {
     storeWebhookContext(messageId, conversation._id, userId)
     
     // Envoyer la requête à n8n de manière asynchrone
-    console.log("[n8n] Envoi webhook asynchrone:", N8N_WEBHOOK_URL)
+    const targetWebhookForLog = hasExistingObjective ? N8N_MODIFICATION_WEBHOOK : N8N_CREATION_WEBHOOK
+    console.log("[n8n] Envoi webhook asynchrone:", targetWebhookForLog)
     console.log("[n8n] Message ID:", messageId)
     console.log("[n8n] Conversation ID:", conversation._id)
     
@@ -137,7 +159,7 @@ export async function POST(request: NextRequest) {
       }
     })
     
-    // Construire le corps de la requête
+    // Construire le corps de la requête avec info sur l'objectif
     const webhookBody = {
       messageId: messageId, // ID unique pour retrouver la réponse
       userId: userId,
@@ -146,20 +168,35 @@ export async function POST(request: NextRequest) {
       objectiveType: objectiveType || "general",
       messageCount: (conversation.messages?.length || 0) + 1,
       callbackUrl: `${process.env.SERVER_URL || process.env.NEXT_PUBLIC_APP_URL}/api/ai/webhook`, // URL de callback pour n8n
+      
+      // NOUVEAU : Informations sur l'objectif existant
+      hasExistingObjective: hasExistingObjective,
+      existingObjectiveId: conversation.objectiveId || conversation.currentObjectiveId || null,
+      currentObjective: currentObjective, // L'objectif complet pour donner le contexte à l'IA
+      
       context: {
         userName: userName,
         userEmail: userEmail,
         previousMessages: decryptedPreviousMessages, // Messages déchiffrés pour le contexte
-        isFirstMessage: !conversation.messages || conversation.messages.length === 0
+        isFirstMessage: !conversation.messages || conversation.messages.length === 0,
+        // NOUVEAU : Type d'agent pour n8n
+        agentType: hasExistingObjective ? "modification" : "creation"
       }
     }
     
-    console.log("[n8n] URL du webhook:", N8N_WEBHOOK_URL)
+    // Choisir le bon webhook selon le contexte
+    const targetWebhook = hasExistingObjective ? N8N_MODIFICATION_WEBHOOK : N8N_CREATION_WEBHOOK
+    
+    console.log("[n8n] Routage vers:", hasExistingObjective ? "Agent Modification" : "Agent Création")
+    console.log("[n8n] URL du webhook:", targetWebhook)
     console.log("[n8n] Callback URL:", webhookBody.callbackUrl)
-    console.log("[n8n] Body complet:", JSON.stringify(webhookBody, null, 2))
+    console.log("[n8n] Objectif existant:", hasExistingObjective ? "OUI" : "NON")
+    if (hasExistingObjective) {
+      console.log("[n8n] ID de l'objectif:", webhookBody.existingObjectiveId)
+    }
     
     // Envoyer à n8n sans attendre la réponse
-    fetch(N8N_WEBHOOK_URL, {
+    fetch(targetWebhook, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -169,18 +206,123 @@ export async function POST(request: NextRequest) {
         console.log("[n8n] Webhook envoyé, status:", response.status)
         if (response.status === 404) {
           console.error("[n8n] ERREUR 404 - L'URL du webhook n'existe pas ou n'est pas accessible")
-          console.error("[n8n] Vérifiez que l'URL est correcte:", N8N_WEBHOOK_URL)
+          console.error("[n8n] Vérifiez que l'URL est correcte:", targetWebhook)
           const responseText = await response.text()
           console.error("[n8n] Réponse du serveur:", responseText)
+          
+          // Ajouter un message d'erreur dans la conversation
+          const errorMessage = "🔧 Notre système est temporairement indisponible. Nous travaillons activement à rétablir le service. Veuillez réessayer dans quelques instants."
+          await db.collection("conversations").updateOne(
+            { _id: conversation._id },
+            {
+              $push: {
+                messages: {
+                  role: "assistant",
+                  content: encrypt(errorMessage),
+                  timestamp: new Date(),
+                  isError: true
+                }
+              }
+            }
+          )
+          
+          // Notifier via WebSocket
+          try {
+            await fetch('http://localhost:3002/notify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                conversationId: conversation._id,
+                type: "message",
+                content: errorMessage,
+                isFinal: true,
+                isError: true
+              })
+            })
+          } catch (wsError) {
+            console.error("[WS] Erreur notification:", wsError)
+          }
         } else if (!response.ok) {
           console.error("[n8n] Erreur HTTP:", response.status, response.statusText)
           const responseText = await response.text()
           console.error("[n8n] Réponse du serveur:", responseText)
+          
+          // Ajouter un message d'erreur dans la conversation
+          const errorMessage = "⚠️ Une erreur technique s'est produite. Notre équipe a été notifiée. Veuillez réessayer ou contactez le support si le problème persiste."
+          await db.collection("conversations").updateOne(
+            { _id: conversation._id },
+            {
+              $push: {
+                messages: {
+                  role: "assistant",
+                  content: encrypt(errorMessage),
+                  timestamp: new Date(),
+                  isError: true
+                }
+              }
+            }
+          )
+          
+          // Notifier via WebSocket
+          try {
+            await fetch('http://localhost:3002/notify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                conversationId: conversation._id,
+                type: "message",
+                content: errorMessage,
+                isFinal: true,
+                isError: true
+              })
+            })
+          } catch (wsError) {
+            console.error("[WS] Erreur notification:", wsError)
+          }
+        } else {
+          console.log("[n8n] Webhook envoyé avec succès à l'agent:", hasExistingObjective ? "Modification" : "Création")
         }
-      }).catch(error => {
+      }).catch(async error => {
         console.error("[n8n] Erreur envoi webhook:", error)
         console.error("[n8n] Type d'erreur:", error.name)
         console.error("[n8n] Message d'erreur:", error.message)
+        
+        // Ajouter un message d'erreur dans la conversation
+        try {
+          const errorMessage = "🌐 Impossible de contacter notre service IA. Vérifiez votre connexion internet ou réessayez dans quelques instants."
+          await db.collection("conversations").updateOne(
+            { _id: conversation._id },
+            {
+              $push: {
+                messages: {
+                  role: "assistant",
+                  content: encrypt(errorMessage),
+                  timestamp: new Date(),
+                  isError: true
+                }
+              }
+            }
+          )
+          
+          // Notifier via WebSocket
+          try {
+            await fetch('http://localhost:3002/notify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                conversationId: conversation._id,
+                type: "message",
+                content: errorMessage,
+                isFinal: true,
+                isError: true
+              })
+            })
+          } catch (wsError) {
+            console.error("[WS] Erreur notification:", wsError)
+          }
+        } catch (dbError) {
+          console.error("[n8n] Erreur lors de l'ajout du message d'erreur:", dbError)
+        }
       })
     
     // Retourner juste le strict minimum - le reste arrive par WebSocket
