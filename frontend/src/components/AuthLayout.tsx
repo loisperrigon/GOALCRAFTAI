@@ -104,8 +104,47 @@ function AuthLayout({ children }: AuthLayoutProps) {
     const initializeConversations = async () => {
       const loadedConversations = await loadConversations()
       
-      // Sélectionner automatiquement la dernière conversation si disponible et si on n'a pas déjà une sélection
-      if (!selectedObjectiveId && !currentObjective && loadedConversations && loadedConversations.length > 0) {
+      // Si l'utilisateur n'a aucune conversation (nouveau compte), en créer une automatiquement
+      if (loadedConversations.length === 0 && isAuthenticated) {
+        console.log("[AuthLayout] Aucune conversation trouvée, création d'une première conversation")
+        try {
+          const response = await fetch('/api/conversations/new', {
+            method: 'POST'
+          })
+          const data = await response.json()
+          
+          if (data.success && data.conversationId) {
+            console.log("[AuthLayout] Première conversation créée:", data.conversationId)
+            
+            // Créer un placeholder pour cette conversation
+            setActiveObjective({
+              id: `placeholder-${data.conversationId}`,
+              conversationId: data.conversationId,
+              title: "Nouvelle conversation",
+              description: "",
+              category: "general",
+              difficulty: "intermediate",
+              progress: 0,
+              completedSteps: [],
+              skillTree: { nodes: [], edges: [] },
+              isPlaceholder: true
+            })
+            
+            // Recharger les conversations pour afficher la nouvelle
+            await loadConversations()
+            
+            // Si on est sur la page objectives, on reste dessus
+            if (pathname === '/objectives') {
+              // La conversation est déjà active via setActiveObjective
+            } else {
+              router.push("/objectives")
+            }
+          }
+        } catch (error) {
+          console.error("[AuthLayout] Erreur création première conversation:", error)
+        }
+      } else if (!selectedObjectiveId && !currentObjective && loadedConversations && loadedConversations.length > 0) {
+        // Sélectionner automatiquement la dernière conversation si disponible et si on n'a pas déjà une sélection
         // Trier les conversations par date de dernière activité (plus récent en premier)
         const sortedConversations = [...loadedConversations].sort((a, b) => {
           // Utiliser updatedAt ou le timestamp du dernier message, ou createdAt en fallback
@@ -297,15 +336,19 @@ function AuthLayout({ children }: AuthLayoutProps) {
                       router.push('/auth')
                     } else {
                       try {
-                        // Créer une nouvelle conversation vide
-                        console.log("[AuthLayout] Création d'une nouvelle conversation")
+                        // Créer ou réutiliser une conversation vide
+                        console.log("[AuthLayout] Création/réutilisation d'une conversation")
                         const response = await fetch('/api/conversations/new', {
                           method: 'POST'
                         })
                         const data = await response.json()
                         
                         if (data.success && data.conversationId) {
-                          console.log("[AuthLayout] Nouvelle conversation créée:", data.conversationId)
+                          if (data.existing) {
+                            console.log("[AuthLayout] Conversation vide existante réutilisée:", data.conversationId)
+                          } else {
+                            console.log("[AuthLayout] Nouvelle conversation créée:", data.conversationId)
+                          }
                           
                           // Créer un placeholder pour cette conversation
                           setActiveObjective({
@@ -321,8 +364,10 @@ function AuthLayout({ children }: AuthLayoutProps) {
                             isPlaceholder: true
                           })
                           
-                          // Recharger les conversations pour afficher la nouvelle
-                          loadConversations()
+                          // Recharger les conversations seulement si c'est une nouvelle
+                          if (!data.existing) {
+                            loadConversations()
+                          }
                           router.push("/objectives")
                         }
                       } catch (error) {
@@ -483,13 +528,19 @@ function AuthLayout({ children }: AuthLayoutProps) {
                           setIsMobileSidebarOpen(false)
                         } else {
                           try {
-                            // Créer une nouvelle conversation vide
+                            // Créer ou réutiliser une conversation vide
                             const response = await fetch('/api/conversations/new', {
                               method: 'POST'
                             })
                             const data = await response.json()
                             
                             if (data.success && data.conversationId) {
+                              if (data.existing) {
+                                console.log("[AuthLayout Mobile] Conversation vide existante réutilisée:", data.conversationId)
+                              } else {
+                                console.log("[AuthLayout Mobile] Nouvelle conversation créée:", data.conversationId)
+                              }
+                              
                               // Créer un placeholder pour cette conversation
                               setActiveObjective({
                                 id: `placeholder-${data.conversationId}`,
@@ -504,8 +555,10 @@ function AuthLayout({ children }: AuthLayoutProps) {
                                 isPlaceholder: true
                               })
                               
-                              // Recharger les conversations
-                              loadConversations()
+                              // Recharger les conversations seulement si c'est une nouvelle
+                              if (!data.existing) {
+                                loadConversations()
+                              }
                               router.push("/objectives")
                               setIsMobileSidebarOpen(false)
                             }

@@ -22,6 +22,37 @@ export async function POST(request: NextRequest) {
     
     const db = await getDatabase()
     
+    // Vérifier s'il existe déjà une conversation vide (sans messages et sans objectif)
+    const existingEmptyConversation = await db.collection("conversations").findOne({
+      userId: userId,
+      $or: [
+        { messages: { $size: 0 } },
+        { messages: { $exists: false } }
+      ],
+      $and: [
+        { objectiveId: { $exists: false } },
+        { currentObjectiveId: { $exists: false } }
+      ]
+    })
+    
+    if (existingEmptyConversation) {
+      console.log("[Conversations/New] Conversation vide existante trouvée:", existingEmptyConversation._id)
+      
+      // Retourner la conversation vide existante au lieu d'en créer une nouvelle
+      return NextResponse.json({
+        success: true,
+        conversationId: existingEmptyConversation._id,
+        conversation: {
+          id: existingEmptyConversation._id,
+          messages: existingEmptyConversation.messages || [],
+          status: existingEmptyConversation.status || "new",
+          createdAt: existingEmptyConversation.createdAt,
+          updatedAt: existingEmptyConversation.updatedAt
+        },
+        existing: true // Indique qu'on a réutilisé une conversation existante
+      })
+    }
+    
     // Créer un ID unique pour la conversation
     const conversationId = `conv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     
