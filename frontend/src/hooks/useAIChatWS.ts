@@ -194,6 +194,116 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
           })
           
           setIsLoading(false)
+        } else if (data.type === "objective_update_started" && data.metadata) {
+          // Début d'une mise à jour d'objectif
+          if (data.conversationId && data.conversationId !== conversationId) {
+            return
+          }
+          
+          console.log("[WS] Début de mise à jour d'objectif")
+          const { startObjectiveUpdate, updateObjectiveMetadata } = useObjectiveStore.getState()
+          startObjectiveUpdate()
+          if (data.metadata) {
+            updateObjectiveMetadata(data.metadata)
+          }
+          
+          setMessages(prev => {
+            const newMessages = [...prev]
+            const lastMessage = newMessages[newMessages.length - 1]
+            if (lastMessage && lastMessage.role === "assistant") {
+              lastMessage.content = data.message || "Mise à jour de votre parcours..."
+            }
+            return newMessages
+          })
+        } else if (data.type === "node_added" && data.node) {
+          // Ajout d'un nouveau node
+          if (data.conversationId && data.conversationId !== conversationId) {
+            return
+          }
+          
+          console.log("[WS] Nouveau node ajouté:", data.node.title)
+          const { addNodeToObjective, addEdgeToObjective } = useObjectiveStore.getState()
+          
+          addNodeToObjective(data.node)
+          
+          if (data.node.dependencies && data.node.dependencies.length > 0) {
+            data.node.dependencies.forEach((depId: string) => {
+              addEdgeToObjective({
+                id: `edge-${depId}-${data.node.id}`,
+                source: depId,
+                target: data.node.id
+              })
+            })
+          }
+          
+          setMessages(prev => {
+            const newMessages = [...prev]
+            const lastMessage = newMessages[newMessages.length - 1]
+            if (lastMessage && lastMessage.role === "assistant") {
+              lastMessage.content = data.message || `Nouvelle étape ajoutée: ${data.node.title}`
+            }
+            return newMessages
+          })
+        } else if (data.type === "node_updated" && data.nodeId) {
+          // Mise à jour d'un node existant
+          if (data.conversationId && data.conversationId !== conversationId) {
+            return
+          }
+          
+          console.log("[WS] Node mis à jour:", data.nodeId)
+          const { updateNodeInObjective } = useObjectiveStore.getState()
+          
+          if (data.updates) {
+            updateNodeInObjective(data.nodeId, data.updates)
+          }
+          
+          setMessages(prev => {
+            const newMessages = [...prev]
+            const lastMessage = newMessages[newMessages.length - 1]
+            if (lastMessage && lastMessage.role === "assistant") {
+              lastMessage.content = data.message || `Étape modifiée`
+            }
+            return newMessages
+          })
+        } else if (data.type === "node_deleted" && data.nodeId) {
+          // Suppression d'un node
+          if (data.conversationId && data.conversationId !== conversationId) {
+            return
+          }
+          
+          console.log("[WS] Node supprimé:", data.nodeId)
+          const { deleteNodeFromObjective } = useObjectiveStore.getState()
+          
+          deleteNodeFromObjective(data.nodeId)
+          
+          setMessages(prev => {
+            const newMessages = [...prev]
+            const lastMessage = newMessages[newMessages.length - 1]
+            if (lastMessage && lastMessage.role === "assistant") {
+              lastMessage.content = data.message || `Étape supprimée`
+            }
+            return newMessages
+          })
+        } else if (data.type === "objective_update_completed") {
+          // Fin de mise à jour de l'objectif
+          if (data.conversationId && data.conversationId !== conversationId) {
+            return
+          }
+          
+          console.log("[WS] Fin de mise à jour d'objectif")
+          const { completeObjectiveUpdate } = useObjectiveStore.getState()
+          completeObjectiveUpdate()
+          
+          setMessages(prev => {
+            const newMessages = [...prev]
+            const lastMessage = newMessages[newMessages.length - 1]
+            if (lastMessage && lastMessage.role === "assistant") {
+              lastMessage.content = data.message || "Modifications terminées !"
+            }
+            return newMessages
+          })
+          
+          setIsLoading(false)
         }
       } catch (error) {
         console.error("[useAIChatWS] Erreur parsing message:", error)

@@ -116,6 +116,13 @@ interface ObjectiveState {
   updateObjectiveByConversationId: (conversationId: string, updates: Partial<Objective>) => void
   createPlaceholderObjective: (conversationId: string) => void
   
+  // Actions pour les modifications d'objectif
+  startObjectiveUpdate: () => void
+  updateNodeInObjective: (nodeId: string, updates: Partial<SkillNode>) => void
+  deleteNodeFromObjective: (nodeId: string) => void
+  updateObjectiveMetadata: (metadata: Partial<Objective>) => void
+  completeObjectiveUpdate: () => void
+  
   // API calls (mock pour l'instant)
   fetchObjective: (id: string) => Promise<void>
 }
@@ -407,5 +414,142 @@ export const useObjectiveStore = create<ObjectiveState>((set) => ({
     } else {
       set({ isLoading: false })
     }
+  },
+
+  // Implémentation des actions de modification
+  startObjectiveUpdate: () => {
+    set(state => {
+      if (!state.currentObjective) return state
+      
+      return {
+        currentObjective: {
+          ...state.currentObjective,
+          isGenerating: true,
+          status: 'generating' as const
+        }
+      }
+    })
+  },
+
+  updateNodeInObjective: (nodeId, updates) => {
+    set(state => {
+      if (!state.currentObjective?.skillTree) return state
+
+      const updatedNodes = state.currentObjective.skillTree.nodes.map(node => {
+        if (node.id === nodeId) {
+          return { ...node, ...updates }
+        }
+        return node
+      })
+
+      // Recalculer les dépendances si nécessaire
+      if (updates.dependencies) {
+        // Mettre à jour les edges
+        const existingEdges = state.currentObjective.skillTree.edges.filter(
+          edge => edge.target !== nodeId
+        )
+        const newEdges = updates.dependencies.map(depId => ({
+          id: `edge-${depId}-${nodeId}`,
+          source: depId,
+          target: nodeId
+        }))
+
+        return {
+          currentObjective: {
+            ...state.currentObjective,
+            skillTree: {
+              nodes: updatedNodes,
+              edges: [...existingEdges, ...newEdges]
+            },
+            updatedAt: new Date()
+          }
+        }
+      }
+
+      return {
+        currentObjective: {
+          ...state.currentObjective,
+          skillTree: {
+            ...state.currentObjective.skillTree,
+            nodes: updatedNodes
+          },
+          updatedAt: new Date()
+        }
+      }
+    })
+  },
+
+  deleteNodeFromObjective: (nodeId) => {
+    set(state => {
+      if (!state.currentObjective?.skillTree) return state
+
+      // Supprimer le node
+      const updatedNodes = state.currentObjective.skillTree.nodes.filter(
+        node => node.id !== nodeId
+      )
+
+      // Supprimer les edges liés
+      const updatedEdges = state.currentObjective.skillTree.edges.filter(
+        edge => edge.source !== nodeId && edge.target !== nodeId
+      )
+
+      // Mettre à jour les dépendances des autres nodes
+      const finalNodes = updatedNodes.map(node => {
+        if (node.dependencies && node.dependencies.includes(nodeId)) {
+          return {
+            ...node,
+            dependencies: node.dependencies.filter(dep => dep !== nodeId)
+          }
+        }
+        return node
+      })
+
+      const completedSteps = finalNodes.filter(n => n.completed).length
+      const progress = finalNodes.length > 0 
+        ? Math.round((completedSteps / finalNodes.length) * 100)
+        : 0
+
+      return {
+        currentObjective: {
+          ...state.currentObjective,
+          skillTree: {
+            nodes: finalNodes,
+            edges: updatedEdges
+          },
+          totalSteps: finalNodes.length,
+          completedSteps,
+          progress,
+          updatedAt: new Date()
+        }
+      }
+    })
+  },
+
+  updateObjectiveMetadata: (metadata) => {
+    set(state => {
+      if (!state.currentObjective) return state
+
+      return {
+        currentObjective: {
+          ...state.currentObjective,
+          ...metadata,
+          updatedAt: new Date()
+        }
+      }
+    })
+  },
+
+  completeObjectiveUpdate: () => {
+    set(state => {
+      if (!state.currentObjective) return state
+
+      return {
+        currentObjective: {
+          ...state.currentObjective,
+          isGenerating: false,
+          status: 'active' as const
+        }
+      }
+    })
   }
 }))

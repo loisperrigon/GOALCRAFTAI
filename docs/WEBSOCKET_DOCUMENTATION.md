@@ -1,18 +1,16 @@
 # 📡 Documentation WebSocket - GoalCraftAI
 
+**⚠️ Note importante** : Cette documentation couvre l'architecture WebSocket générale. Pour l'implémentation actuelle avec n8n et les webhooks, voir [`webhook-api.md`](./webhook-api.md).
+
 ## 📋 Table des matières
 1. [Vue d'ensemble](#vue-densemble)
 2. [Architecture](#architecture)
-3. [Types d'événements](#types-dévénements)
-4. [Flux de streaming IA](#flux-de-streaming-ia)
-5. [Utilisation Frontend](#utilisation-frontend)
-6. [Implémentation Backend](#implémentation-backend)
-7. [Gestion des erreurs](#gestion-des-erreurs)
-8. [Exemples de code](#exemples-de-code)
+3. [Serveur WebSocket](#serveur-websocket)
+4. [Intégration avec les Webhooks](#intégration-webhooks)
 
 ## Vue d'ensemble
 
-Le système WebSocket de GoalCraftAI permet une communication temps réel bidirectionnelle entre le client et le serveur, avec un support complet du streaming pour les réponses de l'IA.
+Le système WebSocket de GoalCraftAI utilise un serveur dédié (port 3002) pour la communication temps réel entre le backend et le frontend.
 
 ### Caractéristiques principales
 - ✅ **Streaming en temps réel** des réponses IA
@@ -24,130 +22,86 @@ Le système WebSocket de GoalCraftAI permet une communication temps réel bidire
 
 ## Architecture
 
+Le système utilise un serveur WebSocket séparé qui reçoit des notifications des API Routes Next.js :
+
+```
+Next.js API Routes → POST /notify → WebSocket Server (3002) → Clients connectés
+```
+
+Structure actuelle :
 ```
 frontend/src/
-├── services/websocket/
-│   ├── WebSocketService.ts    # Service principal
-│   ├── types.ts               # Types TypeScript
-│   ├── events.ts              # Système d'événements
-│   └── messageHandler.ts      # Traitement des messages
+├── app/api/           # API Routes Next.js (backend)
+│   ├── ai/
+│   │   ├── chat/     # Endpoint chat
+│   │   └── webhook/  # Réception webhooks n8n
+│   ├── conversations/
+│   └── objectives/
 ├── hooks/
-│   ├── useWebSocket.ts        # Hook de connexion
-│   └── useChatStream.ts       # Hook pour le chat
+│   └── useAIChatWS.ts # Hook WebSocket client
 └── stores/
-    └── chat-store.ts          # Store Zustand
+    └── objective-store.ts # Store Zustand
 ```
 
-## Types d'événements
+## Serveur WebSocket
 
-### Client → Server
+Le serveur WebSocket (port 3002) reçoit des notifications HTTP des API Routes et les transmet aux clients connectés.
 
-| Événement | Description | Payload |
-|-----------|-------------|---------|
-| `USER_MESSAGE` | Message envoyé par l'utilisateur | `{ content: string, context?: any }` |
-| `GENERATE_OBJECTIVE` | Demande de génération d'objectif | `{ prompt: string, difficulty?: string, category?: string }` |
-| `STOP_GENERATION` | Arrêt de la génération en cours | `{ messageId?: string }` |
-| `UPDATE_OBJECTIVE` | Mise à jour d'un objectif | `{ objectiveId: string, updates: any }` |
-| `PING` | Maintien de la connexion | `{ timestamp: number }` |
+### Notifications reçues (POST /notify)
 
-### Server → Client
+Voir [`webhook-api.md`](./webhook-api.md#notifications-websocket) pour la liste complète des types de notifications.
 
-| Événement | Description | Payload |
-|-----------|-------------|---------|
-| `AI_THINKING` | L'IA commence à réfléchir | `{ timestamp: number }` |
-| `AI_MESSAGE_START` | Début du streaming | `{ messageId: string, model?: string }` |
-| `AI_MESSAGE_CHUNK` | Chunk de contenu | `{ messageId: string, content: string }` |
-| `AI_MESSAGE_END` | Fin du streaming | `{ messageId: string, isComplete: boolean, stopReason?: string }` |
-| `OBJECTIVE_GENERATED` | Objectif généré | `{ objective: Objective, generationTime: number }` |
-| `ERROR` | Erreur | `{ code: string, message: string, retryable: boolean }` |
-| `PONG` | Réponse au ping | `{ timestamp: number }` |
+## Intégration avec les Webhooks
 
-## Flux de streaming IA
-
-Le streaming des réponses IA suit ce flux séquentiel :
+Le flux actuel utilise n8n et les webhooks :
 
 ```mermaid
 sequenceDiagram
-    participant Client
-    participant Server
-    participant IA
+    participant User
+    participant Frontend
+    participant API Routes
+    participant n8n
+    participant WebSocket
     
-    Client->>Server: USER_MESSAGE
-    Server->>Client: AI_THINKING
-    Server->>IA: Génération
-    IA-->>Server: Stream
-    Server->>Client: AI_MESSAGE_START
-    loop Streaming
-        Server->>Client: AI_MESSAGE_CHUNK
-    end
-    Server->>Client: AI_MESSAGE_END
+    User->>Frontend: Message
+    Frontend->>API Routes: POST /api/ai/chat
+    API Routes->>n8n: Trigger workflow
+    n8n->>API Routes: POST /api/ai/webhook
+    API Routes->>WebSocket: POST /notify
+    WebSocket->>Frontend: Broadcast update
 ```
-
-### États du streaming
-
-1. **AI_THINKING** : L'IA réfléchit (afficher un loader)
-2. **AI_MESSAGE_START** : Créer un nouveau message vide dans l'UI
-3. **AI_MESSAGE_CHUNK** : Ajouter le contenu au fur et à mesure
-4. **AI_MESSAGE_END** : Message complet, activer les actions
 
 ## Utilisation Frontend
 
-### 1. Hook basique `useWebSocket`
+### Hook principal `useAIChatWS`
 
 ```typescript
-import { useWebSocket } from '@/hooks/useWebSocket'
-
-function MyComponent() {
-  const { 
-    isConnected, 
-    sendMessage, 
-    on, 
-    generateObjective 
-  } = useWebSocket()
-
-  // Envoyer un message
-  const handleSend = () => {
-    sendMessage("Bonjour !")
-  }
-
-  // Écouter les réponses
-  useEffect(() => {
-    const unsubscribe = on(WSEventType.AI_MESSAGE_END, (data) => {
-      console.log("Message complet:", data.content)
-    })
-    return unsubscribe
-  }, [])
-}
-```
-
-### 2. Hook avancé `useChatStream`
-
-```typescript
-import { useChatStream } from '@/hooks/useChatStream'
+import { useAIChatWS } from '@/hooks/useAIChatWS'
 
 function ChatComponent() {
   const {
     messages,
-    isAIThinking,
-    isAIStreaming,
-    sendUserMessage,
-    stopCurrentStreaming
-  } = useChatStream()
+    isLoading,
+    isConnected,
+    sendMessage,
+    conversationId
+  } = useAIChatWS({
+    onObjectiveGenerated: (objective) => {
+      // Callback quand un objectif est généré
+    }
+  })
 
   return (
     <div>
-      {/* Afficher les messages */}
       {messages.map(msg => (
         <div key={msg.id}>
           {msg.role}: {msg.content}
-          {msg.isStreaming && <span>...</span>}
         </div>
       ))}
-      
-      {/* Indicateurs d'état */}
-      {isAIThinking && <p>L'IA réfléchit...</p>}
-      {isAIStreaming && (
-        <button onClick={stopCurrentStreaming}>
+    </div>
+  )
+}
+```
           Arrêter la génération
         </button>
       )}

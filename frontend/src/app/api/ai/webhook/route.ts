@@ -21,7 +21,18 @@ function verifyWebhookSecret(request: NextRequest): boolean {
 const webhookSchema = z.object({
   messageId: z.string().optional(),
   conversationId: z.string().optional(),
-  type: z.enum(["message", "objective_start", "objective_step", "objective_complete"]), // Types pour génération progressive uniquement
+  type: z.enum([
+    "message", 
+    "objective_start", 
+    "objective_step", 
+    "objective_complete",
+    // Nouveaux types pour modifications
+    "objective_update",  // Mise à jour des métadonnées
+    "objective_update_complete", // Fin de mise à jour
+    "node_add",         // Ajout d'un nouveau node
+    "node_update",      // Modification d'un node existant
+    "node_delete"       // Suppression d'un node
+  ]),
   content: z.string().optional(), // Contenu du message (si type = "message")
   isFinal: z.boolean().optional().default(false), // L'IA décide si c'est son dernier message
   objectiveMetadata: z.object({ // Métadonnées de l'objectif (si type = "objective_start")
@@ -289,6 +300,211 @@ export async function POST(request: NextRequest) {
           }
         )
       }
+    } else if (type === "objective_update" && objectiveMetadata) {
+      // Mise à jour des métadonnées d'un objectif existant
+      console.log("[Webhook] Mise à jour de l'objectif")
+      
+      const objectiveId = conversation.currentObjectiveId || conversation.objectiveId
+      if (objectiveId) {
+        const { ObjectId } = await import("mongodb")
+        
+        await db.collection("objectives").updateOne(
+          { _id: new ObjectId(objectiveId) },
+          {
+            $set: {
+              ...objectiveMetadata,
+              status: "generating",
+              updatedAt: new Date()
+            }
+          }
+        )
+        
+        await db.collection("conversations").updateOne(
+          { _id: conversationId },
+          {
+            $set: {
+              status: "updating_objective"
+            }
+          }
+        )
+      }
+    } else if (type === "node_add" && step) {
+      // Ajout d'un nouveau node à l'objectif existant
+      console.log("[Webhook] Ajout d'un node:", step.title)
+      
+      const objectiveId = conversation.currentObjectiveId || conversation.objectiveId
+      if (objectiveId) {
+        const { ObjectId } = await import("mongodb")
+        
+        // Ajouter le nouveau node
+        await db.collection("objectives").updateOne(
+          { _id: new ObjectId(objectiveId) },
+          {
+            $push: {
+              "skillTree.nodes": {
+                ...step,
+                completed: false,
+                unlocked: !step.dependencies || step.dependencies.length === 0
+              }
+            },
+            $set: {
+              updatedAt: new Date()
+            }
+          }
+        )
+        
+        // Ajouter les edges si nécessaire
+        if (step.dependencies && step.dependencies.length > 0) {
+          const edges = step.dependencies.map(depId => ({
+            id: `edge-${depId}-${step.id}`,
+            source: depId,
+            target: step.id
+          }))
+          
+          await db.collection("objectives").updateOne(
+            { _id: new ObjectId(objectiveId) },
+            {
+              $push: {
+                "skillTree.edges": { $each: edges }
+              }
+            }
+          )
+        }
+      }
+    } else if (type === "node_update" && step) {
+      // Modification d'un node existant
+      console.log("[Webhook] Mise à jour du node:", step.id)
+      
+      const objectiveId = conversation.currentObjectiveId || conversation.objectiveId
+      if (objectiveId) {
+        const { ObjectId } = await import("mongodb")
+        
+        // Récupérer l'objectif actuel
+        const objective = await db.collection("objectives").findOne({
+          _id: new ObjectId(objectiveId)
+        })
+        
+        if (objective && objective.skillTree) {
+          // Mettre à jour le node
+          const updatedNodes = objective.skillTree.nodes.map(node => {
+            if (node.id === step.id) {
+              return { ...node, ...step }
+            }
+            return node
+          })
+          
+          // Mettre à jour les edges si les dépendances ont changé
+          let updatedEdges = objective.skillTree.edges || []
+          if (step.dependencies) {
+            // Supprimer les anciens edges pour ce node
+            updatedEdges = updatedEdges.filter(edge => edge.target !== step.id)
+            // Ajouter les nouveaux edges
+            const newEdges = step.dependencies.map(depId => ({
+              id: `edge-${depId}-${step.id}`,
+              source: depId,
+              target: step.id
+            }))
+            updatedEdges = [...updatedEdges, ...newEdges]
+          }
+          
+          await db.collection("objectives").updateOne(
+            { _id: new ObjectId(objectiveId) },
+            {
+              $set: {
+                "skillTree.nodes": updatedNodes,
+                "skillTree.edges": updatedEdges,
+                updatedAt: new Date()
+              }
+            }
+          )
+        }
+      }
+    } else if (type === "node_delete" && step) {
+      // Suppression d'un node
+      console.log("[Webhook] Suppression du node:", step.id)
+      
+      const objectiveId = conversation.currentObjectiveId || conversation.objectiveId
+      if (objectiveId) {
+        const { ObjectId } = await import("mongodb")
+        
+        // Récupérer l'objectif actuel
+        const objective = await db.collection("objectives").findOne({
+          _id: new ObjectId(objectiveId)
+        })
+        
+        if (objective && objective.skillTree) {
+          // Supprimer le node
+          const updatedNodes = objective.skillTree.nodes.filter(
+            node => node.id !== step.id
+          )
+          
+          // Supprimer les edges liés
+          const updatedEdges = (objective.skillTree.edges || []).filter(
+            edge => edge.source !== step.id && edge.target !== step.id
+          )
+          
+          // Mettre à jour les dépendances des autres nodes
+          const finalNodes = updatedNodes.map(node => {
+            if (node.dependencies && node.dependencies.includes(step.id)) {
+              return {
+                ...node,
+                dependencies: node.dependencies.filter(dep => dep !== step.id)
+              }
+            }
+            return node
+          })
+          
+          await db.collection("objectives").updateOne(
+            { _id: new ObjectId(objectiveId) },
+            {
+              $set: {
+                "skillTree.nodes": finalNodes,
+                "skillTree.edges": updatedEdges,
+                totalSteps: finalNodes.length,
+                updatedAt: new Date()
+              }
+            }
+          )
+        }
+      }
+    } else if (type === "objective_update_complete") {
+      // Fin de la mise à jour de l'objectif
+      console.log("[Webhook] Fin de mise à jour de l'objectif")
+      
+      const objectiveId = conversation.currentObjectiveId || conversation.objectiveId
+      if (objectiveId) {
+        const { ObjectId } = await import("mongodb")
+        
+        // Marquer l'objectif comme actif
+        const objective = await db.collection("objectives").findOneAndUpdate(
+          { _id: new ObjectId(objectiveId) },
+          {
+            $set: {
+              status: "active",
+              updatedAt: new Date()
+            }
+          },
+          { returnDocument: "after" }
+        )
+        
+        // Mettre à jour le statut de la conversation
+        await db.collection("conversations").updateOne(
+          { _id: conversationId },
+          {
+            $push: {
+              messages: {
+                role: "assistant",
+                content: encrypt(`Les modifications de votre parcours "${objective.value?.title}" sont terminées !`),
+                timestamp: new Date()
+              }
+            },
+            $set: {
+              status: "completed",
+              lastResponseAt: new Date()
+            }
+          }
+        )
+      }
     }
     
     // Notifier les clients connectés via le serveur WebSocket
@@ -358,6 +574,50 @@ export async function POST(request: NextRequest) {
       } else {
         console.error("[Webhook] Pas de currentObjectiveId trouvé dans la conversation!")
       }
+    } else if (type === "objective_update" && objectiveMetadata) {
+      console.log(`[Webhook] Notification WebSocket pour objective_update`)
+      const objectiveId = conversation.currentObjectiveId || conversation.objectiveId
+      await notifyWebSocket({
+        type: "objective_update_started",
+        objectiveId: objectiveId,
+        conversationId: conversationId,
+        metadata: objectiveMetadata,
+        message: `Mise à jour de votre parcours...`
+      })
+    } else if (type === "node_add" && step) {
+      console.log(`[Webhook] Notification WebSocket pour node_add: ${step.title}`)
+      await notifyWebSocket({
+        type: "node_added",
+        conversationId: conversationId,
+        node: step,
+        message: `Nouvelle étape ajoutée: ${step.title}`
+      })
+    } else if (type === "node_update" && step) {
+      console.log(`[Webhook] Notification WebSocket pour node_update: ${step.id}`)
+      await notifyWebSocket({
+        type: "node_updated",
+        conversationId: conversationId,
+        nodeId: step.id,
+        updates: step,
+        message: `Étape modifiée: ${step.title || step.id}`
+      })
+    } else if (type === "node_delete" && step) {
+      console.log(`[Webhook] Notification WebSocket pour node_delete: ${step.id}`)
+      await notifyWebSocket({
+        type: "node_deleted",
+        conversationId: conversationId,
+        nodeId: step.id,
+        message: `Étape supprimée`
+      })
+    } else if (type === "objective_update_complete") {
+      console.log(`[Webhook] Notification WebSocket pour objective_update_complete`)
+      const objectiveId = conversation.currentObjectiveId || conversation.objectiveId
+      await notifyWebSocket({
+        type: "objective_update_completed",
+        objectiveId: objectiveId,
+        conversationId: conversationId,
+        message: `Modifications terminées !`
+      })
     } else if (type === "message") {
       await notifyWebSocket({
         type: "message",

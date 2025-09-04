@@ -83,10 +83,8 @@ export default function ObjectivesPage() {
     if (currentObjective || messages.length > 0) {
       setIsInitializing(false)
       
-      // Si on a un objectif avec un arbre, passer directement à la vue tree
-      if (currentObjective?.skillTree?.nodes && currentObjective.skillTree.nodes.length > 0) {
-        setActiveView("tree")
-      }
+      // NE PAS passer automatiquement à la vue tree
+      // L'utilisateur décide ou on attend une modification d'objectif
       return
     }
     
@@ -107,10 +105,10 @@ export default function ObjectivesPage() {
           setConversationId(currentObjective.conversationId)
         }
         
-        // Décider de la vue en fonction du contenu de l'objectif
+        // Charger la conversation mais NE PAS changer la vue automatiquement
         if (currentObjective.skillTree && currentObjective.skillTree.nodes && currentObjective.skillTree.nodes.length > 0) {
-          // Si on a un arbre avec des nodes, afficher l'arbre
-          console.log("[ObjectivesPage] Objectif avec arbre - affichage de l'arbre")
+          // Si on a un arbre avec des nodes, charger la conversation
+          console.log("[ObjectivesPage] Objectif avec arbre - chargement de la conversation")
           loadConversationForObjective(currentObjective)
         } else {
           // Sinon, afficher le chat
@@ -129,6 +127,15 @@ export default function ObjectivesPage() {
         setActiveView("chat")
       }
   }, [currentObjective?.id, currentObjective?.isTemporary]) // eslint-disable-line react-hooks/exhaustive-deps
+  
+  // Détecter les modifications d'objectif pour changer de vue
+  useEffect(() => {
+    if (currentObjective?.isGenerating && currentObjective?.status === 'generating') {
+      // Si l'objectif est en cours de génération/modification, passer à la vue arbre
+      console.log("[ObjectivesPage] Objectif en cours de modification - passage à la vue arbre")
+      setTimeout(() => setActiveView("tree"), 300)
+    }
+  }, [currentObjective?.isGenerating, currentObjective?.status])
   
   const loadConversationMessages = async (conversationId: string) => {
     try {

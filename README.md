@@ -6,35 +6,33 @@ AI-Powered Goal Achievement Platform - Transform your aspirations into achievabl
 
 ```
 GoalCraftAI/
-├── frontend/                 # Next.js Frontend Application
+├── frontend/                 # Next.js Application (Frontend + API)
 │   ├── src/
-│   │   └── app/             # Next.js App Router
-│   │       ├── layout.tsx   # Root layout with SEO optimizations
-│   │       ├── page.tsx     # Homepage
-│   │       └── globals.css  # Global styles
+│   │   ├── app/             # Next.js App Router
+│   │   │   ├── api/         # API Routes (backend)
+│   │   │   │   ├── ai/      # AI endpoints (chat, webhook)
+│   │   │   │   ├── auth/    # NextAuth endpoints
+│   │   │   │   └── conversations/ # CRUD conversations
+│   │   │   ├── (pages)/     # Application pages
+│   │   │   └── layout.tsx   # Root layout
+│   │   ├── components/      # React components
+│   │   ├── hooks/           # Custom React hooks
+│   │   ├── stores/          # Zustand stores
+│   │   └── lib/             # Utilities and configs
 │   ├── next.config.js       # Next.js configuration
-│   ├── tailwind.config.ts   # Tailwind CSS configuration
-│   ├── postcss.config.js    # PostCSS configuration
+│   ├── tailwind.config.ts   # Tailwind CSS v4
 │   ├── tsconfig.json        # TypeScript configuration
-│   └── package.json         # Frontend dependencies
+│   └── package.json         # Dependencies
 │
-├── backend/                  # Express.js Backend API
-│   ├── src/
-│   │   ├── controllers/     # Route controllers
-│   │   ├── middleware/      # Express middleware
-│   │   ├── models/          # Mongoose models
-│   │   │   └── User.ts      # User model with authentication
-│   │   ├── routes/          # API routes
-│   │   ├── services/        # Business logic services
-│   │   ├── utils/           # Utility functions
-│   │   └── server.ts        # Express server setup
-│   ├── tsconfig.json        # TypeScript configuration
-│   ├── package.json         # Backend dependencies
-│   └── .env.example         # Environment variables template
+├── docs/                     # Documentation
+│   ├── webhook-api.md       # API Webhook documentation
+│   ├── N8N_INTEGRATION.md   # n8n workflow integration
+│   └── WEBSOCKET_DOCUMENTATION.md # WebSocket architecture
 │
-└── shared/                   # Shared TypeScript Types
-    └── types/
-        └── index.ts         # Common interfaces and types
+├── ws-server/               # WebSocket Server
+│   └── server.js            # Standalone WS server (port 3002)
+│
+└── CLAUDE.md                # Instructions for Claude AI
 ```
 
 ## 🚀 Getting Started
@@ -53,58 +51,75 @@ GoalCraftAI/
    cd GoalCraftAI
    ```
 
-2. **Install Frontend Dependencies**
+2. **Install Dependencies**
    ```bash
    cd frontend
-   npm install
+   npm install --legacy-peer-deps  # Required for React 19
    ```
 
-3. **Install Backend Dependencies**
-   ```bash
-   cd ../backend
-   npm install
-   ```
-
-4. **Environment Configuration**
+3. **Environment Configuration**
    
-   Backend:
-   ```bash
-   cd backend
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-   
-   Frontend:
+   Create `.env.local` in frontend:
    ```bash
    cd frontend
    cp .env.local.example .env.local
    # Edit .env.local with your configuration
    ```
-
-5. **Start Development Servers**
    
-   Backend (Terminal 1):
-   ```bash
-   cd backend
-   npm run dev
+   Required variables:
+   ```env
+   # MongoDB
+   MONGODB_URI=mongodb+srv://...
+   
+   # NextAuth
+   NEXTAUTH_SECRET=...
+   NEXTAUTH_URL=http://localhost:3000
+   
+   # OAuth (optional)
+   GOOGLE_CLIENT_ID=...
+   GOOGLE_CLIENT_SECRET=...
+   
+   # n8n Webhook
+   N8N_WEBHOOK_SECRET=...
+   
+   # Encryption
+   ENCRYPTION_KEY=...
    ```
+
+4. **Start Development Servers**
    
-   Frontend (Terminal 2):
+   Next.js App (Terminal 1):
    ```bash
    cd frontend
    npm run dev
    ```
+   
+   WebSocket Server (Terminal 2):
+   ```bash
+   cd ws-server
+   node server.js
+   ```
 
 ## 🛠️ Development
 
-### Frontend (Next.js)
+### Tech Stack
 
+**Frontend:**
 - **Framework**: Next.js 15 with App Router
-- **Styling**: Tailwind CSS 4
+- **React**: Version 19 (latest)
+- **Styling**: Tailwind CSS v4 + shadcn/ui (canary)
 - **State Management**: Zustand
 - **Animations**: Framer Motion
 - **Icons**: Lucide React
 - **TypeScript**: Full type safety
+
+**Backend (API Routes):**
+- **Runtime**: Next.js API Routes
+- **Database**: MongoDB Atlas (native driver)
+- **Authentication**: NextAuth v5 
+- **Encryption**: AES-256-GCM for messages
+- **AI Integration**: n8n workflows + OpenAI
+- **Real-time**: WebSocket server (port 3002)
 
 **Available Scripts:**
 - `npm run dev` - Start development server
@@ -112,30 +127,6 @@ GoalCraftAI/
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 - `npm run type-check` - TypeScript type checking
-
-### Backend (Express.js)
-
-- **Framework**: Express.js with TypeScript
-- **Database**: MongoDB with Mongoose
-- **Authentication**: JWT with bcryptjs
-- **AI Integration**: OpenAI API
-- **CORS**: Configured for frontend integration
-
-**Available Scripts:**
-- `npm run dev` - Start development server with hot reload
-- `npm run build` - Build TypeScript to JavaScript
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run type-check` - TypeScript type checking
-
-### Shared Types
-
-Common TypeScript interfaces and types shared between frontend and backend:
-- User management types
-- Goal and step definitions
-- API response formats
-- AI integration types
-- Progress tracking interfaces
 
 ## 🔧 Configuration
 

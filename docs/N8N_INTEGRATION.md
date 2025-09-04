@@ -8,9 +8,9 @@ L'agent IA peut avoir une **conversation complète** avec l'utilisateur avant de
 2. **Phase Analyse** : L'agent comprend le besoin et affine
 3. **Phase Génération** : L'agent crée l'objectif structuré final
 
-## 📥 Webhook n8n
+## 📥 Communication avec n8n
 
-**URL** : `https://n8n.larefonte.store/webhook/333e2809-84c9-4bf7-bc9b-3c5c7aaceb49`
+**Note** : Pour la documentation complète et à jour du système webhook, voir [`webhook-api.md`](./webhook-api.md)
 
 ### Requête envoyée à n8n
 
@@ -42,61 +42,17 @@ L'agent IA peut avoir une **conversation complète** avec l'utilisateur avant de
 }
 ```
 
-### Réponse attendue de n8n
+### Réponses n8n via Webhook
 
-#### 1. **Réponse de discussion** (pas encore d'objectif)
-```json
-{
-  "response": "Pour mieux vous aider, pouvez-vous me dire combien de temps par jour vous pouvez consacrer à la pratique ?",
-  "action": "chat",
-  "metadata": {
-    "intent": "gathering_info",
-    "confidence": 0.95
-  }
-}
-```
+n8n communique maintenant via webhook POST avec différents types d'événements :
+- `message` : Réponse chat simple
+- `objective_start` : Début de génération d'objectif
+- `objective_step` : Ajout d'étape pendant la génération
+- `objective_complete` : Fin de génération
+- `node_add`, `node_update`, `node_delete` : Modifications d'objectif
+- `objective_update_complete` : Fin des modifications
 
-#### 2. **Réponse avec génération d'objectif** (après discussion)
-```json
-{
-  "response": "Parfait ! J'ai créé un parcours personnalisé pour apprendre la guitare en 3 mois avec 30 minutes par jour.",
-  "action": "create_objective",
-  "objective": {
-    "title": "Apprendre la guitare acoustique",
-    "description": "Parcours progressif pour maîtriser les bases de la guitare",
-    "category": "music",
-    "difficulty": "beginner",
-    "estimatedDuration": "3 mois",
-    "skillTree": {
-      "nodes": [
-        {
-          "id": "node-1",
-          "title": "Tenir correctement la guitare",
-          "description": "Apprendre la posture et la position des mains",
-          "type": "main",
-          "xpReward": 20,
-          "estimatedTime": "1 heure",
-          "dependencies": [],
-          "position": { "x": 100, "y": 100 }
-        },
-        // ... autres nodes
-      ],
-      "edges": [
-        {
-          "id": "edge-1",
-          "source": "node-1",
-          "target": "node-2"
-        }
-      ]
-    }
-  },
-  "metadata": {
-    "generationMethod": "gpt-4",
-    "confidence": 0.98,
-    "tags": ["musique", "débutant", "guitare"]
-  }
-}
-```
+**Voir [`webhook-api.md`](./webhook-api.md) pour les exemples détaillés de chaque type.**
 
 ## 🔄 Flux de Conversation Type
 
