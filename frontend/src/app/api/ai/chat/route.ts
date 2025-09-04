@@ -195,7 +195,45 @@ export async function POST(request: NextRequest) {
       console.log("[n8n] ID de l'objectif:", webhookBody.existingObjectiveId)
     }
     
-    // Envoyer à n8n sans attendre la réponse
+    // Fonction pour envoyer une erreur via WebSocket
+    const sendErrorToClient = async (errorMessage: string) => {
+      try {
+        // 1. Sauvegarder dans MongoDB
+        await db.collection("conversations").updateOne(
+          { _id: conversation._id },
+          {
+            $push: {
+              messages: {
+                role: "assistant",
+                content: encrypt(errorMessage),
+                timestamp: new Date(),
+                isError: true
+              }
+            }
+          }
+        )
+        
+        // 2. Notifier immédiatement via WebSocket
+        await fetch('http://localhost:3002/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversationId: conversation._id,
+            data: {
+              type: "message",
+              content: errorMessage,
+              isFinal: true,
+              isError: true
+            }
+          })
+        })
+        console.log("[Erreur] Message d'erreur envoyé au client:", errorMessage)
+      } catch (error) {
+        console.error("[Erreur] Impossible d'envoyer le message d'erreur:", error)
+      }
+    }
+    
+    // Envoyer à n8n et gérer les erreurs immédiatement
     fetch(targetWebhook, {
         method: "POST",
         headers: {
@@ -210,75 +248,15 @@ export async function POST(request: NextRequest) {
           const responseText = await response.text()
           console.error("[n8n] Réponse du serveur:", responseText)
           
-          // Ajouter un message d'erreur dans la conversation
-          const errorMessage = "🔧 Notre système est temporairement indisponible. Nous travaillons activement à rétablir le service. Veuillez réessayer dans quelques instants."
-          await db.collection("conversations").updateOne(
-            { _id: conversation._id },
-            {
-              $push: {
-                messages: {
-                  role: "assistant",
-                  content: encrypt(errorMessage),
-                  timestamp: new Date(),
-                  isError: true
-                }
-              }
-            }
-          )
-          
-          // Notifier via WebSocket
-          try {
-            await fetch('http://localhost:3002/notify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                conversationId: conversation._id,
-                type: "message",
-                content: errorMessage,
-                isFinal: true,
-                isError: true
-              })
-            })
-          } catch (wsError) {
-            console.error("[WS] Erreur notification:", wsError)
-          }
+          // Envoyer le message d'erreur immédiatement
+          await sendErrorToClient("🔧 Notre système est temporairement indisponible. Nous travaillons activement à rétablir le service. Veuillez réessayer dans quelques instants.")
         } else if (!response.ok) {
           console.error("[n8n] Erreur HTTP:", response.status, response.statusText)
           const responseText = await response.text()
           console.error("[n8n] Réponse du serveur:", responseText)
           
-          // Ajouter un message d'erreur dans la conversation
-          const errorMessage = "⚠️ Une erreur technique s'est produite. Notre équipe a été notifiée. Veuillez réessayer ou contactez le support si le problème persiste."
-          await db.collection("conversations").updateOne(
-            { _id: conversation._id },
-            {
-              $push: {
-                messages: {
-                  role: "assistant",
-                  content: encrypt(errorMessage),
-                  timestamp: new Date(),
-                  isError: true
-                }
-              }
-            }
-          )
-          
-          // Notifier via WebSocket
-          try {
-            await fetch('http://localhost:3002/notify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                conversationId: conversation._id,
-                type: "message",
-                content: errorMessage,
-                isFinal: true,
-                isError: true
-              })
-            })
-          } catch (wsError) {
-            console.error("[WS] Erreur notification:", wsError)
-          }
+          // Envoyer le message d'erreur immédiatement
+          await sendErrorToClient("⚠️ Une erreur technique s'est produite. Notre équipe a été notifiée. Veuillez réessayer ou contactez le support si le problème persiste.")
         } else {
           console.log("[n8n] Webhook envoyé avec succès à l'agent:", hasExistingObjective ? "Modification" : "Création")
         }
@@ -287,42 +265,8 @@ export async function POST(request: NextRequest) {
         console.error("[n8n] Type d'erreur:", error.name)
         console.error("[n8n] Message d'erreur:", error.message)
         
-        // Ajouter un message d'erreur dans la conversation
-        try {
-          const errorMessage = "🌐 Impossible de contacter notre service IA. Vérifiez votre connexion internet ou réessayez dans quelques instants."
-          await db.collection("conversations").updateOne(
-            { _id: conversation._id },
-            {
-              $push: {
-                messages: {
-                  role: "assistant",
-                  content: encrypt(errorMessage),
-                  timestamp: new Date(),
-                  isError: true
-                }
-              }
-            }
-          )
-          
-          // Notifier via WebSocket
-          try {
-            await fetch('http://localhost:3002/notify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                conversationId: conversation._id,
-                type: "message",
-                content: errorMessage,
-                isFinal: true,
-                isError: true
-              })
-            })
-          } catch (wsError) {
-            console.error("[WS] Erreur notification:", wsError)
-          }
-        } catch (dbError) {
-          console.error("[n8n] Erreur lors de l'ajout du message d'erreur:", dbError)
-        }
+        // Envoyer le message d'erreur immédiatement
+        await sendErrorToClient("🌐 Impossible de contacter notre service IA. Vérifiez votre connexion internet ou réessayez dans quelques instants.")
       })
     
     // Retourner juste le strict minimum - le reste arrive par WebSocket

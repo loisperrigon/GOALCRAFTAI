@@ -74,7 +74,14 @@
       "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\lib/**)",
       "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\hooks/**)",
       "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\hooks/**)",
-      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\ai\\chat/**)"
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\ai\\chat/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\ai\\webhook/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\hooks/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\ai\\chat/**)",
+      "Read(/C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\hooks/**)"
     ],
     "deny": [],
     "ask": []

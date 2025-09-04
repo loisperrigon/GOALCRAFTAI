@@ -62,6 +62,20 @@ export function useAIChatWS(options: UseAIChatOptions = {}) {
             const newMessages = [...prev]
             const lastMessage = newMessages[newMessages.length - 1]
             
+            // Vérifier si on a déjà ce message d'erreur (éviter les doublons)
+            if (data.isError) {
+              const isDuplicate = newMessages.some(msg => 
+                msg.role === "assistant" && 
+                msg.content === data.content && 
+                msg.isError === true
+              )
+              
+              if (isDuplicate) {
+                console.log("[WS] Message d'erreur dupliqué ignoré")
+                return newMessages // Ignorer le doublon
+              }
+            }
+            
             // Si c'est un message d'erreur ou si le dernier message n'est pas de l'assistant
             if (data.isError || !lastMessage || lastMessage.role !== "assistant") {
               // Ajouter un nouveau message
