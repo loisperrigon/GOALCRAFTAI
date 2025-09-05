@@ -223,6 +223,14 @@
     }
   },
   "auth": {
+    "title": "Iniciar sesión - GoalCraftAI",
+    "description": "Inicia sesión para comenzar a alcanzar tus objetivos con la ayuda de IA",
+    "benefits": {
+      "title": "¿Por qué GoalCraftAI?",
+      "item1": "Planificación de objetivos con IA",
+      "item2": "Seguimiento de progreso gamificado",
+      "item3": "Coaching personalizado"
+    },
     "login": {
       "title": "Iniciar sesión",
       "email": "Correo electrónico",

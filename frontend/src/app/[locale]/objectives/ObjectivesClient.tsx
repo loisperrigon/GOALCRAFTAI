@@ -143,7 +143,7 @@ export default function ObjectivesClient({ translations: t, locale }: Objectives
       setHasStartedUpdate(true)
       
       // Passer à la vue arbre uniquement si on a déjà des nodes (mise à jour) ou si on génère
-      if (currentObjective?.skillTree?.nodes?.length > 0 || currentObjective?.status === 'generating') {
+      if ((currentObjective?.skillTree?.nodes?.length ?? 0) > 0 || currentObjective?.status === 'generating') {
         setTimeout(() => setActiveView("tree"), 300)
       }
     }
@@ -413,7 +413,7 @@ export default function ObjectivesClient({ translations: t, locale }: Objectives
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                    placeholder={isLoading ? t.chat?.thinking || "En attente de la réponse..." : t.chat?.placeholder || "Décrivez votre objectif..."}
+                    placeholder={isLoading ? t?.chat?.thinking || "En attente de la réponse..." : t?.chat?.placeholder || "Décrivez votre objectif..."}
                     className="flex-1 bg-background/50 h-12 md:h-14 text-sm md:text-base px-4 md:px-6"
                     disabled={isLoading}
                   />
@@ -423,7 +423,7 @@ export default function ObjectivesClient({ translations: t, locale }: Objectives
                     className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-4 md:px-8 h-12 md:h-14 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="h-5 w-5 md:mr-2" />
-                    <span className="hidden md:inline">{t.chat?.send || "Envoyer"}</span>
+                    <span className="hidden md:inline">{t?.chat?.send || "Envoyer"}</span>
                   </GameButton>
                 </div>
               </div>

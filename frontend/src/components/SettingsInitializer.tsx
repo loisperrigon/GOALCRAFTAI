@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useSettingsStore } from '@/stores/settings-store'
+import { Toaster } from 'react-hot-toast'
 
 export default function SettingsInitializer() {
   const { settings } = useSettingsStore()
@@ -45,5 +46,5 @@ export default function SettingsInitializer() {
     }
   }, [settings.theme, settings.accentColor])
   
-  return null
+  return <Toaster position="top-center" />
 }

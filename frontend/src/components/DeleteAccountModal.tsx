@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle, Trash2 } from "lucide-react"
-import { useToast } from "@/hooks/useToast"
+import toast from 'react-hot-toast'
 
 interface DeleteAccountModalProps {
   isOpen: boolean
@@ -23,7 +23,6 @@ export default function DeleteAccountModal({ isOpen, onClose }: DeleteAccountMod
   const [isDeleting, setIsDeleting] = useState(false)
   const [confirmText, setConfirmText] = useState("")
   const [agreed, setAgreed] = useState(false)
-  const { toast } = useToast()
   
   const canDelete = confirmText === "SUPPRIMER" && agreed
   

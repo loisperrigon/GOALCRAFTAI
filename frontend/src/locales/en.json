@@ -223,6 +223,14 @@
     }
   },
   "auth": {
+    "title": "Sign In - GoalCraftAI",
+    "description": "Sign in to start achieving your goals with AI-powered guidance",
+    "benefits": {
+      "title": "Why GoalCraftAI?",
+      "item1": "AI-powered goal planning",
+      "item2": "Gamified progress tracking",
+      "item3": "Personalized coaching"
+    },
     "login": {
       "title": "Login",
       "email": "Email",

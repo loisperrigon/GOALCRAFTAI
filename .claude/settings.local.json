@@ -13,7 +13,11 @@
       "Bash(else echo \"✗ $dir/page.tsx MANQUANT\")",
       "Bash(fi)",
       "Bash(done)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }

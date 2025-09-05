@@ -223,6 +223,14 @@
     }
   },
   "auth": {
+    "title": "Connexion - GoalCraftAI",
+    "description": "Connectez-vous pour commencer à atteindre vos objectifs avec l'aide de l'IA",
+    "benefits": {
+      "title": "Pourquoi GoalCraftAI ?",
+      "item1": "Planification d'objectifs avec IA",
+      "item2": "Suivi de progression gamifié",
+      "item3": "Coaching personnalisé"
+    },
     "login": {
       "title": "Connexion",
       "email": "Email",

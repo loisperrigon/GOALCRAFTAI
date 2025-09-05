@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useStripeCheckout, useSubscription } from '@/hooks/use-subscription'
 import { signOut } from "next-auth/react"
 import AuthModal from "@/components/AuthModal"
 import DeleteAccountModal from "@/components/DeleteAccountModal"
@@ -13,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
 import AuthLayout from "@/components/AuthLayout"
 import PremiumBadge from "@/components/PremiumBadge"
-import { useToast } from "@/hooks/useToast"
+import toast from 'react-hot-toast'
 import { useRouter } from "next/navigation"
 import { useUserStore } from "@/stores/user-store"
 import { useObjectiveStore } from "@/stores/objective-store"
@@ -49,11 +50,13 @@ import {
 } from "lucide-react"
 
 export default function ProfilePage() {
-  const { toast } = useToast()
   const router = useRouter()
+  const { createCheckout, openPortal } = useStripeCheckout()
+  const { daysUntilRenewal, subscriptionStatus } = useSubscription()
   const [isEditing, setIsEditing] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isLoadingStripe, setIsLoadingStripe] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   
   // Récupérer les données des stores
@@ -683,16 +686,43 @@ export default function ProfilePage() {
                     <Star className="h-5 w-5 text-blue-400" />
                     <h3 className="font-semibold">Plan Starter</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm text-muted-foreground mb-2">
                     Vous bénéficiez de 10 objectifs et d'étapes illimitées
                   </p>
-                  <Button 
-                    className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
-                    onClick={() => router.push("/pricing")}
-                  >
-                    Passer à Pro
-                    <ChevronRight className="h-4 w-4 ml-2" />
-                  </Button>
+                  {daysUntilRenewal && (
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Renouvellement dans {daysUntilRenewal} jours
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    <Button 
+                      className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
+                      onClick={async () => {
+                        setIsLoadingStripe(true)
+                        try {
+                          await createCheckout('pro', 'monthly')
+                        } catch (error) {
+                          console.error('Checkout error:', error)
+                        } finally {
+                          setIsLoadingStripe(false)
+                        }
+                      }}
+                      disabled={isLoadingStripe}
+                    >
+                      Passer à Pro
+                      <ChevronRight className="h-4 w-4 ml-2" />
+                    </Button>
+                    {user?.stripeCustomerId && (
+                      <Button 
+                        variant="outline"
+                        className="w-full"
+                        onClick={openPortal}
+                        disabled={isLoadingStripe}
+                      >
+                        Gérer mon abonnement
+                      </Button>
+                    )}
+                  </div>
                 </Card>
               )}
               
@@ -702,13 +732,30 @@ export default function ProfilePage() {
                     <Crown className="h-5 w-5 text-yellow-400" />
                     <h3 className="font-semibold">Plan Pro</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm text-muted-foreground mb-2">
                     Vous avez accès à toutes les fonctionnalités premium
                   </p>
-                  <Badge className="w-full justify-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
-                    <Zap className="h-3 w-3 mr-1" />
-                    Accès illimité
-                  </Badge>
+                  {daysUntilRenewal && (
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Renouvellement dans {daysUntilRenewal} jours
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    <Badge className="w-full justify-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+                      <Zap className="h-3 w-3 mr-1" />
+                      Accès illimité
+                    </Badge>
+                    {user?.stripeCustomerId && (
+                      <Button 
+                        variant="outline"
+                        className="w-full"
+                        onClick={openPortal}
+                        disabled={isLoadingStripe}
+                      >
+                        Gérer mon abonnement
+                      </Button>
+                    )}
+                  </div>
                 </Card>
               )}
               

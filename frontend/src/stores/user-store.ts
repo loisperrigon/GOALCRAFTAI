@@ -23,6 +23,14 @@ export interface User {
   completedObjectives?: number;
   currentStreak?: number;
   longestStreak?: number;
+  
+  // Stripe
+  stripeCustomerId?: string;
+  subscriptionId?: string;
+  subscriptionStatus?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid' | 'none';
+  currentPeriodEnd?: Date;
+  subscriptionSyncedAt?: Date;
+  subscriptionUncertain?: boolean;
 }
 
 export interface Badge {
@@ -69,6 +77,17 @@ interface UserState {
   unlockBadge: (badge: Badge) => void;
   setPremiumType: (type: PremiumType, expiresAt?: Date) => void;
   getPremiumLimits: () => { maxObjectives: number; maxStepsPerObjective: number; features: string[] };
+  
+  // Stripe
+  updateSubscription: (data: {
+    stripeCustomerId?: string;
+    subscriptionId?: string;
+    subscriptionStatus?: string;
+    currentPeriodEnd?: Date;
+    plan?: PremiumType;
+  }) => void;
+  syncSubscription: (email: string) => Promise<void>;
+  needsSubscriptionSync: () => boolean;
 
   // Helpers
   calculateLevel: (xp: number) => number;
@@ -362,6 +381,89 @@ export const useUserStore = create<UserState>()(
         const xpNeededForLevel = user.xpToNextLevel - currentLevelXP;
 
         return (xpInCurrentLevel / xpNeededForLevel) * 100;
+      },
+      
+      updateSubscription: (data) => {
+        const { user } = get();
+        if (!user) return;
+        
+        // Déterminer le plan depuis le status
+        let premiumType = user.premiumType;
+        if (data.plan) {
+          premiumType = data.plan;
+        } else if (data.subscriptionStatus === 'canceled' || data.subscriptionStatus === 'none') {
+          premiumType = 'free';
+        }
+        
+        set({
+          user: {
+            ...user,
+            stripeCustomerId: data.stripeCustomerId || user.stripeCustomerId,
+            subscriptionId: data.subscriptionId || user.subscriptionId,
+            subscriptionStatus: data.subscriptionStatus as any || user.subscriptionStatus,
+            currentPeriodEnd: data.currentPeriodEnd || user.currentPeriodEnd,
+            premiumType,
+            subscriptionSyncedAt: new Date(),
+            subscriptionUncertain: false,
+          },
+        });
+      },
+      
+      syncSubscription: async (email: string) => {
+        try {
+          const response = await fetch('/api/stripe/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+          
+          if (!response.ok) throw new Error('Sync failed');
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            get().updateSubscription({
+              stripeCustomerId: data.data.customerId,
+              subscriptionId: data.data.subscriptionId,
+              subscriptionStatus: data.data.status,
+              currentPeriodEnd: data.data.currentPeriodEnd ? new Date(data.data.currentPeriodEnd) : undefined,
+              plan: data.data.plan,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to sync subscription:', error);
+          // Marquer comme incertain
+          const { user } = get();
+          if (user) {
+            set({
+              user: { ...user, subscriptionUncertain: true },
+            });
+          }
+        }
+      },
+      
+      needsSubscriptionSync: () => {
+        const { user } = get();
+        if (!user) return false;
+        
+        // Sync nécessaire si:
+        // 1. Pas de dernière sync
+        if (!user.subscriptionSyncedAt) return true;
+        
+        // 2. Dernière sync > 24h
+        const daysSinceSync = (Date.now() - new Date(user.subscriptionSyncedAt).getTime()) / (1000 * 60 * 60 * 24);
+        if (daysSinceSync > 1) return true;
+        
+        // 3. Marqué comme incertain
+        if (user.subscriptionUncertain) return true;
+        
+        // 4. Près de l'expiration (< 3 jours)
+        if (user.currentPeriodEnd) {
+          const daysUntilExpiry = (new Date(user.currentPeriodEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+          if (daysUntilExpiry < 3) return true;
+        }
+        
+        return false;
       },
     }),
     {

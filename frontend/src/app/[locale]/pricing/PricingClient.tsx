@@ -5,6 +5,9 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { AuthModal } from '@/components/lazy'
+import { useStripeCheckout } from '@/hooks/use-subscription'
+import { useUserStore } from '@/stores/user-store'
+import toast from 'react-hot-toast'
 import { 
   Check, 
   X, 
@@ -39,7 +42,9 @@ export default function PricingClient({ translations: t }: PricingClientProps) {
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 59 })
   const [activeUsers, setActiveUsers] = useState(1247)
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { user, isAuthenticated } = useUserStore()
+  const { createCheckout } = useStripeCheckout()
+  const [isLoading, setIsLoading] = useState(false)
   
   const monthlyPrice = 9.99
   const yearlyPrice = 89.99 // 25% de réduction
@@ -71,33 +76,35 @@ export default function PricingClient({ translations: t }: PricingClientProps) {
     return () => clearInterval(interval)
   }, [])
 
-  // Vérifier si l'utilisateur est connecté (simulation)
-  useEffect(() => {
-    // En production, cela viendrait du contexte auth ou d'un store
-    const checkAuth = () => {
-      const token = localStorage.getItem('auth_token')
-      setIsAuthenticated(!!token)
-    }
-    checkAuth()
-  }, [])
+  // Plus besoin de cette vérification, on utilise le store
 
-  const handlePremiumClick = () => {
+  const handlePremiumClick = async (plan: 'starter' | 'pro') => {
     if (!isAuthenticated) {
       setShowAuthModal(true)
-    } else {
-      // Rediriger vers Stripe ou processus de paiement
-      console.log('Redirection vers Stripe...')
-      // window.location.href = '/api/stripe/checkout'
+      return
+    }
+    
+    // Si déjà abonné au même plan
+    if (user?.premiumType === plan) {
+      toast.info('Vous avez déjà ce plan')
+      return
+    }
+    
+    setIsLoading(true)
+    try {
+      await createCheckout(plan, billingPeriod)
+    } catch (error) {
+      console.error('Checkout error:', error)
+      toast.error('Erreur lors de la création de la session de paiement')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleAuthSuccess = () => {
-    setIsAuthenticated(true)
-    // Simuler le stockage du token
-    localStorage.setItem('auth_token', 'dummy_token')
-    // Après connexion réussie, continuer vers Stripe
-    console.log('Connexion réussie, redirection vers Stripe...')
-    // window.location.href = '/api/stripe/checkout'
+  const handleAuthSuccess = async () => {
+    // Après connexion réussie, on peut continuer vers Stripe
+    // Le composant va se re-render avec isAuthenticated = true
+    toast.success('Connexion réussie ! Vous pouvez maintenant choisir votre plan.')
   }
 
   return (
@@ -267,7 +274,8 @@ export default function PricingClient({ translations: t }: PricingClientProps) {
               <Button 
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg relative overflow-hidden group"
                 size="lg"
-                onClick={handlePremiumClick}
+                onClick={() => handlePremiumClick('starter')}
+                disabled={isLoading}
               >
                 <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
                 <Unlock className="h-4 w-4 mr-2" />
