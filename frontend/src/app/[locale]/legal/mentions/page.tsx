@@ -70,12 +70,12 @@ export default function MentionsPage() {
             <section>
               <h2 className="text-xl font-semibold mb-3">4. Propriété intellectuelle</h2>
               <p className="text-muted-foreground">
-                L'ensemble de ce site relève de la législation française et internationale sur le droit d'auteur 
+                L&apos;ensemble de ce site relève de la législation française et internationale sur le droit d&apos;auteur 
                 et la propriété intellectuelle. Tous les droits de reproduction sont réservés, y compris pour 
                 les documents téléchargeables et les représentations iconographiques et photographiques.
               </p>
               <p className="text-muted-foreground mt-2">
-                La reproduction de tout ou partie de ce site sur un support électronique quel qu'il soit est 
+                La reproduction de tout ou partie de ce site sur un support électronique quel qu&apos;il soit est 
                 formellement interdite sauf autorisation expresse du directeur de la publication.
               </p>
             </section>
@@ -84,8 +84,8 @@ export default function MentionsPage() {
               <h2 className="text-xl font-semibold mb-3">5. Protection des données personnelles</h2>
               <p className="text-muted-foreground">
                 Conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi 
-                « Informatique et Libertés » du 6 janvier 1978 modifiée, vous disposez d'un droit d'accès, 
-                de rectification, de suppression et d'opposition aux données vous concernant.
+                « Informatique et Libertés » du 6 janvier 1978 modifiée, vous disposez d&apos;un droit d&apos;accès, 
+                de rectification, de suppression et d&apos;opposition aux données vous concernant.
               </p>
               <p className="text-muted-foreground mt-2">
                 <strong>Délégué à la Protection des Données (DPO) :</strong>
@@ -99,7 +99,7 @@ export default function MentionsPage() {
             <section>
               <h2 className="text-xl font-semibold mb-3">6. Cookies</h2>
               <p className="text-muted-foreground">
-                Ce site utilise des cookies pour améliorer l'expérience utilisateur. En continuant à naviguer 
+                Ce site utilise des cookies pour améliorer l&apos;expérience utilisateur. En continuant à naviguer 
                 sur ce site, vous acceptez notre utilisation des cookies conformément à notre 
                 <Link href="/legal/privacy" className="text-purple-400 hover:text-purple-300 mx-1">
                   politique de confidentialité
@@ -125,13 +125,13 @@ export default function MentionsPage() {
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">8. Conditions d'utilisation</h2>
+              <h2 className="text-xl font-semibold mb-3">8. Conditions d&apos;utilisation</h2>
               <p className="text-muted-foreground">
-                L'utilisation de ce site implique l'acceptation pleine et entière des 
+                L'utilisation de ce site implique l&apos;acceptation pleine et entière des 
                 <Link href="/legal/terms" className="text-purple-400 hover:text-purple-300 mx-1">
-                  conditions générales d'utilisation
+                  conditions générales d&apos;utilisation
                 </Link>
-                décrites dans nos CGU. Ces conditions sont susceptibles d'être modifiées ou complétées 
+                décrites dans nos CGU. Ces conditions sont susceptibles d&apos;être modifiées ou complétées 
                 à tout moment.
               </p>
             </section>
@@ -140,7 +140,7 @@ export default function MentionsPage() {
               <h2 className="text-xl font-semibold mb-3">9. Litiges</h2>
               <p className="text-muted-foreground">
                 Les présentes mentions légales sont régies par le droit français. En cas de litige et 
-                après échec de toute tentative de recherche d'une solution amiable, les tribunaux français 
+                après échec de toute tentative de recherche d&apos;une solution amiable, les tribunaux français 
                 seront seuls compétents pour connaître de ce litige.
               </p>
             </section>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import ReactFlow, {
   Node,
   Edge,
@@ -25,15 +25,14 @@ import { useStreakStore } from '@/stores/streak-store'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Lock, CheckCircle2, Circle, Star, Zap, Trophy, RotateCcw, Save, Download, Layout, Move, Target } from 'lucide-react'
-import ObjectiveDetailModal from '@/components/ObjectiveDetailModal'
-import Confetti from '@/components/Confetti'
 import { useSound } from '@/hooks/useSound'
-import { SimpleStreakNotification } from '@/components/SimpleStreakNotification'
+// Lazy loaded components for better performance
+import { ObjectiveDetailModal, Confetti, SimpleStreakNotification } from '@/components/lazy'
 
 // Layout sera fait de manière asynchrone maintenant
 
-// Custom Node Component
-const SkillNode = ({ data, selected }: NodeProps) => {
+// Custom Node Component - Memoized for performance
+const SkillNode = React.memo(({ data, selected }: NodeProps) => {
   const { currentObjective, completeNode } = useObjectiveStore()
   const { playClick, playUnlock } = useSound()
   const node = data as any
@@ -168,7 +167,7 @@ const SkillNode = ({ data, selected }: NodeProps) => {
     </Card>
     </motion.div>
   )
-}
+})
 
 // Définir nodeTypes en dehors du composant pour éviter les re-renders
 const nodeTypes = {

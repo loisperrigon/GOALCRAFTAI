@@ -2,6 +2,8 @@
  * Types et interfaces pour le service WebSocket
  */
 
+import type { SkillNode, SkillEdge } from '@/types/websocket'
+
 // Types d'événements WebSocket
 export enum WSEventType {
   // Client → Server
@@ -24,7 +26,7 @@ export enum WSEventType {
 }
 
 // Structure de base d'un message WebSocket
-export interface WSMessage<T = any> {
+export interface WSMessage<T = unknown> {
   id: string
   type: WSEventType
   timestamp: number
@@ -38,7 +40,7 @@ export interface WSMetadata {
   sessionId?: string
   conversationId?: string
   requestId?: string
-  [key: string]: any
+  [key: string]: string | undefined
 }
 
 // Données pour les messages utilisateur
@@ -78,10 +80,10 @@ export interface GeneratedObjectiveData {
     title: string
     description: string
     skillTree: {
-      nodes: any[]
-      edges: any[]
+      nodes: SkillNode[]
+      edges: SkillEdge[]
     }
-    metadata?: any
+    metadata?: Record<string, unknown>
   }
   generationTime: number
   tokensUsed: number
@@ -91,7 +93,7 @@ export interface GeneratedObjectiveData {
 export interface ErrorData {
   code: string
   message: string
-  details?: any
+  details?: Record<string, unknown>
   retryable: boolean
 }
 
@@ -126,7 +128,7 @@ export interface SendOptions {
 }
 
 // Callback pour les événements
-export type WSEventCallback<T = any> = (data: T, message: WSMessage<T>) => void
+export type WSEventCallback<T = unknown> = (data: T, message: WSMessage<T>) => void
 
 // File d'attente de messages
 export interface QueuedMessage {

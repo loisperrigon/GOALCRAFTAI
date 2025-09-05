@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Home, ArrowLeft, Search, Gamepad2, Ghost } from "lucide-react"
@@ -28,7 +29,7 @@ export default function NotFound() {
 
           {/* Error message */}
           <h1 className="text-2xl md:text-4xl font-bold mb-4">
-            Oops ! Cette quête n'existe pas
+            Oops ! Cette quête n&apos;existe pas
           </h1>
           <p className="text-muted-foreground text-lg mb-8">
             Il semble que vous ayez trouvé un bug dans la matrice... 
@@ -54,7 +55,7 @@ export default function NotFound() {
               size="lg"
             >
               <Home className="h-5 w-5 mr-2" />
-              Retour à l'accueil
+              Retour à l&apos;accueil
             </Button>
             <Button
               onClick={() => router.back()}
@@ -80,24 +81,24 @@ export default function NotFound() {
           <div className="mt-12 p-6 bg-purple-500/5 rounded-lg border border-purple-500/20">
             <h2 className="font-semibold mb-3">Pages populaires :</h2>
             <div className="flex flex-wrap gap-2 justify-center">
-              <a
+              <Link
                 href="/objectives"
                 className="px-4 py-2 bg-card hover:bg-purple-500/10 rounded-lg border border-border transition-colors"
               >
                 Mes Objectifs
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/pricing"
                 className="px-4 py-2 bg-card hover:bg-purple-500/10 rounded-lg border border-border transition-colors"
               >
                 Tarifs
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/auth"
                 className="px-4 py-2 bg-card hover:bg-purple-500/10 rounded-lg border border-border transition-colors"
               >
                 Connexion
-              </a>
+              </Link>
             </div>
           </div>
         </div>

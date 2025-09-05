@@ -30,7 +30,7 @@ export default function TermsPage() {
               <FileText className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Conditions Générales d'Utilisation</h1>
+              <h1 className="text-3xl font-bold">Conditions Générales d&apos;Utilisation</h1>
               <p className="text-sm text-muted-foreground">Dernière mise à jour : Août 2024</p>
             </div>
           </div>
@@ -39,19 +39,19 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold mb-3">1. Acceptation des conditions</h2>
               <p className="text-muted-foreground">
-                En utilisant GoalCraftAI, vous acceptez d'être lié par ces conditions d'utilisation. 
-                Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser notre service.
+                En utilisant GoalCraftAI, vous acceptez d&apos;être lié par ces conditions d&apos;utilisation. 
+                Si vous n&apos;acceptez pas ces conditions, veuillez ne pas utiliser notre service.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold mb-3">2. Description du service</h2>
               <p className="text-muted-foreground">
-                GoalCraftAI est une plateforme de gamification d'objectifs personnels utilisant l'intelligence artificielle 
+                GoalCraftAI est une plateforme de gamification d&apos;objectifs personnels utilisant l&apos;intelligence artificielle 
                 pour créer des parcours personnalisés et structurés. Le service comprend :
               </p>
               <ul className="list-disc list-inside text-muted-foreground ml-4 space-y-1">
-                <li>Génération de parcours d'objectifs par IA</li>
+                <li>Génération de parcours d&apos;objectifs par IA</li>
                 <li>Système de progression gamifié</li>
                 <li>Coaching personnalisé (plan Premium)</li>
                 <li>Suivi de progression et statistiques</li>
@@ -77,7 +77,7 @@ export default function TermsPage() {
                 <li>Utiliser le service à des fins illégales</li>
                 <li>Tenter de contourner les limites du service</li>
                 <li>Partager votre compte avec des tiers</li>
-                <li>Utiliser l'IA pour générer du contenu inapproprié</li>
+                <li>Utiliser l&apos;IA pour générer du contenu inapproprié</li>
                 <li>Perturber ou surcharger nos serveurs</li>
               </ul>
             </section>
@@ -85,7 +85,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold mb-3">5. Abonnement Premium</h2>
               <p className="text-muted-foreground">
-                L'abonnement Premium offre des fonctionnalités supplémentaires. Les paiements sont :
+                L&apos;abonnement Premium offre des fonctionnalités supplémentaires. Les paiements sont :
               </p>
               <ul className="list-disc list-inside text-muted-foreground ml-4 space-y-1">
                 <li>Récurrents (mensuel ou annuel)</li>
@@ -106,8 +106,8 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold mb-3">7. Limitation de responsabilité</h2>
               <p className="text-muted-foreground">
-                GoalCraftAI est fourni "tel quel". Nous ne garantissons pas que le service sera 
-                ininterrompu ou exempt d'erreurs. Notre responsabilité est limitée au montant 
+                GoalCraftAI est fourni &quot;tel quel&quot;. Nous ne garantissons pas que le service sera 
+                ininterrompu ou exempt d&apos;erreurs. Notre responsabilité est limitée au montant 
                 que vous avez payé pour le service.
               </p>
             </section>

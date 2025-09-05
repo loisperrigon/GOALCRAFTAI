@@ -1,7 +1,18 @@
 {
   "permissions": {
     "allow": [
-      "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\user\\settings\\route.ts\")"
+      "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\app\\api\\user\\settings\\route.ts\")",
+      "Bash(sed:*)",
+      "Bash(npm run lint)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(taskkill:*)",
+      "WebSearch",
+      "Bash(for dir in auth dashboard how-it-works legal/mentions legal/privacy legal/terms objectives pricing profile)",
+      "Bash(then echo \"✓ $dir/page.tsx\")",
+      "Bash(else echo \"✗ $dir/page.tsx MANQUANT\")",
+      "Bash(fi)",
+      "Bash(done)"
     ]
   }
 }

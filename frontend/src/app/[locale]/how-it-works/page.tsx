@@ -12,8 +12,6 @@ import {
   Sparkles, 
   Target, 
   Trophy,
-  Zap,
-  ChevronRight,
   Play,
   Gamepad2,
   Brain,
@@ -24,7 +22,6 @@ import {
   Crown,
   Shield,
   Swords,
-  Heart,
   ArrowRight,
   CheckCircle,
   Lock,
@@ -74,7 +71,7 @@ export default function HowItWorksPage() {
     {
       icon: MessageSquare,
       title: "Décris ton rêve",
-      description: "Parle à notre IA de ton objectif, qu'il soit personnel ou professionnel",
+      description: "Parle à notre IA de ton objectif, qu&apos;il soit personnel ou professionnel",
       color: "from-blue-500 to-cyan-500",
       badge: "Étape 1",
       xp: 25,
@@ -82,7 +79,7 @@ export default function HowItWorksPage() {
     },
     {
       icon: Sparkles,
-      title: "L'IA crée ton parcours",
+      title: "L&apos;IA crée ton parcours",
       description: "Notre IA génère un arbre de compétences personnalisé avec des étapes progressives",
       color: "from-purple-500 to-pink-500",
       badge: "Étape 2",
@@ -92,7 +89,7 @@ export default function HowItWorksPage() {
     {
       icon: Target,
       title: "Progresse étape par étape",
-      description: "Complète les missions, débloque de nouvelles compétences et gagne de l'XP",
+      description: "Complète les missions, débloque de nouvelles compétences et gagne de l&apos;XP",
       color: "from-green-500 to-emerald-500",
       badge: "Étape 3",
       xp: 25,
@@ -125,7 +122,7 @@ export default function HowItWorksPage() {
     {
       icon: Rocket,
       title: "Progression Rapide",
-      description: "Système de déblocage qui rend l'apprentissage addictif",
+      description: "Système de déblocage qui rend l&apos;apprentissage addictif",
       color: "text-green-400"
     },
     {
@@ -154,7 +151,7 @@ export default function HowItWorksPage() {
             </h1>
             
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-              4 étapes simples pour gamifier n'importe quel objectif et le rendre aussi addictif qu'un jeu vidéo
+              4 étapes simples pour gamifier n&apos;importe quel objectif et le rendre aussi addictif qu&apos;un jeu vidéo
             </p>
 
             {/* Mini game bar */}
@@ -261,7 +258,7 @@ export default function HowItWorksPage() {
             <div className="grid md:grid-cols-3 gap-4 mb-6">
               {[
                 { icon: Swords, label: "Choisir une quête", unlocked: true },
-                { icon: Stars, label: "Gagner de l'XP", unlocked: unlockedSteps.length > 2 },
+                { icon: Stars, label: "Gagner de l&apos;XP", unlocked: unlockedSteps.length > 2 },
                 { icon: Crown, label: "Devenir légendaire", unlocked: unlockedSteps.length === 4 }
               ].map((item, index) => (
                 <div 
@@ -297,7 +294,7 @@ export default function HowItWorksPage() {
                 {unlockedSteps.length < 4 ? (
                   <>
                     <Unlock className="h-4 w-4 mr-2" />
-                    Débloquer l'étape suivante
+                    Débloquer l&apos;étape suivante
                   </>
                 ) : (
                   <>
@@ -334,7 +331,7 @@ export default function HowItWorksPage() {
                 Prêt à transformer ta vie en jeu ?
               </h2>
               <p className="text-lg text-muted-foreground mb-6">
-                Commence gratuitement et découvre une nouvelle façon d'atteindre tes objectifs
+                Commence gratuitement et découvre une nouvelle façon d&apos;atteindre tes objectifs
               </p>
               <div className="flex gap-4 justify-center">
                 <Button 
@@ -342,7 +339,7 @@ export default function HowItWorksPage() {
                   onClick={() => router.push("/objectives")}
                   className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
                 >
-                  Commencer l'aventure
+                  Commencer l&apos;aventure
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
                 <Button 

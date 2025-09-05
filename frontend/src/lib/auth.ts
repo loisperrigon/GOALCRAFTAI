@@ -34,9 +34,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // Avec strategy database, user vient directement de la DB
       if (session?.user && user) {
         session.user.id = user.id
-        // @ts-ignore
+        // @ts-expect-error - Custom properties added to user
         session.user.level = user.level || 1
-        // @ts-ignore
+        // @ts-expect-error - Custom properties added to user
         session.user.xp = user.xp || 0
       }
       return session

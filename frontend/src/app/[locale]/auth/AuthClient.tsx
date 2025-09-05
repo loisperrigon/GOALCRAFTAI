@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
-import { Chrome, Mail, Lock, User, Sparkles, Trophy, Target, Zap } from "lucide-react"
+import { Chrome, Mail, Lock, User } from "lucide-react"
 import { Spinner } from "@/components/ui/loader"
+import type { AuthTranslations } from "@/types/translations"
 
 interface AuthClientProps {
-  translations: any
+  translations: AuthTranslations
   locale: string
 }
 

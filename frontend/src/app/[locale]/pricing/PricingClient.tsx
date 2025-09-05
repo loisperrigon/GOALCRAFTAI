@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import AuthModal from '@/components/AuthModal'
+import { AuthModal } from '@/components/lazy'
 import { 
   Check, 
   X, 
@@ -12,8 +12,6 @@ import {
   Zap, 
   Trophy, 
   Crown,
-  Rocket,
-  Lock,
   Unlock,
   Star,
   Gift,
@@ -23,17 +21,20 @@ import {
   Globe,
   Shield,
   Heart,
-  ChevronRight,
-  Gamepad2
+  ChevronRight
 } from 'lucide-react'
 import Link from 'next/link'
 
 interface PricingClientProps {
-  translations: any
+  translations: {
+    free?: { features?: string[], limitations?: string[] }
+    pro?: { features?: string[], yearlyBonus?: string }
+    faq?: { items?: { question: string, answer: string }[] }
+  }
   locale: string
 }
 
-export default function PricingClient({ translations: t, locale }: PricingClientProps) {
+export default function PricingClient({ translations: t }: PricingClientProps) {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly') // Yearly par défaut pour montrer l'économie
   const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 59 })
   const [activeUsers, setActiveUsers] = useState(1247)
@@ -106,7 +107,7 @@ export default function PricingClient({ translations: t, locale }: PricingClient
         <div className="container mx-auto px-4 py-2">
           <div className="flex items-center justify-center gap-4">
             <span className="text-sm font-medium text-orange-400">
-              🔥 Offre limitée : -25% sur l'abonnement annuel
+              🔥 Offre limitée : -25% sur l&apos;abonnement annuel
             </span>
             <div className="flex items-center gap-2 bg-black/30 px-3 py-1 rounded-full">
               <span className="text-xs text-orange-300">Expire dans</span>
@@ -124,7 +125,7 @@ export default function PricingClient({ translations: t, locale }: PricingClient
       <div className="container mx-auto px-4 py-4 md:py-6">
         <div className="text-center mb-4">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-            Débloquez l'IA illimitée
+            Débloquez l&apos;IA illimitée
           </h1>
           <p className="text-muted-foreground">
             Transformez vos objectifs en réalité avec un coaching personnalisé
@@ -301,7 +302,7 @@ export default function PricingClient({ translations: t, locale }: PricingClient
                 <div className="flex items-center gap-2">
                   <Gift className="h-5 w-5 text-green-400" />
                   <span className="text-sm text-green-400 font-medium">
-                    {t?.pro?.yearlyBonus || '2 mois offerts avec l\'abonnement annuel !'}
+                    {t?.pro?.yearlyBonus || "2 mois offerts avec l'abonnement annuel !"}
                   </span>
                 </div>
               </div>
@@ -361,7 +362,7 @@ export default function PricingClient({ translations: t, locale }: PricingClient
                 ))}
               </div>
               <p className="text-sm italic mb-2">
-                "L'IA m'a aidé à structurer mes objectifs comme jamais. J'ai appris la guitare en 3 mois !"
+                &quot;L&apos;IA m&apos;a aidé à structurer mes objectifs comme jamais. J&apos;ai appris la guitare en 3 mois !&quot;
               </p>
               <p className="text-xs text-muted-foreground">- Marie, 28 ans</p>
             </Card>
@@ -383,7 +384,7 @@ export default function PricingClient({ translations: t, locale }: PricingClient
                 ))}
               </div>
               <p className="text-sm italic mb-2">
-                "Meilleur investissement de l'année. J'ai atteint 3 objectifs majeurs en 6 mois."
+                &quot;Meilleur investissement de l&apos;année. J&apos;ai atteint 3 objectifs majeurs en 6 mois.&quot;
               </p>
               <p className="text-xs text-muted-foreground">- Sophie, 42 ans</p>
             </Card>

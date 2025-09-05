@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, memo } from "react"
-import PricingModal from "@/components/PricingModal"
+import { PricingModal } from '@/components/lazy'
 import { useRouter, usePathname } from "next/navigation"
 import { useCurrentLocale } from "@/lib/i18n/navigation"
 import { Button } from "@/components/ui/button"
@@ -108,7 +108,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
       
       // Si l'utilisateur n'a aucune conversation (nouveau compte), en créer une automatiquement
       if (loadedConversations.length === 0 && isAuthenticated) {
-        console.log("[AuthLayout] Aucune conversation trouvée, création d'une première conversation")
+        console.log("[AuthLayout] Aucune conversation trouvée, création d&apos;une première conversation")
         try {
           const response = await fetch('/api/conversations/new', {
             method: 'POST'
@@ -146,7 +146,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
           console.error("[AuthLayout] Erreur création première conversation:", error)
         }
       } else if (!selectedObjectiveId && !currentObjective && loadedConversations && loadedConversations.length > 0) {
-        // Sélectionner automatiquement la dernière conversation si disponible et si on n'a pas déjà une sélection
+        // Sélectionner automatiquement la dernière conversation si disponible et si on n&apos;a pas déjà une sélection
         // Trier les conversations par date de dernière activité (plus récent en premier)
         const sortedConversations = [...loadedConversations].sort((a, b) => {
           // Utiliser updatedAt ou le timestamp du dernier message, ou createdAt en fallback
@@ -159,7 +159,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
           return dateB - dateA // Ordre décroissant (plus récent en premier)
         })
         
-        // Sélectionner la conversation avec l'activité la plus récente
+        // Sélectionner la conversation avec l&apos;activité la plus récente
         const mostRecentConversation = sortedConversations[0]
         handleConversationClick(mostRecentConversation)
       }
@@ -171,7 +171,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
   // Recharger les conversations quand un objectif change de status
   useEffect(() => {
     if (currentObjective) {
-      // Recharger quand l'objectif passe en génération ou est complété
+      // Recharger quand l&apos;objectif passe en génération ou est complété
       if (currentObjective.status === 'generating' || currentObjective.status === 'active') {
         loadConversations()
       }
@@ -203,7 +203,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
     try {
       // Si la conversation a un objectifId, charger l'objectif complet depuis la DB
       if (conversation.objectiveId) {
-        console.log(`[AuthLayout] Chargement de l'objectif ${conversation.objectiveId}`)
+        console.log(`[AuthLayout] Chargement de l&apos;objectif ${conversation.objectiveId}`)
         const response = await fetch(`/api/objectives/${conversation.objectiveId}`)
         const data = await response.json()
         
@@ -212,11 +212,11 @@ function AuthLayout({ children }: AuthLayoutProps) {
           setActiveObjective({
             ...data.objective,
             conversationId: conversation._id,
-            isPlaceholder: false // S'assurer que ce n'est pas un placeholder
+            isPlaceholder: false // S&apos;assurer que ce n&apos;est pas un placeholder
           })
         } else {
-          // Si on ne peut pas charger l'objectif, créer un placeholder
-          console.warn(`[AuthLayout] Impossible de charger l'objectif ${conversation.objectiveId}`)
+          // Si on ne peut pas charger l&apos;objectif, créer un placeholder
+          console.warn(`[AuthLayout] Impossible de charger l&apos;objectif ${conversation.objectiveId}`)
           setActiveObjective({
             id: conversation.objectiveId,
             conversationId: conversation._id,
@@ -339,7 +339,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                     } else {
                       try {
                         // Créer ou réutiliser une conversation vide
-                        console.log("[AuthLayout] Création/réutilisation d'une conversation")
+                        console.log("[AuthLayout] Création/réutilisation d&apos;une conversation")
                         const response = await fetch('/api/conversations/new', {
                           method: 'POST'
                         })
@@ -394,7 +394,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                         <div className="text-center py-8">
                           <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                           <p className="text-xs text-muted-foreground">Aucune conversation</p>
-                          <p className="text-xs text-muted-foreground mt-1">Commencez par discuter avec l'IA</p>
+                          <p className="text-xs text-muted-foreground mt-1">Commencez par discuter avec l&apos;IA</p>
                         </div>
                       ) : conversations.map((conversation) => (
                         <Card 
@@ -453,7 +453,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                   <span className="text-sm font-semibold">Passer Premium</span>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Débloquez l'IA illimitée et toutes les fonctionnalités
+                  Débloquez l&apos;IA illimitée et toutes les fonctionnalités
                 </p>
                 <Button 
                   size="sm"
@@ -587,7 +587,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                         <div className="text-center py-8">
                           <Trophy className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                           <p className="text-xs text-muted-foreground">Aucune conversation</p>
-                          <p className="text-xs text-muted-foreground mt-1">Commencez par discuter avec l'IA</p>
+                          <p className="text-xs text-muted-foreground mt-1">Commencez par discuter avec l&apos;IA</p>
                         </div>
                       ) : conversations.map((conversation) => (
                         <Card 
@@ -638,7 +638,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                       <span className="text-sm font-semibold">Passer Premium</span>
                     </div>
                     <p className="text-xs text-muted-foreground mb-3">
-                      Débloquez l'IA illimitée
+                      Débloquez l&apos;IA illimitée
                     </p>
                     <Button 
                       size="sm"
@@ -693,7 +693,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
         <div 
           className="flex-1 overflow-y-auto"
           style={{
-            scrollbarWidth: 'thin',
+            scrollbarWidth: 'thin' as any,
             scrollbarColor: 'rgb(168 85 247 / 0.3) transparent'
           }}
         >

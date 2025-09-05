@@ -25,7 +25,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Transformez vos rêves en victoires épiques avec l'IA qui gamifie vos objectifs.
+              Transformez vos rêves en victoires épiques avec l&apos;IA qui gamifie vos objectifs.
             </p>
             <div className="flex gap-3">
               <a 
@@ -90,7 +90,7 @@ export default function Footer() {
               </li>
               <li>
                 <a href="#" className="text-muted-foreground hover:text-purple-400 transition-colors">
-                  Guide d'utilisation
+                  Guide d&apos;utilisation
                 </a>
               </li>
               <li>
@@ -112,7 +112,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <a href="/legal/terms" className="text-muted-foreground hover:text-purple-400 transition-colors">
-                  Conditions d'utilisation
+                  Conditions d&apos;utilisation
                 </a>
               </li>
               <li>
@@ -151,7 +151,7 @@ export default function Footer() {
                 />
               </div>
               <button className="px-6 py-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white text-sm font-semibold rounded-lg transition-all">
-                S'inscrire
+                S&apos;inscrire
               </button>
             </div>
           </div>

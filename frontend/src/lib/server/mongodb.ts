@@ -16,7 +16,7 @@ console.log("🔗 [MongoDB] Tentative de connexion à:", uri.replace(/\/\/([^:]+
 if (process.env.NODE_ENV === "development") {
   // En développement, utiliser une variable globale pour préserver la connexion
   // entre les hot reloads
-  let globalWithMongo = global as typeof globalThis & {
+  const globalWithMongo = global as typeof globalThis & {
     _mongoClientPromise?: Promise<MongoClient>
   }
 

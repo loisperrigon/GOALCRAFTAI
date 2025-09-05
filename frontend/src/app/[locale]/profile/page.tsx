@@ -590,7 +590,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      <span>Membre depuis {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "aujourd'hui"}</span>
+                      <span>Membre depuis {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : &quot;aujourd&apos;hui&quot;}</span>
                     </div>
                   </div>
                 </div>
@@ -631,7 +631,7 @@ export default function ProfilePage() {
                       <span className="text-sm">Membre depuis</span>
                     </div>
                     <span className="text-sm font-medium">
-                      {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Aujourd'hui"}
+                      {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : &quot;Aujourd&apos;hui&quot;}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -655,7 +655,7 @@ export default function ProfilePage() {
                     <h3 className="font-semibold">Passer Premium</h3>
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Débloquez l'IA illimitée et des fonctionnalités exclusives
+                    Débloquez l&apos;IA illimitée et des fonctionnalités exclusives
                   </p>
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center gap-2 text-xs">
@@ -684,7 +684,7 @@ export default function ProfilePage() {
                     <h3 className="font-semibold">Plan Starter</h3>
                   </div>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Vous bénéficiez de 10 objectifs et d'étapes illimitées
+                    Vous bénéficiez de 10 objectifs et d&apos;étapes illimitées
                   </p>
                   <Button 
                     className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"

@@ -48,7 +48,7 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-semibold mb-3">2. Données collectées</h2>
               <p className="text-muted-foreground mb-2">Nous collectons les données suivantes :</p>
               
-              <h3 className="text-lg font-medium mt-4 mb-2">Données d'inscription :</h3>
+              <h3 className="text-lg font-medium mt-4 mb-2">Données d&apos;inscription :</h3>
               <ul className="list-disc list-inside text-muted-foreground ml-4 space-y-1">
                 <li>Nom et prénom</li>
                 <li>Adresse email</li>
@@ -56,10 +56,10 @@ export default function PrivacyPage() {
                 <li>Photo de profil (optionnelle)</li>
               </ul>
 
-              <h3 className="text-lg font-medium mt-4 mb-2">Données d'utilisation :</h3>
+              <h3 className="text-lg font-medium mt-4 mb-2">Données d&apos;utilisation :</h3>
               <ul className="list-disc list-inside text-muted-foreground ml-4 space-y-1">
                 <li>Objectifs créés et progression</li>
-                <li>Interactions avec l'IA</li>
+                <li>Interactions avec l&apos;IA</li>
                 <li>Statistiques de connexion</li>
                 <li>Préférences utilisateur</li>
               </ul>
@@ -68,7 +68,7 @@ export default function PrivacyPage() {
               <ul className="list-disc list-inside text-muted-foreground ml-4 space-y-1">
                 <li>Adresse IP</li>
                 <li>Type de navigateur</li>
-                <li>Système d'exploitation</li>
+                <li>Système d&apos;exploitation</li>
                 <li>Cookies de session</li>
               </ul>
             </section>
@@ -79,9 +79,9 @@ export default function PrivacyPage() {
               <ul className="list-disc list-inside text-muted-foreground ml-4 space-y-1">
                 <li>Fournir et améliorer nos services</li>
                 <li>Personnaliser votre expérience</li>
-                <li>Générer des parcours d'objectifs adaptés</li>
+                <li>Générer des parcours d&apos;objectifs adaptés</li>
                 <li>Communiquer avec vous (notifications, support)</li>
-                <li>Analyser l'utilisation du service (données anonymisées)</li>
+                <li>Analyser l&apos;utilisation du service (données anonymisées)</li>
                 <li>Prévenir les fraudes et abus</li>
               </ul>
             </section>
@@ -92,9 +92,9 @@ export default function PrivacyPage() {
                 Nous ne vendons jamais vos données personnelles. Nous pouvons partager vos données avec :
               </p>
               <ul className="list-disc list-inside text-muted-foreground ml-4 space-y-1">
-                <li>OpenAI (pour la génération d'objectifs - données anonymisées)</li>
+                <li>OpenAI (pour la génération d&apos;objectifs - données anonymisées)</li>
                 <li>Stripe (pour le traitement des paiements)</li>
-                <li>Services d'hébergement (données chiffrées)</li>
+                <li>Services d&apos;hébergement (données chiffrées)</li>
                 <li>Autorités légales (si requis par la loi)</li>
               </ul>
             </section>
@@ -133,7 +133,7 @@ export default function PrivacyPage() {
               <ul className="list-disc list-inside text-muted-foreground ml-4 space-y-1">
                 <li>Maintenir votre session de connexion</li>
                 <li>Mémoriser vos préférences</li>
-                <li>Analyser l'utilisation du site (cookies analytiques)</li>
+                <li>Analyser l&apos;utilisation du site (cookies analytiques)</li>
                 <li>Améliorer les performances</li>
               </ul>
               <p className="text-muted-foreground mt-2">
@@ -153,7 +153,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-xl font-semibold mb-3">9. Mineurs</h2>
               <p className="text-muted-foreground">
-                GoalCraftAI n'est pas destiné aux personnes de moins de 16 ans. 
+                GoalCraftAI n&apos;est pas destiné aux personnes de moins de 16 ans. 
                 Nous ne collectons pas sciemment de données de mineurs.
               </p>
             </section>
@@ -162,7 +162,7 @@ export default function PrivacyPage() {
               <h2 className="text-xl font-semibold mb-3">10. Modifications</h2>
               <p className="text-muted-foreground">
                 Cette politique peut être mise à jour. Nous vous informerons de tout changement 
-                significatif par email ou notification dans l'application.
+                significatif par email ou notification dans l&apos;application.
               </p>
             </section>
 

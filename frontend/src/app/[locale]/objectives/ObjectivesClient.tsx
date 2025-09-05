@@ -6,17 +6,14 @@ import AuthLayout from "@/components/AuthLayout"
 import { Button } from "@/components/ui/button"
 import { GameButton } from "@/components/ui/game-button"
 import { useSound } from "@/hooks/useSound"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAIChatWS } from "@/hooks/useAIChatWS"
 import { useObjectiveStore } from "@/stores/objective-store"
 import { motion, AnimatePresence } from "framer-motion"
 import { Loader, Spinner } from "@/components/ui/loader"
-import GenerationProgress from "@/components/GenerationProgress"
+import { GenerationProgress } from '@/components/lazy'
 import { 
   Send, 
-  Settings, 
   Target, 
   Zap,
   Brain
@@ -34,7 +31,7 @@ const SkillTree = dynamic(() => import("@/components/SkillTree"), {
 
 
 interface ObjectivesClientProps {
-  translations: any
+  translations: { [key: string]: string }
   locale: string
 }
 
@@ -43,7 +40,7 @@ export default function ObjectivesClient({ translations: t, locale }: Objectives
   // useInitializeStores() // SUPPRIMÉ
   
   const { playNotification, playWhoosh } = useSound()
-  const { currentObjective, setActiveObjective } = useObjectiveStore()
+  const { currentObjective } = useObjectiveStore()
   const [inputMessage, setInputMessage] = useState("")
   // Initialiser activeView en fonction de l'objectif actuel
   const [activeView, setActiveView] = useState<"chat" | "tree">(() => {
@@ -54,7 +51,7 @@ export default function ObjectivesClient({ translations: t, locale }: Objectives
     return "chat"
   })
   const [isInitializing, setIsInitializing] = useState(true)
-  const hasInitialized = useRef(false)
+  // const hasInitialized = useRef(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   
   // Utiliser le hook AI Chat WebSocket pour la vraie intégration

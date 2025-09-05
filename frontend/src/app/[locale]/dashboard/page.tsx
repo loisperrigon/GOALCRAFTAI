@@ -15,13 +15,10 @@ import { mockObjectives } from "@/data/mockObjectives"
 import { 
   Trophy, 
   Target, 
-  Zap, 
   Calendar,
-  TrendingUp,
   Award,
   Star,
   Plus,
-  ChevronRight,
   Flame,
   Clock,
   CheckCircle,
@@ -63,10 +60,10 @@ export default function Dashboard() {
   
   const activeObjectives = objectives.filter(obj => obj.status === "active")
   const completedObjectives = objectives.filter(obj => obj.status === "completed")
-  const pausedObjectives = objectives.filter(obj => obj.status === "paused")
+  // const pausedObjectives = objectives.filter(obj => obj.status === "paused") // Not used yet
   
   // Mapper les catégories aux icônes et couleurs
-  const categoryConfig: Record<string, { icon: any, color: string }> = {
+  const categoryConfig: Record<string, { icon: React.ComponentType<{ className?: string }>, color: string }> = {
     "learning": { 
       icon: BookOpen, 
       color: "bg-blue-500/20 text-blue-400 border-blue-500/30" 
@@ -396,7 +393,7 @@ export default function Dashboard() {
             <Card className="p-6 bg-gradient-to-br from-blue-500/10 to-purple-500/10">
               <Sparkles className="h-5 w-5 text-purple-400 mb-3" />
               <p className="text-sm italic">
-                "Le succès est la somme de petits efforts répétés jour après jour."
+                &quot;Le succès est la somme de petits efforts répétés jour après jour.&quot;
               </p>
               <p className="text-xs text-muted-foreground mt-2">- Robert Collier</p>
             </Card>

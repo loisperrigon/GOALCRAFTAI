@@ -7,6 +7,8 @@ import ToastProvider from "@/components/ToastProvider";
 import { I18nProvider } from "@/lib/i18n/client";
 import { getDictionary } from "@/lib/i18n/utils";
 import type { Locale } from "@/lib/i18n/config";
+import { locales } from "@/lib/i18n/config";
+import { notFound } from "next/navigation";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -85,6 +87,12 @@ export default async function RootLayout({
   params: Promise<{ locale: Locale }>;
 }>) {
   const { locale } = await params;
+  
+  // Valider que la locale existe
+  if (!locales.includes(locale as Locale)) {
+    notFound();
+  }
+  
   const dictionary = await getDictionary(locale);
 
   return (
