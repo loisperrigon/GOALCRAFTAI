@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { signOut } from "next-auth/react"
 import AuthModal from "@/components/AuthModal"
+import DeleteAccountModal from "@/components/DeleteAccountModal"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -52,6 +53,7 @@ export default function ProfilePage() {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   
   // Récupérer les données des stores
@@ -924,7 +926,11 @@ export default function ProfilePage() {
               <Card className="p-6 border-red-500/30">
                 <h3 className="font-semibold mb-4 text-red-400">Zone dangereuse</h3>
                 <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start border-red-500/30 hover:bg-red-500/10 text-red-400">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start border-red-500/30 hover:bg-red-500/10 text-red-400"
+                    onClick={() => setShowDeleteModal(true)}
+                  >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Supprimer le compte
                   </Button>
@@ -1025,6 +1031,14 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+      
+      {/* Modal de suppression de compte */}
+      {showDeleteModal && (
+        <DeleteAccountModal 
+          isOpen={showDeleteModal} 
+          onClose={() => setShowDeleteModal(false)} 
+        />
+      )}
     </AuthLayout>
   )
 }

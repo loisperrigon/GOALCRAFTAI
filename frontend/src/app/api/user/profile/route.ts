@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-config"
+import { auth } from "@/lib/auth"
 import { MongoClient } from "mongodb"
 
 const client = new MongoClient(process.env.MONGODB_URI!)
@@ -9,7 +8,7 @@ let clientPromise = client.connect()
 export async function GET(req: NextRequest) {
   try {
     // Vérifier l'authentification
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -107,7 +106,7 @@ export async function GET(req: NextRequest) {
 // Route pour mettre à jour le profil
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     
     if (!session?.user?.email) {
       return NextResponse.json(

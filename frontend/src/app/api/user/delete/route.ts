@@ -1,16 +1,42 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-config"
+import { auth } from "@/lib/auth"
 import { MongoClient } from "mongodb"
 
 const client = new MongoClient(process.env.MONGODB_URI!)
 let clientPromise = client.connect()
 
+// Rate limiting simple en mémoire (max 3 tentatives par heure)
+const deleteAttempts = new Map<string, { count: number; firstAttempt: number }>()
+
+function checkDeleteRateLimit(email: string): boolean {
+  const now = Date.now()
+  const attempt = deleteAttempts.get(email)
+  
+  if (!attempt) {
+    deleteAttempts.set(email, { count: 1, firstAttempt: now })
+    return true
+  }
+  
+  // Reset après 1 heure
+  if (now - attempt.firstAttempt > 60 * 60 * 1000) {
+    deleteAttempts.set(email, { count: 1, firstAttempt: now })
+    return true
+  }
+  
+  // Max 3 tentatives par heure
+  if (attempt.count >= 3) {
+    return false
+  }
+  
+  attempt.count++
+  return true
+}
+
 // Route pour supprimer complètement le compte utilisateur
 export async function DELETE(req: NextRequest) {
   try {
     // Vérifier l'authentification
-    const session = await getServerSession(authOptions)
+    const session = await auth()
     
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -21,6 +47,17 @@ export async function DELETE(req: NextRequest) {
     
     const userEmail = session.user.email
     const userId = session.user.id || session.user.email
+    
+    // Vérifier le rate limiting
+    if (!checkDeleteRateLimit(userEmail)) {
+      return NextResponse.json(
+        { 
+          error: "Trop de tentatives de suppression", 
+          details: "Veuillez attendre 1 heure avant de réessayer" 
+        },
+        { status: 429 }
+      )
+    }
     
     console.log(`[DELETE ACCOUNT] Début de suppression pour ${userEmail}`)
     
