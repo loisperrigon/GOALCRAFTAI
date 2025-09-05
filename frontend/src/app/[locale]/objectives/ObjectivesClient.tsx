@@ -33,7 +33,12 @@ const SkillTree = dynamic(() => import("@/components/SkillTree"), {
 })
 
 
-export default function ObjectivesPage() {
+interface ObjectivesClientProps {
+  translations: any
+  locale: string
+}
+
+export default function ObjectivesClient({ translations: t, locale }: ObjectivesClientProps) {
   // NE PAS initialiser avec les données mock
   // useInitializeStores() // SUPPRIMÉ
   
@@ -272,7 +277,7 @@ export default function ObjectivesPage() {
                   }
                 >
                   <Brain className="h-4 w-4" />
-                  <span className="ml-2 hidden sm:inline">Chat IA</span>
+                  <span className="ml-2 hidden sm:inline">{locale === 'fr' ? 'Chat IA' : locale === 'es' ? 'Chat IA' : 'AI Chat'}</span>
                 </Button>
                 <Button
                   variant={activeView === "tree" ? "default" : "ghost"}
@@ -284,7 +289,7 @@ export default function ObjectivesPage() {
                   }
                 >
                   <Target className="h-4 w-4" />
-                  <span className="ml-2 hidden sm:inline">Arbre de progression</span>
+                  <span className="ml-2 hidden sm:inline">{locale === 'fr' ? 'Arbre de progression' : locale === 'es' ? 'Árbol de progreso' : 'Progress Tree'}</span>
                 </Button>
               </div>
             </div>
@@ -411,7 +416,7 @@ export default function ObjectivesPage() {
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-                    placeholder={isLoading ? "En attente de la réponse..." : "Décrivez votre objectif... Ex: 'Je veux apprendre la guitare' ou 'Perdre 10kg en 3 mois'"}
+                    placeholder={isLoading ? t.chat?.thinking || "En attente de la réponse..." : t.chat?.placeholder || "Décrivez votre objectif..."}
                     className="flex-1 bg-background/50 h-12 md:h-14 text-sm md:text-base px-4 md:px-6"
                     disabled={isLoading}
                   />
@@ -421,7 +426,7 @@ export default function ObjectivesPage() {
                     className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-4 md:px-8 h-12 md:h-14 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Send className="h-5 w-5 md:mr-2" />
-                    <span className="hidden md:inline">Envoyer</span>
+                    <span className="hidden md:inline">{t.chat?.send || "Envoyer"}</span>
                   </GameButton>
                 </div>
               </div>
