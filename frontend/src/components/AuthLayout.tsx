@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, memo } from "react"
 import PricingModal from "@/components/PricingModal"
 import { useRouter, usePathname } from "next/navigation"
+import { useCurrentLocale } from "@/lib/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -43,6 +44,7 @@ interface Objective {
 function AuthLayout({ children }: AuthLayoutProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const locale = useCurrentLocale()
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
   const [showPricingModal, setShowPricingModal] = useState(false)
   const { user, isAuthenticated } = useUserStore()
@@ -77,7 +79,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
       // Si non authentifié, rediriger vers /auth
       if (response.status === 401) {
         console.log("[AuthLayout] Utilisateur non authentifié, redirection vers /auth")
-        router.push('/auth')
+        router.push(`/${locale}/auth`)
         return []
       }
       
@@ -134,10 +136,10 @@ function AuthLayout({ children }: AuthLayoutProps) {
             await loadConversations()
             
             // Si on est sur la page objectives, on reste dessus
-            if (pathname === '/objectives') {
+            if (pathname === `/${locale}/objectives`) {
               // La conversation est déjà active via setActiveObjective
             } else {
-              router.push("/objectives")
+              router.push(`/${locale}/objectives`)
             }
           }
         } catch (error) {
@@ -178,10 +180,10 @@ function AuthLayout({ children }: AuthLayoutProps) {
 
   const navigationItems = [
     { 
-      href: "/dashboard", 
+      href: `/${locale}/dashboard`, 
       label: "Tableau de bord", 
       icon: LayoutDashboard,
-      active: pathname === "/dashboard"
+      active: pathname === `/${locale}/dashboard`
     }
   ]
   
@@ -247,7 +249,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
       console.error("[AuthLayout] Erreur chargement objectif:", error)
     } finally {
       setIsLoadingObjective(false)
-      router.push("/objectives")
+      router.push(`/${locale}/objectives`)
     }
   }, [router, setActiveObjective])
 
@@ -333,7 +335,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                   className="h-7 px-2 hover:bg-purple-500/10"
                   onClick={async () => {
                     if (!isAuthenticated) {
-                      router.push('/auth')
+                      router.push(`/${locale}/auth`)
                     } else {
                       try {
                         // Créer ou réutiliser une conversation vide
@@ -368,7 +370,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                           if (!data.existing) {
                             loadConversations()
                           }
-                          router.push("/objectives")
+                          router.push(`/${locale}/objectives`)
                         }
                       } catch (error) {
                         console.error("[AuthLayout] Erreur création conversation:", error)
@@ -524,7 +526,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                       className="h-7 px-2 hover:bg-purple-500/10"
                       onClick={async () => {
                         if (!isAuthenticated) {
-                          router.push('/auth')
+                          router.push(`/${locale}/auth`)
                           setIsMobileSidebarOpen(false)
                         } else {
                           try {
@@ -559,7 +561,7 @@ function AuthLayout({ children }: AuthLayoutProps) {
                               if (!data.existing) {
                                 loadConversations()
                               }
-                              router.push("/objectives")
+                              router.push(`/${locale}/objectives`)
                               setIsMobileSidebarOpen(false)
                             }
                           } catch (error) {

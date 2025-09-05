@@ -3,24 +3,46 @@
 import { useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Menu, X, User, LayoutDashboard, Target } from "lucide-react"
+import { Menu, X } from "lucide-react"
 import SoundControl from "@/components/SoundControl"
+import LanguageSelector from "@/components/LanguageSelector"
+
+// Fonction pour essayer d'utiliser les hooks i18n
+function useI18n() {
+  try {
+    const { useLocale, useTranslations } = require('@/lib/i18n/client')
+    const locale = useLocale()
+    const t = useTranslations('nav')
+    return { locale, t, hasI18n: true }
+  } catch {
+    // Pas dans un contexte i18n, retourner des valeurs par défaut
+    return { 
+      locale: 'fr', 
+      t: {
+        home: 'Accueil',
+        pricing: 'Tarifs',
+        login: 'Se connecter'
+      },
+      hasI18n: false 
+    }
+  }
+}
 
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
+  const { locale, t, hasI18n } = useI18n()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
   // Simulation : vérifier si l'utilisateur est connecté
-  // En production, cela viendrait d'un contexte ou store global
-  const isAuthenticated = pathname === '/objectives' || pathname === '/dashboard' || pathname === '/profile'
+  const isAuthenticated = pathname.includes('/objectives') || pathname.includes('/dashboard') || pathname.includes('/profile')
 
   return (
     <>
       <header className="flex items-center justify-between px-4 md:px-8 py-4 md:py-6 relative z-20">
         <div 
           className="flex items-center gap-2 cursor-pointer" 
-          onClick={() => router.push("/")}
+          onClick={() => router.push(hasI18n ? `/${locale}` : '/')}
         >
           <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg md:text-xl">G</span>
@@ -41,71 +63,73 @@ export default function Header() {
             <Menu className="h-6 w-6" />
           )}
         </button>
+        
       <nav className="hidden md:flex items-center gap-8">
         <a 
-          href="/how-it-works" 
+          href={hasI18n ? `/${locale}/` : '/'}
           className={`relative transition-colors ${
-            pathname === '/how-it-works' 
+            pathname === '/' || pathname === `/${locale}` 
               ? 'text-foreground font-medium' 
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          Comment ça marche
-          {pathname === '/how-it-works' && (
+          {t?.home || 'Accueil'}
+          {(pathname === '/' || pathname === `/${locale}`) && (
             <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
           )}
         </a>
         <a 
-          href="#" 
+          href={hasI18n ? `/${locale}/examples` : '#'}
           className={`relative transition-colors ${
-            pathname === '/examples' 
+            pathname.includes('/examples') 
               ? 'text-foreground font-medium' 
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          Exemples
-          {pathname === '/examples' && (
+          {locale === 'fr' ? 'Exemples' : locale === 'es' ? 'Ejemplos' : 'Examples'}
+          {pathname.includes('/examples') && (
             <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
           )}
         </a>
         <a 
-          href="/pricing" 
+          href={hasI18n ? `/${locale}/pricing` : '/pricing'}
           className={`relative transition-colors ${
-            pathname === '/pricing' 
+            pathname.includes('/pricing') 
               ? 'text-foreground font-medium' 
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          Tarifs
-          {pathname === '/pricing' && (
+          {t?.pricing || 'Tarifs'}
+          {pathname.includes('/pricing') && (
             <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
           )}
         </a>
         
-        {/* Sound Controls */}
+        {/* Sound Controls & Language Selector */}
         <div className="flex items-center gap-2">
           <SoundControl />
+          {hasI18n && <LanguageSelector />}
         </div>
         
-        {pathname === '/objectives' ? (
+        {pathname.includes('/objectives') ? (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/30">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             <span className="text-sm font-medium">En ligne</span>
           </div>
-        ) : pathname === '/auth' ? (
+        ) : pathname.includes('/auth') ? (
           <Button 
             variant="outline" 
             className="border-purple-500/50 bg-purple-500/10"
           >
-            Connexion
+            {t?.login || 'Connexion'}
           </Button>
         ) : (
           <Button 
             variant="outline" 
             className="border-purple-500/50 hover:bg-purple-500/10"
-            onClick={() => router.push("/auth")}
+            onClick={() => router.push(hasI18n ? `/${locale}/auth` : '/auth')}
           >
-            Se connecter
+            {t?.login || 'Se connecter'}
           </Button>
         )}
         </nav>
@@ -137,41 +161,47 @@ export default function Header() {
 
         <nav className="flex flex-col p-4 space-y-2">
           <a 
-            href="/how-it-works"
+            href={hasI18n ? `/${locale}/` : '/'}
             onClick={() => setIsMobileMenuOpen(false)}
             className={`px-4 py-3 rounded-lg transition-colors ${
-              pathname === '/how-it-works'
+              pathname === '/' || pathname === `/${locale}`
                 ? 'bg-purple-500/10 text-foreground font-medium'
                 : 'hover:bg-purple-500/10 text-muted-foreground'
             }`}
           >
-            Comment ça marche
+            {t?.home || 'Accueil'}
           </a>
           <a 
-            href="#"
+            href={hasI18n ? `/${locale}/examples` : '#'}
             onClick={() => setIsMobileMenuOpen(false)}
             className={`px-4 py-3 rounded-lg transition-colors ${
-              pathname === '/examples'
+              pathname.includes('/examples')
                 ? 'bg-purple-500/10 text-foreground font-medium'
                 : 'hover:bg-purple-500/10 text-muted-foreground'
             }`}
           >
-            Exemples
+            {locale === 'fr' ? 'Exemples' : locale === 'es' ? 'Ejemplos' : 'Examples'}
           </a>
           <a 
-            href="/pricing"
+            href={hasI18n ? `/${locale}/pricing` : '/pricing'}
             onClick={() => setIsMobileMenuOpen(false)}
             className={`px-4 py-3 rounded-lg transition-colors ${
-              pathname === '/pricing'
+              pathname.includes('/pricing')
                 ? 'bg-purple-500/10 text-foreground font-medium'
                 : 'hover:bg-purple-500/10 text-muted-foreground'
             }`}
           >
-            Tarifs
+            {t?.pricing || 'Tarifs'}
           </a>
           
           <div className="pt-4 mt-4 border-t border-border">
-            {pathname === '/objectives' ? (
+            {/* Language Selector for mobile */}
+            {hasI18n && (
+              <div className="mb-4">
+                <LanguageSelector />
+              </div>
+            )}
+            {pathname.includes('/objectives') ? (
               <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/30">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                 <span className="text-sm font-medium">En ligne</span>
@@ -180,11 +210,11 @@ export default function Header() {
               <Button 
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
                 onClick={() => {
-                  router.push("/auth")
+                  router.push(hasI18n ? `/${locale}/auth` : '/auth')
                   setIsMobileMenuOpen(false)
                 }}
               >
-                {pathname === '/auth' ? 'Connexion' : 'Se connecter'}
+                {pathname.includes('/auth') ? (t?.login || 'Connexion') : (t?.login || 'Se connecter')}
               </Button>
             )}
           </div>

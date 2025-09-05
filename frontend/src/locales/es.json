@@ -1,0 +1,197 @@
+{
+  "metadata": {
+    "title": "GoalCraftAI - Transforma tus objetivos en una aventura épica",
+    "description": "Plataforma de gamificación de objetivos personales con IA. Crea caminos estructurados, desbloquea etapas y alcanza tus sueños como en un videojuego."
+  },
+  "nav": {
+    "home": "Inicio",
+    "objectives": "Objetivos",
+    "dashboard": "Panel",
+    "pricing": "Precios",
+    "profile": "Perfil",
+    "login": "Iniciar sesión",
+    "signup": "Registrarse",
+    "logout": "Cerrar sesión"
+  },
+  "home": {
+    "hero": {
+      "title": "Transforma tus objetivos en una aventura épica",
+      "subtitle": "IA que gamifica tus sueños y te guía hacia el éxito",
+      "cta": "Comenzar gratis",
+      "demo": "Ver demo"
+    },
+    "features": {
+      "title": "¿Cómo funciona?",
+      "ai": {
+        "title": "IA Personalizada",
+        "description": "Nuestra IA analiza tus objetivos y crea un camino personalizado"
+      },
+      "gamification": {
+        "title": "Gamificación",
+        "description": "Desbloquea etapas, gana XP y logros"
+      },
+      "tracking": {
+        "title": "Seguimiento en tiempo real",
+        "description": "Visualiza tu progreso con gráficos interactivos"
+      }
+    }
+  },
+  "objectives": {
+    "title": "Mis Objetivos",
+    "empty": "Aún no tienes objetivos. ¡Empieza creando uno!",
+    "create": "Crear objetivo",
+    "chat": {
+      "placeholder": "Describe tu objetivo o sueño...",
+      "send": "Enviar",
+      "thinking": "La IA está pensando..."
+    },
+    "tree": {
+      "complete": "Marcar como completado",
+      "unlock": "Desbloquear esta etapa",
+      "locked": "Bloqueado",
+      "available": "Disponible",
+      "completed": "Completado"
+    }
+  },
+  "dashboard": {
+    "title": "Panel de control",
+    "welcome": "Bienvenido",
+    "stats": {
+      "level": "Nivel",
+      "xp": "Puntos XP",
+      "objectives": "Objetivos",
+      "completed": "Completados",
+      "streak": "Racha"
+    },
+    "recent": "Actividad reciente",
+    "achievements": "Logros"
+  },
+  "pricing": {
+    "title": "Elige tu plan",
+    "subtitle": "Empieza gratis, evoluciona a tu ritmo",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "save": "Ahorra",
+    "free": {
+      "name": "Gratis",
+      "price": "0€",
+      "description": "Perfecto para descubrir",
+      "features": [
+        "3 objetivos por mes",
+        "Árbol básico",
+        "Soporte comunitario"
+      ]
+    },
+    "starter": {
+      "name": "Starter",
+      "price": "9.99€",
+      "description": "Para los ambiciosos",
+      "features": [
+        "Objetivos ilimitados",
+        "Árboles avanzados",
+        "Soporte prioritario",
+        "Exportar PDF",
+        "Estadísticas detalladas"
+      ]
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "19.99€",
+      "description": "Para profesionales",
+      "features": [
+        "Todo de Starter",
+        "Coaching IA avanzado",
+        "Colaboración en equipo",
+        "Acceso API",
+        "Soporte dedicado"
+      ]
+    },
+    "cta": {
+      "free": "Empezar gratis",
+      "starter": "Elegir Starter",
+      "pro": "Elegir Pro"
+    }
+  },
+  "profile": {
+    "title": "Mi Perfil",
+    "edit": "Editar",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "tabs": {
+      "overview": "Resumen",
+      "achievements": "Logros",
+      "settings": "Configuración"
+    },
+    "stats": {
+      "member_since": "Miembro desde",
+      "total_objectives": "Objetivos creados",
+      "completed_objectives": "Objetivos completados",
+      "current_streak": "Racha actual",
+      "longest_streak": "Racha más larga"
+    },
+    "settings": {
+      "notifications": "Notificaciones",
+      "sound": "Efectos de sonido",
+      "theme": "Tema",
+      "language": "Idioma",
+      "dark_mode": "Modo oscuro",
+      "light_mode": "Modo claro"
+    },
+    "danger_zone": {
+      "title": "Zona peligrosa",
+      "delete_account": "Eliminar cuenta",
+      "delete_warning": "Esta acción es irreversible. Todos tus datos serán eliminados."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar sesión",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "remember": "Recuérdame",
+      "forgot": "¿Olvidaste tu contraseña?",
+      "submit": "Iniciar sesión",
+      "no_account": "¿No tienes cuenta?",
+      "with_google": "Continuar con Google",
+      "with_github": "Continuar con GitHub"
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "name": "Nombre completo",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirm": "Confirmar contraseña",
+      "terms": "Acepto los términos de servicio",
+      "submit": "Registrarse",
+      "have_account": "¿Ya tienes cuenta?"
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "retry": "Reintentar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "save": "Guardar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "export": "Exportar",
+    "import": "Importar",
+    "download": "Descargar",
+    "upload": "Subir",
+    "share": "Compartir",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "days": "días",
+    "hours": "horas",
+    "minutes": "minutos",
+    "seconds": "segundos"
+  }
+}
