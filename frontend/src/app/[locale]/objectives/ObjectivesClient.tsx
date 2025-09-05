@@ -274,7 +274,7 @@ export default function ObjectivesClient({ translations: t, locale }: Objectives
                   }
                 >
                   <Brain className="h-4 w-4" />
-                  <span className="ml-2 hidden sm:inline">{locale === 'fr' ? 'Chat IA' : locale === 'es' ? 'Chat IA' : 'AI Chat'}</span>
+                  <span className="ml-2 hidden sm:inline">{translations?.tabs?.chat || 'AI Chat'}</span>
                 </Button>
                 <Button
                   variant={activeView === "tree" ? "default" : "ghost"}
@@ -286,7 +286,7 @@ export default function ObjectivesClient({ translations: t, locale }: Objectives
                   }
                 >
                   <Target className="h-4 w-4" />
-                  <span className="ml-2 hidden sm:inline">{locale === 'fr' ? 'Arbre de progression' : locale === 'es' ? 'Árbol de progreso' : 'Progress Tree'}</span>
+                  <span className="ml-2 hidden sm:inline">{translations?.tabs?.tree || 'Progress Tree'}</span>
                 </Button>
               </div>
             </div>

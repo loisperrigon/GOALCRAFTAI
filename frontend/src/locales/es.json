@@ -9,16 +9,91 @@
     "dashboard": "Panel",
     "pricing": "Precios",
     "profile": "Perfil",
+    "examples": "Ejemplos",
     "login": "Iniciar sesión",
     "signup": "Registrarse",
     "logout": "Cerrar sesión"
+  },
+  "seo": {
+    "home": {
+      "title": "GoalCraftAI - Transforma tus objetivos en una aventura épica con IA GPT-4",
+      "description": "Plataforma revolucionaria de gamificación de objetivos. Crea caminos personalizados con IA, gana XP, desbloquea logros. Comienza gratis.",
+      "h1": "GoalCraftAI - Plataforma de Gamificación de Objetivos con Inteligencia Artificial GPT-4",
+      "intro": "GoalCraftAI es una plataforma revolucionaria que utiliza inteligencia artificial GPT-4 para transformar tus objetivos personales y profesionales en rutas gamificadas. Crea árboles de habilidades, desbloquea etapas, gana XP y alcanza tus objetivos de manera divertida y motivadora.",
+      "features": [
+        "IA GPT-4 para generación personalizada de rutas",
+        "Sistema de gamificación completo con XP y niveles",
+        "Árbol de habilidades interactivo y visual",
+        "Coaching personalizado por inteligencia artificial",
+        "Seguimiento de progreso en tiempo real",
+        "Desafíos semanales e insignias de logro"
+      ],
+      "stats": {
+        "users": "Más de 50,000 usuarios activos",
+        "goals": "Más de 2 millones de objetivos alcanzados",
+        "rating": "Calificación promedio de 4.9/5 estrellas",
+        "success": "Tasa de éxito del 93%"
+      },
+      "faq": [
+        {
+          "question": "¿Cómo funciona GoalCraftAI?",
+          "answer": "Describes tu objetivo a nuestra IA GPT-4 que genera automáticamente una ruta personalizada con etapas para desbloquear progresivamente."
+        },
+        {
+          "question": "¿Es gratis?",
+          "answer": "Sí, puedes crear hasta 3 objetivos gratis. El plan Premium ofrece objetivos ilimitados y acceso a GPT-4."
+        }
+      ],
+      "testimonial": {
+        "author": "María L., Madrid",
+        "text": "GoalCraftAI ha transformado mi forma de abordar mis objetivos. ¡Aprendí Python en 3 meses gracias a la ruta gamificada!"
+      }
+    },
+    "pricing": {
+      "title": "Precios - GoalCraftAI",
+      "description": "Plan gratuito o Premium desde 7,49€/mes. IA ilimitada GPT-4, coaching personalizado y objetivos ilimitados. Prueba gratuita disponible.",
+      "h1": "Precios GoalCraftAI - Planes y Tarifas",
+      "intro": "Transforma tus objetivos en realidad con nuestra plataforma gamificada. Comienza gratis o pasa a Premium para desbloquear todo el potencial.",
+      "faq": [
+        {
+          "question": "¿Puedo cancelar mi suscripción en cualquier momento?",
+          "answer": "Sí, puedes cancelar tu suscripción en cualquier momento desde tu perfil. Sin compromiso."
+        },
+        {
+          "question": "¿Cómo funciona la prueba gratuita?",
+          "answer": "Tienes acceso a 3 objetivos gratuitos sin límite de tiempo. Actúaliza a Premium cuando quieras más."
+        },
+        {
+          "question": "¿Cuál es la diferencia entre GPT-3.5 y GPT-4?",
+          "answer": "GPT-4 es más inteligente, creativo y preciso. Genera rutas más detalladas y personalizadas."
+        }
+      ],
+      "testimonial": {
+        "author": "María, 28 años",
+        "text": "La IA me ayudó a estructurar mis objetivos como nunca. ¡Aprendí guitarra en 3 meses!"
+      }
+    }
   },
   "home": {
     "hero": {
       "title": "Transforma tus objetivos en una aventura épica",
       "subtitle": "IA que gamifica tus sueños y te guía hacia el éxito",
       "cta": "Comenzar gratis",
-      "demo": "Ver demo"
+      "demo": "Ver demo",
+      "badge": "Impulsado por GPT-4",
+      "tryLabel": "Prueba:",
+      "suggestions": ["Perder 10kg", "Aprender React", "Lanzar un podcast", "Meditar diariamente"],
+      "ctaSection": {
+        "title": "¿Listo para convertir tu vida en un juego?",
+        "subtitle": "Únete a miles de personas que logran lo imposible cada día.",
+        "benefits": "✨ Sin tarjeta de crédito • 🎮 5 objetivos gratis • ⚡ Configuración en 30 segundos"
+      },
+      "stats": {
+        "users": "Usuarios activos",
+        "goals": "Objetivos alcanzados",
+        "rating": "Calificación promedio",
+        "success": "Tasa de éxito"
+      }
     },
     "features": {
       "title": "¿Cómo funciona?",
@@ -40,6 +115,10 @@
     "title": "Mis Objetivos",
     "empty": "Aún no tienes objetivos. ¡Empieza creando uno!",
     "create": "Crear objetivo",
+    "tabs": {
+      "chat": "Chat IA",
+      "tree": "Árbol de progreso"
+    },
     "chat": {
       "placeholder": "Describe tu objetivo o sueño...",
       "send": "Enviar",

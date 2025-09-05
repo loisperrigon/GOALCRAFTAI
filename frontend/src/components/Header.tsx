@@ -86,7 +86,7 @@ export default function Header() {
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          {locale === 'fr' ? 'Exemples' : locale === 'es' ? 'Ejemplos' : 'Examples'}
+          {dict?.nav?.examples || 'Examples'}
           {pathname.includes('/examples') && (
             <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
           )}
@@ -180,7 +180,7 @@ export default function Header() {
                 : 'hover:bg-purple-500/10 text-muted-foreground'
             }`}
           >
-            {locale === 'fr' ? 'Exemples' : locale === 'es' ? 'Ejemplos' : 'Examples'}
+            {dict?.nav?.examples || 'Examples'}
           </a>
           <a 
             href={hasI18n ? `/${locale}/pricing` : '/pricing'}

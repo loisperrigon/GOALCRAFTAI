@@ -12,7 +12,8 @@
       "Bash(then echo \"✓ $dir/page.tsx\")",
       "Bash(else echo \"✗ $dir/page.tsx MANQUANT\")",
       "Bash(fi)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(curl:*)"
     ]
   }
 }

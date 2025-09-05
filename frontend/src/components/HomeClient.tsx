@@ -19,11 +19,7 @@ export default function HomeClient({ locale, translations: t }: HomeClientProps)
     router.push(`/${locale}/objectives`)
   }
 
-  const suggestions = locale === 'fr' 
-    ? ["Perdre 10kg", "Apprendre React", "Lancer un podcast", "Méditer quotidiennement"]
-    : locale === 'es'
-    ? ["Perder 10kg", "Aprender React", "Lanzar un podcast", "Meditar diariamente"]
-    : ["Lose 10kg", "Learn React", "Launch a podcast", "Meditate daily"]
+  const suggestions = t.home?.hero?.suggestions || ["Lose 10kg", "Learn React", "Launch a podcast", "Meditate daily"]
 
   return (
     <>
@@ -54,7 +50,7 @@ export default function HomeClient({ locale, translations: t }: HomeClientProps)
         {/* Suggestions */}
         <div className="flex flex-wrap gap-2 justify-center mt-6">
           <span className="text-sm text-muted-foreground">
-            {locale === 'fr' ? 'Essayez:' : locale === 'es' ? 'Prueba:' : 'Try:'}
+            {t.home?.hero?.tryLabel || 'Try:'}
           </span>
           {suggestions.map((suggestion) => (
             <button
@@ -71,14 +67,10 @@ export default function HomeClient({ locale, translations: t }: HomeClientProps)
       {/* CTA Section */}
       <div className="mt-12 md:mt-20">
         <h2 className="text-3xl font-bold mb-4">
-          {locale === 'fr' ? 'Prêt à transformer votre vie en jeu ?' : 
-           locale === 'es' ? '¿Listo para convertir tu vida en un juego?' : 
-           'Ready to turn your life into a game?'}
+          {t.home?.hero?.ctaSection?.title || 'Ready to turn your life into a game?'}
         </h2>
         <p className="text-muted-foreground mb-8">
-          {locale === 'fr' ? "Rejoignez des milliers de personnes qui accomplissent l'impossible chaque jour." : 
-           locale === 'es' ? 'Únete a miles de personas que logran lo imposible cada día.' : 
-           'Join thousands of people achieving the impossible every day.'}
+          {t.home?.hero?.ctaSection?.subtitle || 'Join thousands of people achieving the impossible every day.'}
         </p>
         <Button 
           size="lg"
@@ -88,9 +80,7 @@ export default function HomeClient({ locale, translations: t }: HomeClientProps)
           {t.pricing?.cta?.free}
         </Button>
         <p className="text-sm text-muted-foreground mt-4">
-          {locale === 'fr' ? '✨ Pas de carte bancaire • 🎮 5 objectifs gratuits • ⚡ Setup en 30 secondes' : 
-           locale === 'es' ? '✨ Sin tarjeta de crédito • 🎮 5 objetivos gratis • ⚡ Configuración en 30 segundos' : 
-           '✨ No credit card • 🎮 5 free goals • ⚡ 30 second setup'}
+          {t.home?.hero?.ctaSection?.benefits || '✨ No credit card • 🎮 5 free goals • ⚡ 30 second setup'}
         </p>
       </div>
     </>

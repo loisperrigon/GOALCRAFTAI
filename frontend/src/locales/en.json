@@ -9,16 +9,91 @@
     "dashboard": "Dashboard",
     "pricing": "Pricing",
     "profile": "Profile",
+    "examples": "Examples",
     "login": "Login",
     "signup": "Sign up",
     "logout": "Logout"
+  },
+  "seo": {
+    "home": {
+      "title": "GoalCraftAI - Transform your goals into an epic adventure with GPT-4 AI",
+      "description": "Revolutionary goal gamification platform. Create personalized paths with AI, earn XP, unlock achievements. Start for free.",
+      "h1": "GoalCraftAI - Goal Gamification Platform with GPT-4 Artificial Intelligence",
+      "intro": "GoalCraftAI is a revolutionary platform that uses GPT-4 artificial intelligence to transform your personal and professional goals into gamified paths. Create skill trees, unlock stages, earn XP and achieve your goals in a fun and motivating way.",
+      "features": [
+        "GPT-4 AI for personalized path generation",
+        "Complete gamification system with XP and levels",
+        "Interactive and visual skill tree",
+        "Personalized coaching by artificial intelligence",
+        "Real-time progress tracking",
+        "Weekly challenges and achievement badges"
+      ],
+      "stats": {
+        "users": "Over 50,000 active users",
+        "goals": "Over 2 million goals achieved",
+        "rating": "Average rating of 4.9/5 stars",
+        "success": "93% success rate"
+      },
+      "faq": [
+        {
+          "question": "How does GoalCraftAI work?",
+          "answer": "You describe your goal to our GPT-4 AI which automatically generates a personalized path with stages to unlock progressively."
+        },
+        {
+          "question": "Is it free?",
+          "answer": "Yes, you can create up to 3 goals for free. Premium plan offers unlimited goals and GPT-4 access."
+        }
+      ],
+      "testimonial": {
+        "author": "Mary L., London",
+        "text": "GoalCraftAI transformed how I approach my goals. I learned Python in 3 months thanks to the gamified path!"
+      }
+    },
+    "pricing": {
+      "title": "Pricing - GoalCraftAI",
+      "description": "Free plan or Premium from €7.49/month. Unlimited GPT-4 AI, personalized coaching and unlimited goals. Free trial available.",
+      "h1": "GoalCraftAI Pricing - Plans and Prices",
+      "intro": "Transform your goals into reality with our gamified platform. Start free or go Premium to unlock full potential.",
+      "faq": [
+        {
+          "question": "Can I cancel my subscription anytime?",
+          "answer": "Yes, you can cancel your subscription anytime from your profile. No commitment."
+        },
+        {
+          "question": "How does the free trial work?",
+          "answer": "You have access to 3 free goals with no time limit. Upgrade to Premium when you want more."
+        },
+        {
+          "question": "What's the difference between GPT-3.5 and GPT-4?",
+          "answer": "GPT-4 is smarter, more creative and accurate. It generates more detailed and personalized paths."
+        }
+      ],
+      "testimonial": {
+        "author": "Mary, 28 years old",
+        "text": "The AI helped me structure my goals like never before. I learned guitar in 3 months!"
+      }
+    }
   },
   "home": {
     "hero": {
       "title": "Transform your goals into an epic adventure",
       "subtitle": "AI that gamifies your dreams and guides you to success",
       "cta": "Start for free",
-      "demo": "View demo"
+      "demo": "View demo",
+      "badge": "Powered by GPT-4",
+      "tryLabel": "Try:",
+      "suggestions": ["Lose 10kg", "Learn React", "Launch a podcast", "Meditate daily"],
+      "ctaSection": {
+        "title": "Ready to turn your life into a game?",
+        "subtitle": "Join thousands of people achieving the impossible every day.",
+        "benefits": "✨ No credit card • 🎮 5 free goals • ⚡ 30 second setup"
+      },
+      "stats": {
+        "users": "Active users",
+        "goals": "Goals achieved",
+        "rating": "Average rating",
+        "success": "Success rate"
+      }
     },
     "features": {
       "title": "How it works?",
@@ -40,6 +115,10 @@
     "title": "My Objectives",
     "empty": "You don't have any objectives yet. Start by creating one!",
     "create": "Create objective",
+    "tabs": {
+      "chat": "AI Chat",
+      "tree": "Progress Tree"
+    },
     "chat": {
       "placeholder": "Describe your goal or dream...",
       "send": "Send",
