@@ -30,7 +30,9 @@
       "Bash(do)",
       "Bash(if [ -f \"$file\" ])",
       "Bash(then)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\components\\home\\AnimatedBackgroundWrapper.tsx\")",
+      "Bash(npm run clean:all:*)"
     ]
   }
 }

@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import HeaderServer from "@/components/HeaderServer"
 import Footer from "@/components/Footer"
+import HomeClient from "@/components/home/HomeClient"
 import { getDictionary } from "@/lib/i18n/utils"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -101,12 +102,8 @@ export default async function Home({
       {/* Animated gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-background to-blue-900/20" />
       
-      {/* Animated particles effect */}
-      <div className="absolute inset-0">
-        <div className="absolute top-20 left-20 w-72 h-72 bg-purple-500/30 rounded-full filter blur-[128px] animate-pulse" />
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/30 rounded-full filter blur-[128px] animate-pulse animation-delay-2000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/20 rounded-full filter blur-[128px] animate-pulse animation-delay-4000" />
-      </div>
+      
+      
 
       <div className="relative z-10 min-h-screen flex flex-col">
         <HeaderServer locale={locale} translations={dict.nav || { home: 'Accueil', pricing: 'Tarifs', login: 'Se connecter' }} />
@@ -193,42 +190,15 @@ export default async function Home({
               {dict.home?.hero?.subtitle}
             </p>
 
-            {/* CTA Buttons - Server rendered */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <a href={`/${locale}/objectives`}>
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg rounded-xl shadow-xl hover:shadow-2xl transition-all"
-                >
-                  {dict.home?.hero?.cta?.primary || 'Commencer l\'aventure'}
-                </Button>
-              </a>
-              <a href={`/${locale}/pricing`}>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  className="px-8 py-6 text-lg rounded-xl"
-                >
-                  {dict.home?.hero?.cta?.secondary || 'Voir les tarifs'}
-                </Button>
-              </a>
-            </div>
-
-            {/* Suggestions - Server rendered */}
-            <div className="flex flex-wrap gap-2 justify-center max-w-2xl mx-auto">
-              <span className="text-sm text-muted-foreground">
-                {dict.home?.hero?.suggestions?.label || 'Essayez :'}
-              </span>
-              {(dict.home?.hero?.suggestions?.items || ['Perdre 10kg', 'Apprendre React', 'Lancer un podcast']).map((suggestion: string, index: number) => (
-                <a
-                  key={index}
-                  href={`/${locale}/objectives`}
-                  className="text-sm px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
-                >
-                  {suggestion}
-                </a>
-              ))}
-            </div>
+            {/* Interactive Client Components */}
+            <HomeClient 
+              locale={locale} 
+              translations={{
+                placeholder: dict.home?.hero?.placeholder,
+                button: dict.home?.hero?.cta?.primary || 'Commencer l\'aventure',
+                suggestions: dict.home?.hero?.suggestions
+              }}
+            />
 
             {/* Features Grid */}
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto mb-12 md:mb-20">

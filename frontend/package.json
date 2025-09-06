@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "rimraf .next && concurrently \"next dev\" \"node websocket-server.js\"",
+    "dev": "rimraf .next && concurrently \"next dev --turbo\" \"node websocket-server.js\"",
     "dev:nocache": "rimraf .next node_modules/.cache && concurrently \"next dev\" \"node websocket-server.js\"",
     "dev:simple": "rimraf .next && next dev",
     "dev:turbo": "rimraf .next && next dev --turbopack",
