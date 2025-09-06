@@ -1,6 +1,10 @@
 import { Metadata } from "next"
 import { Card } from "@/components/ui/card"
-import Header from "@/components/Header"
+import dynamic from 'next/dynamic'
+
+const HeaderClient = dynamic(() => import('@/components/HeaderClient'), {
+  ssr: true
+})
 import Footer from "@/components/Footer"
 import HomeClient from "@/components/HomeClient"
 import { getDictionary } from "@/lib/i18n/utils"
@@ -109,7 +113,7 @@ export default async function Home({
       </div>
 
       <div className="relative z-10 min-h-screen flex flex-col">
-        <Header />
+        <HeaderClient locale={locale} translations={dict.nav || { home: 'Accueil', pricing: 'Tarifs', login: 'Se connecter' }} />
 
         {/* Contenu SEO invisible mais indexable depuis les traductions */}
         <div className="sr-only">

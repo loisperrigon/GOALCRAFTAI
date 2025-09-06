@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev:next\" \"npm run dev:ws\"",
-    "dev:next": "next dev",
+    "dev:next": "next dev --turbopack",
     "dev:ws": "node websocket-server.js",
     "dev:custom": "node server.js",
     "build": "next build",

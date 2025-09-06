@@ -2,7 +2,8 @@ import { Metadata } from 'next'
 import { getDictionary } from '@/lib/i18n/utils'
 import type { Locale } from '@/lib/i18n/config'
 import AuthClient from './AuthClient'
-import Header from '@/components/Header'
+import dynamic from 'next/dynamic'
+const HeaderClient = dynamic(() => import('@/components/HeaderClient'), { ssr: true })
 import Footer from '@/components/Footer'
 
 export async function generateMetadata({
@@ -34,7 +35,7 @@ export default async function AuthPage({
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <HeaderClient locale="fr" translations={{ home: 'Accueil', pricing: 'Tarifs', login: 'Se connecter' }} />
       
       {/* SEO Content */}
       <div className="sr-only">

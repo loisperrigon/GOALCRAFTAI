@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import Header from "@/components/Header"
+import dynamic from 'next/dynamic'
+const HeaderClient = dynamic(() => import('@/components/HeaderClient'), { ssr: true })
 import Footer from "@/components/Footer"
 import { useRouter } from "next/navigation"
 import { 
@@ -135,7 +136,7 @@ export default function HowItWorksPage() {
 
   return (
     <>
-      <Header />
+      <HeaderClient locale="fr" translations={{ home: 'Accueil', pricing: 'Tarifs', login: 'Se connecter' }} />
       <main className="min-h-screen bg-gradient-to-b from-background to-purple-950/10">
         {/* Hero Section avec animation */}
         <section className="container mx-auto px-4 py-12">

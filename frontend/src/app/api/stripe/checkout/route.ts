@@ -2,10 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
+    // Debug: Afficher si la clé est chargée
+    console.log('[Stripe] Secret key exists:', !!process.env.STRIPE_SECRET_KEY);
+    console.log('[Stripe] Secret key starts with:', process.env.STRIPE_SECRET_KEY?.substring(0, 7));
+    
     // Vérifier si Stripe est configuré
     if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('XXXX')) {
+      console.error('[Stripe] Configuration error: Missing or invalid secret key');
       return NextResponse.json(
-        { error: 'Stripe is not configured. Please add your Stripe keys to .env.local' },
+        { error: 'Stripe is not configured. Please add your Stripe keys to .env' },
         { status: 503 }
       );
     }
@@ -77,7 +82,7 @@ export async function POST(req: NextRequest) {
       mode: 'subscription',
       allow_promotion_codes: true,
       subscription_data: {
-        trial_period_days: plan === 'starter' ? 7 : 0, // 7 jours d'essai pour Starter
+        // Pas de période d'essai
         metadata: {
           userId: userId || '',
           plan,

@@ -337,25 +337,45 @@ export const useUserStore = create<UserState>()(
             return {
               maxObjectives: 3,
               maxStepsPerObjective: 10,
-              features: ['Objectifs basiques', 'Chat IA limité']
+              features: ['3 objectifs maximum', '10 étapes par objectif', 'Chat IA basique limité'],
+              canUseAI: false,
+              canUseGPT4: false,
+              canExport: false,
+              canCollaborate: false,
+              prioritySupport: false,
             };
           case 'starter':
             return {
               maxObjectives: 10,
-              maxStepsPerObjective: -1, // Illimité
-              features: ['Objectifs illimités par objectif', 'Chat IA standard', 'Support prioritaire']
+              maxStepsPerObjective: 20,
+              features: ['10 objectifs actifs', '20 étapes par objectif', 'IA GPT-3.5 illimitée', 'Export PDF', 'Rappels'],
+              canUseAI: true,
+              canUseGPT4: false, // GPT-3.5 seulement
+              canExport: true,
+              canCollaborate: false,
+              prioritySupport: false,
             };
           case 'pro':
             return {
               maxObjectives: -1, // Illimité
               maxStepsPerObjective: -1,
-              features: ['Tout illimité', 'IA avancée', 'Coaching personnalisé', 'Analytics avancés']
+              features: ['Objectifs illimités', 'Étapes illimitées', 'IA GPT-4 illimitée', 'Coaching personnalisé', 'Mode collaboratif', 'Support prioritaire'],
+              canUseAI: true,
+              canUseGPT4: true,
+              canExport: true,
+              canCollaborate: true,
+              prioritySupport: true,
             };
           default:
             return {
               maxObjectives: 3,
               maxStepsPerObjective: 10,
-              features: []
+              features: [],
+              canUseAI: false,
+              canUseGPT4: false,
+              canExport: false,
+              canCollaborate: false,
+              prioritySupport: false,
             };
         }
       },

@@ -46,9 +46,17 @@ export default function PricingClient({ translations: t }: PricingClientProps) {
   const { createCheckout } = useStripeCheckout()
   const [isLoading, setIsLoading] = useState(false)
   
-  const monthlyPrice = 9.99
-  const yearlyPrice = 89.99 // 25% de réduction
-  const currentPrice = billingPeriod === 'monthly' ? monthlyPrice : yearlyPrice / 12
+  // Prix pour chaque plan
+  const prices = {
+    starter: {
+      monthly: 9,
+      yearly: 81, // 9 mois au lieu de 12
+    },
+    pro: {
+      monthly: 19,
+      yearly: 171, // 9 mois au lieu de 12
+    }
+  }
   
   // Timer countdown
   useEffect(() => {
@@ -108,7 +116,7 @@ export default function PricingClient({ translations: t }: PricingClientProps) {
   }
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 overflow-x-auto">
       {/* Bannière urgence */}
       <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 border-y border-orange-500/30">
         <div className="container mx-auto px-4 py-2">
@@ -196,12 +204,13 @@ export default function PricingClient({ translations: t }: PricingClientProps) {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid lg:grid-cols-2 gap-6 md:gap-8 max-w-5xl mx-auto">
+        <div className="px-4 pb-8">
+          <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 max-w-7xl mx-auto">
           
           {/* Free Plan */}
-          <Card className="relative p-4 md:p-6 border-2 border-border hover:border-purple-500/30 transition-all">
+          <Card className="relative flex-1 md:max-w-sm p-4 md:p-6 border-2 border-border hover:border-purple-500/30 transition-all">
             <div className="mb-4">
-              <h3 className="text-2xl font-bold mb-1">Starter</h3>
+              <h3 className="text-2xl font-bold mb-1">Free</h3>
               <p className="text-sm text-muted-foreground mb-3">
                 Pour découvrir la plateforme
               </p>
@@ -242,44 +251,94 @@ export default function PricingClient({ translations: t }: PricingClientProps) {
             </div>
           </Card>
 
-          {/* Premium Plan */}
-          <Card className="relative p-4 md:p-6 border-2 border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-blue-500/10 hover:border-purple-500 transition-all lg:scale-105">
-            {/* Badge populaire */}
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-              <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none px-3 py-1 text-xs animate-pulse">
-                <Star className="h-3 w-3 mr-1" />
-                82% CHOISISSENT CE PLAN
-              </Badge>
-            </div>
-
+          {/* Starter Plan */}
+          <Card className="relative flex-1 md:max-w-sm p-4 md:p-6 border-2 border-blue-500/50 bg-gradient-to-br from-blue-500/10 to-purple-500/10 hover:border-blue-500 transition-all">
             <div className="mb-4">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-2xl font-bold">Premium</h3>
-                <Crown className="h-5 w-5 text-yellow-400" />
+                <h3 className="text-2xl font-bold">Starter</h3>
+                <Zap className="h-5 w-5 text-blue-400" />
               </div>
               <p className="text-sm text-muted-foreground mb-3">
-                IA illimitée + Coaching
+                Pour progresser sérieusement
               </p>
               <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-5xl font-bold text-purple-400">
-                  {billingPeriod === 'monthly' ? `${monthlyPrice}€` : `${currentPrice.toFixed(2)}€`}
+                <span className="text-5xl font-bold text-blue-400">
+                  {billingPeriod === 'monthly' ? '9€' : '6.75€'}
                 </span>
                 <span className="text-muted-foreground">/mois</span>
               </div>
               {billingPeriod === 'yearly' && (
                 <p className="text-sm text-green-400 mb-4">
-                  Économisez {((monthlyPrice * 12) - yearlyPrice).toFixed(2)}€ par an
+                  Économisez 27€ par an
+                </p>
+              )}
+              <Button 
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg"
+                size="lg"
+                onClick={() => handlePremiumClick('starter')}
+                disabled={isLoading}
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                Choisir Starter
+              </Button>
+              <p className="text-xs text-center text-muted-foreground mt-2">
+                🔒 Paiement 100% sécurisé • Annulation immédiate
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-semibold text-sm text-blue-400 uppercase tracking-wide">
+                Inclus dans Starter :
+              </h4>
+              <ul className="space-y-3">
+                {t?.starter?.features?.map((feature: string, index: number) => (
+                  <li key={index} className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Card>
+
+          {/* Pro Plan */}
+          <Card className="relative flex-1 md:max-w-sm p-4 md:p-6 border-2 border-purple-500/50 bg-gradient-to-br from-purple-500/10 to-blue-500/10 hover:border-purple-500 transition-all">
+            {/* Badge populaire */}
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none px-3 py-1 text-xs animate-pulse">
+                <Star className="h-3 w-3 mr-1" />
+                LE PLUS POPULAIRE
+              </Badge>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-2xl font-bold">Pro</h3>
+                <Crown className="h-5 w-5 text-yellow-400" />
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                IA GPT-4 + Coaching illimité
+              </p>
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-5xl font-bold text-purple-400">
+                  {billingPeriod === 'monthly' ? '19€' : '14.25€'}
+                </span>
+                <span className="text-muted-foreground">/mois</span>
+              </div>
+              {billingPeriod === 'yearly' && (
+                <p className="text-sm text-green-400 mb-4">
+                  Économisez 57€ par an
                 </p>
               )}
               <Button 
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white shadow-lg relative overflow-hidden group"
                 size="lg"
-                onClick={() => handlePremiumClick('starter')}
+                onClick={() => handlePremiumClick('pro')}
                 disabled={isLoading}
               >
                 <span className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
-                <Unlock className="h-4 w-4 mr-2" />
-                Commencer maintenant
+                <Crown className="h-4 w-4 mr-2" />
+                Devenir Pro
               </Button>
               <p className="text-xs text-center text-muted-foreground mt-2">
                 🔒 Paiement 100% sécurisé • Annulation immédiate
@@ -288,16 +347,16 @@ export default function PricingClient({ translations: t }: PricingClientProps) {
 
             <div className="space-y-4">
               <h4 className="font-semibold text-sm text-purple-400 uppercase tracking-wide">
-                Tout du plan gratuit, plus :
+                Inclus dans Pro :
               </h4>
               <ul className="space-y-3">
                 {t?.pro?.features?.map((feature: string, index: number) => {
-                  const icons = [Sparkles, Brain, Zap, Trophy, Users, Download, Globe, Shield]
+                  const icons = [Sparkles, Brain, Trophy, Unlock, Users, Shield]
                   const Icon = icons[index] || Sparkles
                   return (
                     <li key={index} className="flex items-start gap-3">
                       <Icon className="h-5 w-5 text-purple-400 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
+                      <span className="text-sm font-medium">{feature}</span>
                     </li>
                   )
                 })}
@@ -310,12 +369,13 @@ export default function PricingClient({ translations: t }: PricingClientProps) {
                 <div className="flex items-center gap-2">
                   <Gift className="h-5 w-5 text-green-400" />
                   <span className="text-sm text-green-400 font-medium">
-                    {t?.pro?.yearlyBonus || "2 mois offerts avec l'abonnement annuel !"}
+                    3 mois offerts avec l'abonnement annuel !
                   </span>
                 </div>
               </div>
             )}
           </Card>
+          </div>
         </div>
 
         {/* Comparaison visuelle */}
@@ -334,10 +394,12 @@ export default function PricingClient({ translations: t }: PricingClientProps) {
                 <p className="text-sm text-muted-foreground">Apps concurrentes</p>
               </div>
               <div className="space-y-2">
-                <p className="text-3xl font-bold text-purple-400">{currentPrice.toFixed(2)}€/mois</p>
-                <p className="text-sm font-medium">GoalCraft Premium</p>
+                <p className="text-3xl font-bold text-purple-400">
+                  {billingPeriod === 'monthly' ? '19€' : '14.25€'}/mois
+                </p>
+                <p className="text-sm font-medium">GoalCraft Pro</p>
                 <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                  93% moins cher
+                  87% moins cher
                 </Badge>
               </div>
             </div>

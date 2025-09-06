@@ -2,7 +2,11 @@ import { Metadata } from 'next'
 import { getDictionary } from '@/lib/i18n/utils'
 import type { Locale } from '@/lib/i18n/config'
 import PricingClient from './PricingClient'
-import Header from '@/components/Header'
+import dynamic from 'next/dynamic'
+
+const HeaderClient = dynamic(() => import('@/components/HeaderClient'), {
+  ssr: true
+})
 import Footer from '@/components/Footer'
 
 export async function generateMetadata({
@@ -103,14 +107,16 @@ export default async function PricingPage({
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Schema.org JSON-LD pour Google */}
+    <>
+      {/* Schema.org JSON-LD pour Google - En dehors du div principal */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        suppressHydrationWarning
       />
       
-      <Header />
+      <div className="min-h-screen bg-background">
+        <HeaderClient locale={locale} translations={dict.nav || { home: 'Accueil', pricing: 'Tarifs', login: 'Se connecter' }} />
       
       {/* SEO Content - Tout le contenu important pour Google depuis les traductions */}
       <div className="sr-only">
@@ -194,10 +200,11 @@ export default async function PricingPage({
         </section>
       </div>
 
-      {/* Interactive Client Component */}
-      <PricingClient translations={dict.pricing} locale={locale} />
-      
-      <Footer />
-    </div>
+        {/* Interactive Client Component */}
+        <PricingClient translations={dict.pricing} locale={locale} />
+        
+        <Footer />
+      </div>
+    </>
   )
 }

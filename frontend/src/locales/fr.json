@@ -152,38 +152,45 @@
     "yearly": "Annuel",
     "save": "Économisez",
     "free": {
-      "name": "Gratuit",
+      "name": "Free",
       "price": "0€",
-      "description": "Parfait pour découvrir",
+      "description": "Pour découvrir la plateforme",
       "features": [
-        "3 objectifs par mois",
-        "Arbre basique",
-        "Support communautaire"
+        "3 objectifs maximum",
+        "10 étapes par objectif",
+        "Chat IA basique limité"
+      ],
+      "limitations": [
+        "Pas d'export PDF",
+        "Pas de notifications",
+        "Support communautaire uniquement"
       ]
     },
     "starter": {
       "name": "Starter",
-      "price": "9.99€",
-      "description": "Pour les ambitieux",
+      "price": "9€",
+      "description": "Pour progresser sérieusement",
       "features": [
-        "Objectifs illimités",
-        "Arbres avancés",
-        "Support prioritaire",
-        "Export PDF",
-        "Statistiques détaillées"
+        "10 objectifs actifs",
+        "20 étapes par objectif",
+        "IA GPT-3.5 illimitée",
+        "Export PDF de vos objectifs",
+        "Rappels et notifications"
       ]
     },
     "pro": {
       "name": "Pro",
-      "price": "19.99€",
-      "description": "Pour les professionnels",
+      "price": "19€",
+      "description": "IA GPT-4 + Coaching illimité",
       "features": [
-        "Tout de Starter",
-        "Coaching IA avancé",
-        "Collaboration d'équipe",
-        "API access",
-        "Support dédié"
-      ]
+        "Objectifs illimités",
+        "Étapes illimitées",
+        "IA GPT-4 illimitée",
+        "Coaching personnalisé IA",
+        "Mode collaboratif",
+        "Support prioritaire"
+      ],
+      "yearlyBonus": "3 mois offerts avec l'abonnement annuel !"
     },
     "cta": {
       "free": "Commencer gratuitement",

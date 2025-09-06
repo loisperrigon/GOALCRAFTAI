@@ -17,7 +17,10 @@
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
       "WebFetch(domain:ui.shadcn.com)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(cmd //c:*)",
+      "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\components\\HeaderServer.tsx\")",
+      "Bash(find:*)"
     ]
   }
 }

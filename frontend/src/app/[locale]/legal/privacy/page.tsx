@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
-import Header from '@/components/Header'
+import dynamic from 'next/dynamic'
+const HeaderClient = dynamic(() => import('@/components/HeaderClient'), { ssr: true })
 import Footer from '@/components/Footer'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <HeaderClient locale="fr" translations={{ home: 'Accueil', pricing: 'Tarifs', login: 'Se connecter' }} />
       
       <div className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
         <Link href="/">

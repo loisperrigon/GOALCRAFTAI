@@ -6,43 +6,39 @@ import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import SoundControl from "@/components/SoundControl"
 import LanguageSelector from "@/components/LanguageSelector"
+import type { Locale } from '@/lib/i18n/config'
 
-// Fonction pour essayer d'utiliser les hooks i18n
-function useI18n() {
-  try {
-    const { useLocale, useTranslations } = require('@/lib/i18n/client')
-    const locale = useLocale()
-    const t = useTranslations('nav')
-    return { locale, t, hasI18n: true }
-  } catch {
-    // Pas dans un contexte i18n, retourner des valeurs par défaut
-    return { 
-      locale: 'fr', 
-      t: {
-        home: 'Accueil',
-        pricing: 'Tarifs',
-        login: 'Se connecter'
-      },
-      hasI18n: false 
-    }
+interface HeaderClientProps {
+  locale: Locale
+  translations: {
+    home?: string
+    pricing?: string
+    login?: string
+    examples?: string
   }
 }
 
-export default function Header() {
+export default function HeaderClient({ locale, translations }: HeaderClientProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { locale, t, hasI18n } = useI18n()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   
   // Simulation : vérifier si l'utilisateur est connecté
   const isAuthenticated = pathname.includes('/objectives') || pathname.includes('/dashboard') || pathname.includes('/profile')
+
+  const t = translations || {
+    home: 'Accueil',
+    pricing: 'Tarifs',
+    login: 'Se connecter',
+    examples: 'Exemples'
+  }
 
   return (
     <>
       <header className="flex items-center justify-between px-4 md:px-8 py-4 md:py-6 relative z-20">
         <div 
           className="flex items-center gap-2 cursor-pointer" 
-          onClick={() => router.push(hasI18n ? `/${locale}` : '/')}
+          onClick={() => router.push(`/${locale}`)}
         >
           <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg md:text-xl">G</span>
@@ -66,40 +62,27 @@ export default function Header() {
         
       <nav className="hidden md:flex items-center gap-8">
         <a 
-          href={hasI18n ? `/${locale}/` : '/'}
+          href={`/${locale}/`}
           className={`relative transition-colors ${
             pathname === '/' || pathname === `/${locale}` 
               ? 'text-foreground font-medium' 
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          {t?.home || 'Accueil'}
+          {t.home}
           {(pathname === '/' || pathname === `/${locale}`) && (
             <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
           )}
         </a>
         <a 
-          href={hasI18n ? `/${locale}/examples` : '#'}
-          className={`relative transition-colors ${
-            pathname.includes('/examples') 
-              ? 'text-foreground font-medium' 
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          {t?.nav?.examples || 'Examples'}
-          {pathname.includes('/examples') && (
-            <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
-          )}
-        </a>
-        <a 
-          href={hasI18n ? `/${locale}/pricing` : '/pricing'}
+          href={`/${locale}/pricing`}
           className={`relative transition-colors ${
             pathname.includes('/pricing') 
               ? 'text-foreground font-medium' 
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          {t?.pricing || 'Tarifs'}
+          {t.pricing}
           {pathname.includes('/pricing') && (
             <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500" />
           )}
@@ -108,7 +91,7 @@ export default function Header() {
         {/* Sound Controls & Language Selector */}
         <div className="flex items-center gap-2">
           <SoundControl />
-          {hasI18n && <LanguageSelector />}
+          <LanguageSelector />
         </div>
         
         {pathname.includes('/objectives') ? (
@@ -121,15 +104,15 @@ export default function Header() {
             variant="outline" 
             className="border-purple-500/50 bg-purple-500/10"
           >
-            {t?.login || 'Connexion'}
+            {t.login}
           </Button>
         ) : (
           <Button 
             variant="outline" 
             className="border-purple-500/50 hover:bg-purple-500/10"
-            onClick={() => router.push(hasI18n ? `/${locale}/auth` : '/auth')}
+            onClick={() => router.push(`/${locale}/auth`)}
           >
-            {t?.login || 'Se connecter'}
+            {t.login}
           </Button>
         )}
         </nav>
@@ -161,7 +144,7 @@ export default function Header() {
 
         <nav className="flex flex-col p-4 space-y-2">
           <a 
-            href={hasI18n ? `/${locale}/` : '/'}
+            href={`/${locale}/`}
             onClick={() => setIsMobileMenuOpen(false)}
             className={`px-4 py-3 rounded-lg transition-colors ${
               pathname === '/' || pathname === `/${locale}`
@@ -169,21 +152,10 @@ export default function Header() {
                 : 'hover:bg-purple-500/10 text-muted-foreground'
             }`}
           >
-            {t?.home || 'Accueil'}
+            {t.home}
           </a>
           <a 
-            href={hasI18n ? `/${locale}/examples` : '#'}
-            onClick={() => setIsMobileMenuOpen(false)}
-            className={`px-4 py-3 rounded-lg transition-colors ${
-              pathname.includes('/examples')
-                ? 'bg-purple-500/10 text-foreground font-medium'
-                : 'hover:bg-purple-500/10 text-muted-foreground'
-            }`}
-          >
-            {t?.nav?.examples || 'Examples'}
-          </a>
-          <a 
-            href={hasI18n ? `/${locale}/pricing` : '/pricing'}
+            href={`/${locale}/pricing`}
             onClick={() => setIsMobileMenuOpen(false)}
             className={`px-4 py-3 rounded-lg transition-colors ${
               pathname.includes('/pricing')
@@ -191,16 +163,14 @@ export default function Header() {
                 : 'hover:bg-purple-500/10 text-muted-foreground'
             }`}
           >
-            {t?.pricing || 'Tarifs'}
+            {t.pricing}
           </a>
           
           <div className="pt-4 mt-4 border-t border-border">
             {/* Language Selector for mobile */}
-            {hasI18n && (
-              <div className="mb-4">
-                <LanguageSelector />
-              </div>
-            )}
+            <div className="mb-4">
+              <LanguageSelector />
+            </div>
             {pathname.includes('/objectives') ? (
               <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg border border-purple-500/30">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
@@ -210,11 +180,11 @@ export default function Header() {
               <Button 
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
                 onClick={() => {
-                  router.push(hasI18n ? `/${locale}/auth` : '/auth')
+                  router.push(`/${locale}/auth`)
                   setIsMobileMenuOpen(false)
                 }}
               >
-                {pathname.includes('/auth') ? (t?.login || 'Connexion') : (t?.login || 'Se connecter')}
+                {pathname.includes('/auth') ? t.login : t.login}
               </Button>
             )}
           </div>
