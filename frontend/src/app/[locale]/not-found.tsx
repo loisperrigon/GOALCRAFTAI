@@ -5,8 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Home, ArrowLeft, Search, Gamepad2, Ghost } from "lucide-react"
-import dynamic from 'next/dynamic'
-const HeaderClient = dynamic(() => import('@/components/HeaderClient'), { ssr: true })
+import HeaderServer from '@/components/HeaderServer'
 import Footer from "@/components/Footer"
 
 export default function NotFound() {
@@ -14,7 +13,7 @@ export default function NotFound() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <HeaderClient locale="fr" translations={{ home: 'Accueil', pricing: 'Tarifs', login: 'Se connecter' }} />
+      <HeaderServer locale="fr" translations={{ home: 'Accueil', pricing: 'Tarifs', login: 'Se connecter' }} />
       
       <div className="flex-1 flex items-center justify-center px-4 py-16">
         <div className="max-w-2xl w-full text-center">

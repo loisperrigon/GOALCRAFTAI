@@ -39,6 +39,5 @@ export const GenerationProgress = dynamic(() => import('@/components/GenerationP
 })
 
 // For components that are always visible, export them normally
-export { default as HeaderClient } from '@/components/HeaderClient'
 export { default as Footer } from '@/components/Footer'
 export { default as AuthLayout } from '@/components/AuthLayout'

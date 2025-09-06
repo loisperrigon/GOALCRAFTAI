@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { AuthSessionProvider } from "@/providers/session-provider";
-import SettingsInitializer from "@/components/SettingsInitializer";
 import { I18nProvider } from "@/lib/i18n/client";
 import { getDictionary } from "@/lib/i18n/utils";
 import type { Locale } from "@/lib/i18n/config";
@@ -99,7 +98,6 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SettingsInitializer />
         <AuthSessionProvider>
           <I18nProvider locale={locale} dictionary={dictionary}>
             {children}

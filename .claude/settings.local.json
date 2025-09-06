@@ -25,7 +25,12 @@
       "Bash(cat:*)",
       "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\clean-start.bat\")",
       "Bash(./clean-dev.bat)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(for file in how-it-works/page.tsx legal/terms/page.tsx legal/privacy/page.tsx legal/mentions/page.tsx not-found.tsx)",
+      "Bash(do)",
+      "Bash(if [ -f \"$file\" ])",
+      "Bash(then)",
+      "Bash(echo:*)"
     ]
   }
 }

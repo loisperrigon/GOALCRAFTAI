@@ -1,12 +1,8 @@
 import { Metadata } from "next"
 import { Card } from "@/components/ui/card"
-import dynamic from 'next/dynamic'
-
-const HeaderClient = dynamic(() => import('@/components/HeaderClient'), {
-  ssr: true
-})
+import { Button } from "@/components/ui/button"
+import HeaderServer from "@/components/HeaderServer"
 import Footer from "@/components/Footer"
-import HomeClient from "@/components/HomeClient"
 import { getDictionary } from "@/lib/i18n/utils"
 import type { Locale } from "@/lib/i18n/config"
 
@@ -113,7 +109,7 @@ export default async function Home({
       </div>
 
       <div className="relative z-10 min-h-screen flex flex-col">
-        <HeaderClient locale={locale} translations={dict.nav || { home: 'Accueil', pricing: 'Tarifs', login: 'Se connecter' }} />
+        <HeaderServer locale={locale} translations={dict.nav || { home: 'Accueil', pricing: 'Tarifs', login: 'Se connecter' }} />
 
         {/* Contenu SEO invisible mais indexable depuis les traductions */}
         <div className="sr-only">
@@ -197,8 +193,42 @@ export default async function Home({
               {dict.home?.hero?.subtitle}
             </p>
 
-            {/* Client Component for interactive parts */}
-            <HomeClient locale={locale} translations={dict} />
+            {/* CTA Buttons - Server rendered */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              <a href={`/${locale}/objectives`}>
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg rounded-xl shadow-xl hover:shadow-2xl transition-all"
+                >
+                  {dict.home?.hero?.cta?.primary || 'Commencer l\'aventure'}
+                </Button>
+              </a>
+              <a href={`/${locale}/pricing`}>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="px-8 py-6 text-lg rounded-xl"
+                >
+                  {dict.home?.hero?.cta?.secondary || 'Voir les tarifs'}
+                </Button>
+              </a>
+            </div>
+
+            {/* Suggestions - Server rendered */}
+            <div className="flex flex-wrap gap-2 justify-center max-w-2xl mx-auto">
+              <span className="text-sm text-muted-foreground">
+                {dict.home?.hero?.suggestions?.label || 'Essayez :'}
+              </span>
+              {(dict.home?.hero?.suggestions?.items || ['Perdre 10kg', 'Apprendre React', 'Lancer un podcast']).map((suggestion: string, index: number) => (
+                <a
+                  key={index}
+                  href={`/${locale}/objectives`}
+                  className="text-sm px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+                >
+                  {suggestion}
+                </a>
+              ))}
+            </div>
 
             {/* Features Grid */}
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-4xl mx-auto mb-12 md:mb-20">
