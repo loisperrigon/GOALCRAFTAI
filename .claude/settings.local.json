@@ -20,7 +20,12 @@
       "Bash(npm uninstall:*)",
       "Bash(cmd //c:*)",
       "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\src\\components\\HeaderServer.tsx\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(cmd /c:*)",
+      "Bash(cat:*)",
+      "Bash(del \"C:\\Users\\Lois\\Documents\\Projet\\GoalCraftAI\\frontend\\clean-start.bat\")",
+      "Bash(./clean-dev.bat)",
+      "Bash(rm:*)"
     ]
   }
 }
